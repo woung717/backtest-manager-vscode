@@ -1,0 +1,202 @@
+{
+  "name": "backtest-manager-vscode",
+  "displayName": "Backtest Manager",
+  "description": "백테스트 관리 도구",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.98.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [
+    "onCommand:backtest-manager-vscode.start"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "myExtension.helloWorld",
+        "title": "Hello World"
+      },
+      {
+        "command": "myExtension.refreshTreeView",
+        "title": "Refresh",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "myExtension.executeShellCommand",
+        "title": "Execute Shell Command on Server"
+      },
+      {
+        "command": "myExtension.checkServerStatus",
+        "title": "Check Server Status"
+      },
+      {
+        "command": "myExtension.createNewProject",
+        "title": "새 프로젝트 생성",
+        "icon": "$(add)"
+      },
+      {
+        "command": "myExtension.runBacktest",
+        "title": "Backtest",
+        "icon": "$(dashboard)"
+      },
+      {
+        "command": "myExtension.runBacktestFromTree",
+        "title": "Run Backtest",
+        "icon": "$(play)"
+      },
+      {
+        "command": "myExtension.deleteBacktestResult",
+        "title": "Delete result"
+      },
+      {
+        "command": "myExtension.deleteProject",
+        "title": "프로젝트 삭제"
+      },
+      {
+        "command": "myExtension.refreshDatasetView",
+        "title": "데이터셋 새로고침",
+        "icon": "$(refresh)"
+      },
+      {
+        "command": "myExtension.deleteDataset",
+        "title": "데이터셋 삭제"
+      },
+      {
+        "command": "myExtension.openDatasetFile",
+        "title": "데이터셋 파일 열기"
+      },
+      {
+        "command": "myExtension.showDatasetDownloader",
+        "title": "데이터 다운로드",
+        "icon": "$(cloud-download)"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "my-extension-explorer",
+          "title": "Backtest Manager",
+          "icon": "$(dashboard)"
+        }
+      ]
+    },
+    "views": {
+      "my-extension-explorer": [
+        {
+          "type": "tree",
+          "id": "myExtensionTreeView",
+          "name": "Projects"
+        },
+        {
+          "type": "tree",
+          "id": "myDatasetTreeView",
+          "name": "Datasets"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "myExtension.refreshTreeView",
+          "when": "view == myExtensionTreeView",
+          "group": "navigation"
+        },
+        {
+          "command": "myExtension.createNewProject",
+          "when": "view == myExtensionTreeView",
+          "group": "navigation"
+        },
+        {
+          "command": "myExtension.refreshDatasetView",
+          "when": "view == myDatasetTreeView",
+          "group": "navigation"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "myExtension.runBacktest",
+          "when": "resourceScheme == 'file' && resourcePath in backtestManager.entryFiles",
+          "group": "navigation"
+        }
+      ],
+      "view/item/context": [
+        {
+          "command": "myExtension.runBacktestFromTree",
+          "when": "view == myExtensionTreeView && viewItem == project",
+          "group": "inline"
+        },
+        {
+          "command": "myExtension.deleteBacktestResult",
+          "when": "view == myExtensionTreeView && viewItem == backtestResult"
+        },
+        {
+          "command": "myExtension.deleteProject",
+          "when": "view == myExtensionTreeView && viewItem == project"
+        },
+        {
+          "command": "myExtension.deleteDataset",
+          "when": "view == myDatasetTreeView && viewItem == dataset"
+        },
+        {
+          "command": "myExtension.showDatasetDownloader",
+          "when": "view == myDatasetTreeView && viewItem == assetFolder",
+          "group": "inline"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./ && webpack --mode production",
+    "watch": "tsc -watch -p ./",
+    "watch:webpack": "webpack --watch --mode development",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "vscode-test",
+    "dev": "webpack --mode development"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.13.0",
+    "@stylistic/eslint-plugin": "^2.9.0",
+    "@tailwindcss/postcss": "^4.0.16",
+    "@tailwindcss/vite": "^4.0.15",
+    "@types/ejs": "^3.1.5",
+    "@types/express": "^5.0.1",
+    "@types/lowdb": "^1.0.11",
+    "@types/mocha": "^10.0.1",
+    "@types/node": "^20",
+    "@types/react": "^19.0.12",
+    "@types/react-dom": "^19.0.4",
+    "@types/vscode": "^1.73.0",
+    "@vscode/test-cli": "^0.0.8",
+    "@vscode/test-electron": "^2.3.9",
+    "autoprefixer": "^10.4.19",
+    "css-loader": "^6.10.0",
+    "eslint": "^9.13.0",
+    "mini-css-extract-plugin": "^2.8.1",
+    "mocha": "^10.2.0",
+    "postcss": "^8.5.3",
+    "postcss-loader": "^7.3.4",
+    "style-loader": "^3.3.4",
+    "tailwindcss": "^4.0.15",
+    "terser-webpack-plugin": "^5.3.14",
+    "ts-loader": "^9.5.1",
+    "typescript": "^5.8.2",
+    "typescript-eslint": "^8.26.0",
+    "webpack": "^5.91.0",
+    "webpack-cli": "^5.1.4"
+  },
+  "dependencies": {
+    "@seald-io/nedb": "^4.1.1",
+    "@vscode/webview-ui-toolkit": "^1.4.0",
+    "ccxt": "^4.4.71",
+    "ejs": "^3.1.10",
+    "express": "^4.21.2",
+    "lightweight-charts": "^5.0.3",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0"
+  }
+}

@@ -1,0 +1,146 @@
+import backtrader as bt
+import json
+from datetime import datetime
+import os
+
+
+# Define TradeAndEquityAnalyzer
+class TradeAndEquityAnalyzer(bt.Analyzer):
+    def __init__(self):
+        super(TradeAndEquityAnalyzer, self).__init__()
+        self.trades = {}
+        self.equity = []
+
+    def notify_trade(self, trade):
+        if trade.justopened: 
+            trade_data = {
+                'ref': str(trade.ref),
+                'datetime': self.strategy.datetime.datetime().isoformat(),
+                'price': round(trade.price, 2),
+                'size': trade.size,
+                'value': round(abs(trade.value), 2),
+                'commission': round(trade.commission, 2),
+                'side': 'long' if trade.size > 0 else 'short'
+            }
+            self.trades[trade.ref] = {'enter': trade_data, 'exits': []}
+            print(f"trade: {json.dumps(trade_data)}")
+            
+        elif trade.isclosed: 
+            if trade.ref in self.trades:
+                enter_info = self.trades[trade.ref]['enter']
+                exit_size = enter_info['size'] - trade.size
+                exit_price = enter_info['price'] + (trade.pnl / exit_size) if exit_size != 0 else enter_info['price']
+                
+                exit_info = {
+                    'ref': str(trade.ref),
+                    'datetime': self.strategy.datetime.datetime().isoformat(),
+                    'price': round(exit_price, 2),
+                    'pnl': round(trade.pnl, 2),
+                    'pnlcomm': round(trade.pnlcomm, 2),
+                    'commission': round(trade.commission, 2),
+                    'hold_bars': trade.barlen,
+                    'size': exit_size
+                }
+                self.trades[trade.ref]['exits'].append(exit_info)
+                print(f"trade: {json.dumps(exit_info)}")
+
+    def next(self):
+        # Print current portfolio value at each tick
+        portfolio_value = self.strategy.broker.getvalue()
+        equity_data = {
+            'datetime': self.strategy.datetime.datetime().isoformat(),
+            'value': round(portfolio_value, 2)
+        }
+        print(f"equity: {json.dumps(equity_data)}")
+        self.equity.append(equity_data)
+
+    def get_analysis(self):
+        return {
+            'trades': self.trades,
+            'equity': self.equity
+        }
+
+# Create Cerebro instance
+cerebro = bt.Cerebro(
+<% if (config.preload != null) { %>    preload=<%= config.preload ? 'True' : 'False' %>,<% } %>
+<% if (config.runonce != null) { %>    runonce=<%= config.runonce ? 'True' : 'False' %>,<% } %>
+<% if (config.live != null) { %>    live=<%= config.live ? 'True' : 'False' %>,<% } %>
+<% if (config.maxcpus != null) { %>    maxcpus=<%= config.maxcpus %>,<% } %>
+<% if (config.stdstats != null) { %>    stdstats=<%= config.stdstats ? 'True' : 'False' %>,<% } %>
+<% if (config.oldbuysell != null) { %>    oldbuysell=<%= config.oldbuysell ? 'True' : 'False' %>,<% } %>
+<% if (config.oldtrades != null) { %>    oldtrades=<%= config.oldtrades ? 'True' : 'False' %>,<% } %>
+<% if (config.exactbars != null) { %>    exactbars=<%= typeof config.exactbars === 'boolean' ? (config.exactbars ? 'True' : 'False') : config.exactbars %>,<% } %>
+)
+
+# Basic settings
+cerebro.broker.setcash(<%= config.broker.initialCapital %>)
+
+# Add Analyzer
+cerebro.addanalyzer(TradeAndEquityAnalyzer, _name='trade_and_equity')
+
+<% if (config.broker) { %>
+# Broker settings
+<% if (config.broker.checkSubmit != null) { %>cerebro.broker.set_checksubmit(<%= config.broker.checkSubmit ? 'True' : 'False' %>)<% } %>
+<% if (config.broker.eosbar != null) { %>cerebro.broker.set_eosbar(<%= config.broker.eosbar ? 'True' : 'False' %>)<% } %>
+
+# Additional broker settings
+<% if (config.broker.coc != null) { %>cerebro.broker.set_coc(<%= config.broker.coc ? 'True' : 'False' %>)<% } %>
+<% if (config.broker.coo != null) { %>cerebro.broker.set_coo(<%= config.broker.coo ? 'True' : 'False' %>)<% } %>
+<% if (config.broker.int2pnl != null) { %>cerebro.broker.set_int2pnl(<%= config.broker.int2pnl ? 'True' : 'False' %>)<% } %>
+<% if (config.broker.shortcash != null) { %>cerebro.broker.set_shortcash(<%= config.broker.shortcash ? 'True' : 'False' %>)<% } %>
+<% if (config.broker.fundstartval != null) { %>cerebro.broker.set_fundstartval(<%= config.broker.fundstartval %>)<% } %>
+<% if (config.broker.fundmode != null) { %>cerebro.broker.set_fundmode(<%= config.broker.fundmode ? 'True' : 'False' %>)<% } %>
+
+<% if (config.broker.commissionScheme) { %>
+# Commission settings
+cerebro.broker.setcommission(
+    <% if (config.broker.commissionScheme.commission != null) { %>commission=<%= config.broker.commissionScheme.commission %>,<% } %>
+    <% if (config.broker.commissionScheme.margin != null) { %>margin=<%= config.broker.commissionScheme.margin %>,<% } %>
+    <% if (config.broker.commissionScheme.mult != null) { %>mult=<%= config.broker.commissionScheme.mult %>,<% } %>
+    <% if (config.broker.commissionScheme.percabs != null) { %>percabs=<%= config.broker.commissionScheme.percabs ? 'True' : 'False' %>,<% } %>
+    <% if (config.broker.commissionScheme.stocklike != null) { %>stocklike=<%= config.broker.commissionScheme.stocklike ? 'True' : 'False' %>,<% } %>
+    <% if (config.broker.commissionScheme.interest != null) { %>interest=<%= config.broker.commissionScheme.interest %>,<% } %>
+    <% if (config.broker.commissionScheme.interestLong != null) { %>interest_long=<%= config.broker.commissionScheme.interestLong ? 'True' : 'False' %>,<% } %>
+    <% if (config.broker.commissionScheme.leverage != null) { %>leverage=<%= config.broker.commissionScheme.leverage %>,<% } %>
+    <% if (config.broker.commissionScheme.automargin != null) { %>automargin=<%= config.broker.commissionScheme.automargin ? 'True' : 'False' %>,<% } %>
+)
+<% } %>
+
+<% if (config.broker.slippage) { %>
+# Slippage settings
+<% if (config.broker.slippage.slippagePerc != null) { %>
+cerebro.broker.set_slippage_perc(<%= config.broker.slippage.slippagePerc %>
+    <% if (config.broker.slippage.slippageOpen != null) { %>, slip_open=<%= config.broker.slippage.slippageOpen ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageLimit != null) { %>, slip_limit=<%= config.broker.slippage.slippageLimit ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageMatch != null) { %>, slip_match=<%= config.broker.slippage.slippageMatch ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageOut != null) { %>, slip_out=<%= config.broker.slippage.slippageOut ? 'True' : 'False' %><% } %>
+)
+<% } else if (config.broker.slippage.slippageFixed != null) { %>
+cerebro.broker.set_slippage_fixed(<%= config.broker.slippage.slippageFixed %>
+    <% if (config.broker.slippage.slippageOpen != null) { %>, slip_open=<%= config.broker.slippage.slippageOpen ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageLimit != null) { %>, slip_limit=<%= config.broker.slippage.slippageLimit ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageMatch != null) { %>, slip_match=<%= config.broker.slippage.slippageMatch ? 'True' : 'False' %><% } %>
+    <% if (config.broker.slippage.slippageOut != null) { %>, slip_out=<%= config.broker.slippage.slippageOut ? 'True' : 'False' %><% } %>
+)
+<% } %>
+<% } %>
+<% } %>
+
+# Execute user code (Data feed setup and strategy class definition)
+<%- userCode %>
+
+try:
+    cerebro_init(cerebro)
+except NameError as e:
+    print("Seems like there is no cerebro configuration. Pass.")
+
+
+# Strategy settings
+<% if (config.strategyParams) { %>
+cerebro.addstrategy(<%= config.strategy %>, <%= Object.entries(config.strategyParams).map(([key, value]) => typeof value === 'string' ? `${key}='${value}'` : `${key}=${value}`).join(', ') %>)
+<% } else { %>
+cerebro.addstrategy(<%= config.strategy %>)
+<% } %>
+
+results = cerebro.run()
+<% if (config.plotEnabled) { %>cerebro.plot()<% } %>
