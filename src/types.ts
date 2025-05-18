@@ -3,7 +3,7 @@ export interface ProjectInfo {
     name: string;
     path: string;
     entryFile: string;
-    engine: 'backtrader';
+    engine: Engine;
     strategy?: string;
     description?: string;
     created?: Date;
@@ -11,6 +11,8 @@ export interface ProjectInfo {
     results?: Backtest[];
     lastConfig?: any;  // 마지막으로 저장된 백테스트 설정값
 }
+
+export type Engine = 'backtrader' | 'vectorbt';
 
 // 거래 진입 정보
 export interface TradeEnterData {

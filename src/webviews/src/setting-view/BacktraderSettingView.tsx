@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
-import VSCodeAPI from '../lib/VSCodeAPI';
-import { ProjectInfo, DatasetInfo } from '../../types';
+import VSCodeAPI from '../../lib/VSCodeAPI';
+import { ProjectInfo, DatasetInfo } from '../../../types';
 
-type BacktestSettingViewProps = {
+type BacktradrSettingViewProps = {
   currentProject?: ProjectInfo;
   datasets?: DatasetInfo[];
   lastConfig?: any;
 };
 
-const BacktestSettingView: React.FC<BacktestSettingViewProps> = ({ currentProject, datasets = [], lastConfig }) => {
+const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentProject, datasets = [], lastConfig }) => {
   const [cerebroSettings, setCerebroSettings] = useState({
     preload: true,
     runonce: true,
@@ -833,4 +833,4 @@ const BacktestSettingView: React.FC<BacktestSettingViewProps> = ({ currentProjec
   );
 };
 
-export default BacktestSettingView; 
+export default BacktraderSettingView; 

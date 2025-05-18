@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
-import { Backtest, ProjectInfo } from './types';
+import { Backtest, Engine, ProjectInfo } from './types';
 import { BacktestResultView } from './backtestResultView';
 import { Database } from './database';
 
@@ -168,7 +168,7 @@ def cerebro_init(cerebro: bt.Cerebro):
         this.loadProjects();
     }
 
-    async createNewProject(projectName: string): Promise<void> {
+    async createNewProject(projectName: string, engine: Engine): Promise<void> {
         try {
             const workspaceFolders = vscode.workspace.workspaceFolders;
             if (!workspaceFolders) {
@@ -186,7 +186,7 @@ def cerebro_init(cerebro: bt.Cerebro):
                 name: projectName,
                 path: projectPath,
                 entryFile: this.entryFileName,
-                engine: "backtrader"
+                engine: engine
             };
 
             await this.db.addProject(projectInfo);

@@ -4,7 +4,7 @@ import { BacktestSettingView } from './backtestSettingView';
 import { ExtensionServer } from './server';
 import * as path from 'path';
 import { BacktestResultView } from './backtestResultView';
-import { Backtest, DatasetInfo } from './types';
+import { Backtest, DatasetInfo, Engine } from './types';
 import { DatasetTreeProvider, DatasetTreeItem } from './datasetTreeProvider';
 import { DatasetDownloaderView } from './datasetDownloaderView';
 import { VSCodeOutputLogger } from './vscodeOutputLogger';
@@ -120,9 +120,15 @@ export function activate(context: vscode.ExtensionContext) {
                     return null;
                 }
             });
+            const engine = await vscode.window.showQuickPick([
+                { label: '🚀 Backtrader', value: 'backtrader', description: 'Full featured event-driven backtesting engine.' },
+                { label: '⚡ VectorBT', value: 'vectorbt', description: 'Ultra rapid vectorized backtesting engine.' }
+            ], {
+                placeHolder: 'Select engine',
+            });
 
-            if (projectName) {
-                await projectTreeProvider.createNewProject(projectName);
+            if (projectName && engine) {
+                await projectTreeProvider.createNewProject(projectName, engine.value as Engine);
             }
         }),
 

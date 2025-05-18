@@ -6,8 +6,6 @@ import { ProjectInfo } from './types';
 export class Database {
     private static instance: Database;
     private Datastore = require('@seald-io/nedb');
-    private zlib = require('zlib');
-    private createGzip = require('node:zlib').createGzip;
     private readonly CONFIG_FILE_NAME: string = '.backtest-man';
     private db: any;
     private initialized: boolean = false;
@@ -50,16 +48,6 @@ export class Database {
         } catch (error) {
             throw new Error(`Error initializing database: ${error}`);
         }
-    }
-
-    private async compressPersistent() {
-        this.zlib.gzip(this.db, (err: any, buffer: any) => {
-            if (err) {
-                throw new Error(`Error during compression: ${err}`);
-            }
-            this.db = buffer;
-            this.zlib.createGzip();
-        });
     }
 
     public async getProjects(): Promise<(ProjectInfo & { results: Backtest[] })[]> {

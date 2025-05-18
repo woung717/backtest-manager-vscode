@@ -1,6 +1,6 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import BacktestSettingView from './BacktestSettingView';
+import BacktraderSettingView from './setting-view/BacktraderSettingView';
 import { ProjectInfo, DatasetInfo } from '../../types';
 import '../lib/VSCode.css';
 const root = document.getElementById('root');
@@ -28,7 +28,7 @@ if (root) {
     function render() {
         reactRoot.render(
             <React.StrictMode>
-                <BacktestSettingView 
+                <BacktraderSettingView 
                     currentProject={currentProject} 
                     datasets={datasets}
                     lastConfig={lastConfig}

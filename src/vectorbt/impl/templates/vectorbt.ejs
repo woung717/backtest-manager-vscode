@@ -1,0 +1,126 @@
+import vectorbt as vbt
+import numpy as np
+import pandas as pd
+import json
+from datetime import datetime, timedelta
+
+# VectorBT 분석기 클래스 정의
+class TradeAndEquityAnalyzer:
+    def __init__(self):
+        self.trades = {}
+        self.equity = []
+        self.trade_counter = 0
+
+    def process_trade(self, trade_record, index):
+        for i in range(len(index)):
+            trade_ref = self.trade_counter
+            entry_idx = index[i]
+            
+            if trade_record.entry_idx[i] != -1:  # 진입이 있는 경우에만
+                # 진입 데이터 처리
+                entry_time = entry_idx.isoformat()
+                entry_price = trade_record.entry_price[i]
+                size = trade_record.size[i]
+                side = 'long' if size > 0 else 'short'
+                
+                # 수수료 계산 (vectorbt에서는 직접 제공하지 않을 수 있음)
+                commission = abs(entry_price * size * <%= config.broker.commissionScheme?.commission || 0 %>)
+                
+                entry_data = {
+                    'ref': str(trade_ref),
+                    'datetime': entry_time,
+                    'price': round(float(entry_price), 2),
+                    'size': float(size),
+                    'value': round(abs(float(entry_price * size)), 2),
+                    'commission': round(float(commission), 2),
+                    'side': side
+                }
+                
+                self.trades[trade_ref] = {'enter': entry_data, 'exits': []}
+                print(f"trade: {json.dumps(entry_data)}")
+                
+                # 청산 데이터 처리
+                if trade_record.exit_idx[i] != -1:  # 청산이 있는 경우에만
+                    exit_idx = trade_record.exit_idx[i]
+                    exit_time = index[exit_idx].isoformat()
+                    exit_price = trade_record.exit_price[i]
+                    
+                    # PnL 계산
+                    if side == 'long':
+                        pnl = (exit_price - entry_price) * size
+                    else:
+                        pnl = (entry_price - exit_price) * abs(size)
+                    
+                    exit_commission = abs(exit_price * size * <%= config.broker.commissionScheme?.commission || 0 %>)
+                    pnlcomm = pnl - commission - exit_commission
+                    
+                    hold_bars = exit_idx - trade_record.entry_idx[i]
+                    
+                    exit_info = {
+                        'ref': str(trade_ref),
+                        'datetime': exit_time,
+                        'price': round(float(exit_price), 2),
+                        'pnl': round(float(pnl), 2),
+                        'pnlcomm': round(float(pnlcomm), 2),
+                        'commission': round(float(exit_commission), 2),
+                        'hold_bars': int(hold_bars),
+                        'size': float(size)
+                    }
+                    
+                    self.trades[trade_ref]['exits'].append(exit_info)
+                    print(f"trade: {json.dumps(exit_info)}")
+                
+                self.trade_counter += 1
+
+    def record_equity(self, portfolio_value, index):
+        for i in range(len(index)):
+            equity_data = {
+                'datetime': index[i].isoformat(), 
+                'value': round(float(portfolio_value[i]), 2)
+            }
+            print(f"equity: {json.dumps(equity_data)}")
+            self.equity.append(equity_data)
+
+    def get_analysis(self):
+        return {
+            'trades': self.trades,
+            'equity': self.equity
+        }
+
+# Execute user code (Data feed setup and strategy class definition)
+<%- userCode %>
+
+# VectorBT 설정
+initial_capital = <%= config.broker.initialCapital %>
+
+try:
+    # 사용자 구현한 함수 실행 (선택사항)
+    vbt_init()
+except NameError:
+    print("Seems like there is no vbt initialization. Pass.")
+
+# 백테스트 실행 (예시 코드, 사용자 코드에서 실제 백테스트 실행 함수를 호출해야 함)
+try:
+    # 백테스트 실행 및 결과 가져오기
+    portfolio = run_backtest(initial_capital=initial_capital)
+    
+    # 결과 분석
+    analyzer = TradeAndEquityAnalyzer()
+    
+    # 포트폴리오 가치 추적
+    if hasattr(portfolio, 'value'):
+        analyzer.record_equity(portfolio.value, portfolio.index)
+    
+    # 트레이드 정보 추출
+    if hasattr(portfolio, 'trades'):
+        analyzer.process_trade(portfolio.trades.records, portfolio.index)
+    
+<% if (config.plotEnabled) { %>
+    # 플롯 생성
+    if hasattr(portfolio, 'plot'):
+        portfolio.plot().show()
+<% } %>
+    
+except Exception as e:
+    print(f"Error running backtest: {e}")
+    raise e 

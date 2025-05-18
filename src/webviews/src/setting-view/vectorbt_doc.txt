@@ -1,0 +1,635 @@
+from_signals class method
+
+Portfolio.from_signals(
+    close,
+    entries=None,
+    exits=None,
+    short_entries=None,
+    short_exits=None,
+    signal_func_nb=no_signal_func_nb,
+    signal_args=(),
+    size=None,
+    size_type=None,
+    price=None,
+    fees=None,
+    fixed_fees=None,
+    slippage=None,
+    min_size=None,
+    max_size=None,
+    size_granularity=None,
+    reject_prob=None,
+    lock_cash=None,
+    allow_partial=None,
+    raise_reject=None,
+    log=None,
+    accumulate=None,
+    upon_long_conflict=None,
+    upon_short_conflict=None,
+    upon_dir_conflict=None,
+    upon_opposite_entry=None,
+    direction=None,
+    val_price=None,
+    open=None,
+    high=None,
+    low=None,
+    sl_stop=None,
+    sl_trail=None,
+    tp_stop=None,
+    stop_entry_price=None,
+    stop_exit_price=None,
+    upon_stop_exit=None,
+    upon_stop_update=None,
+    adjust_sl_func_nb=no_adjust_sl_func_nb,
+    adjust_sl_args=(),
+    adjust_tp_func_nb=no_adjust_tp_func_nb,
+    adjust_tp_args=(),
+    use_stops=None,
+    init_cash=None,
+    cash_sharing=None,
+    call_seq=None,
+    ffill_val_price=None,
+    update_value=None,
+    max_orders=None,
+    max_logs=None,
+    seed=None,
+    group_by=None,
+    broadcast_named_args=None,
+    broadcast_kwargs=None,
+    template_mapping=None,
+    wrapper_kwargs=None,
+    freq=None,
+    attach_call_seq=None,
+    **kwargs
+)
+Simulate portfolio from entry and exit signals.
+
+See simulate_from_signal_func_nb().
+
+You have three options to provide signals:
+
+entries and exits: The direction of each pair of signals is taken from direction argument. Best to use when the direction doesn't change throughout time.
+
+Uses dir_enex_signal_func_nb() as signal_func_nb.
+
+Hint
+
+entries and exits can be easily translated to direction-aware signals:
+
+(True, True, 'longonly') -> True, True, False, False
+(True, True, 'shortonly') -> False, False, True, True
+(True, True, 'both') -> True, False, True, False
+entries (acting as long), exits (acting as long), short_entries, and short_exits: The direction is already built into the arrays. Best to use when the direction changes frequently (for example, if you have one indicator providing long signals and one providing short signals).
+
+Uses ls_enex_signal_func_nb() as signal_func_nb.
+
+signal_func_nb and signal_args: Custom signal function that returns direction-aware signals. Best to use when signals should be placed dynamically based on custom conditions.
+
+Args
+
+close : array_like
+See Portfolio.from_orders().
+entries : array_like of bool
+Boolean array of entry signals. Defaults to True if all other signal arrays are not set, otherwise False. Will broadcast.
+
+If short_entries and short_exits are not set: Acts as a long signal if direction is all or longonly, otherwise short.
+If short_entries or short_exits are set: Acts as long_entries.
+exits : array_like of bool
+Boolean array of exit signals. Defaults to False. Will broadcast.
+
+If short_entries and short_exits are not set: Acts as a short signal if direction is all or longonly, otherwise long.
+If short_entries or short_exits are set: Acts as long_exits.
+short_entries : array_like of bool
+Boolean array of short entry signals. Defaults to False. Will broadcast.
+short_exits : array_like of bool
+Boolean array of short exit signals. Defaults to False. Will broadcast.
+signal_func_nb : callable
+Function called to generate signals.
+
+Should accept SignalContext and *signal_args. Should return long entry signal, long exit signal, short entry signal, and short exit signal.
+
+Note
+
+Stop signal has priority: signal_func_nb is executed only if there is no stop signal.
+
+signal_args : tuple
+Packed arguments passed to signal_func_nb. Defaults to ().
+size : float or array_like
+See Portfolio.from_orders().
+
+Note
+
+Negative size is not allowed. You should express direction using signals.
+
+size_type : SizeType or array_like
+See Portfolio.from_orders().
+
+Only SizeType.Amount, SizeType.Value, and SizeType.Percent are supported. Other modes such as target percentage are not compatible with signals since their logic may contradict the direction of the signal.
+
+Note
+
+SizeType.Percent does not support position reversal. Switch to a single direction or use vectorbt.portfolio.enums.OppositeEntryMode.Close to close the position first.
+
+See warning in Portfolio.from_orders().
+
+price : array_like of float
+See Portfolio.from_orders().
+fees : float or array_like
+See Portfolio.from_orders().
+fixed_fees : float or array_like
+See Portfolio.from_orders().
+slippage : float or array_like
+See Portfolio.from_orders().
+min_size : float or array_like
+See Portfolio.from_orders().
+max_size : float or array_like
+See Portfolio.from_orders().
+
+Will be partially filled if exceeded. You might not be able to properly close the position if accumulation is enabled and max_size is too low.
+
+size_granularity : float or array_like
+See Portfolio.from_orders().
+reject_prob : float or array_like
+See Portfolio.from_orders().
+lock_cash : bool or array_like
+See Portfolio.from_orders().
+allow_partial : bool or array_like
+See Portfolio.from_orders().
+raise_reject : bool or array_like
+See Portfolio.from_orders().
+log : bool or array_like
+See Portfolio.from_orders().
+accumulate : bool, AccumulationMode or array_like
+See AccumulationMode. If True, becomes 'both'. If False, becomes 'disabled'. Will broadcast.
+
+When enabled, Portfolio.from_signals() behaves similarly to Portfolio.from_orders().
+
+upon_long_conflict : ConflictMode or array_like
+Conflict mode for long signals. See ConflictMode. Will broadcast.
+upon_short_conflict : ConflictMode or array_like
+Conflict mode for short signals. See ConflictMode. Will broadcast.
+upon_dir_conflict : DirectionConflictMode or array_like
+See DirectionConflictMode. Will broadcast.
+upon_opposite_entry : OppositeEntryMode or array_like
+See OppositeEntryMode. Will broadcast.
+direction : Direction or array_like
+See Portfolio.from_orders().
+
+Takes only effect if short_entries and short_exits are not set.
+
+val_price : array_like of float
+See Portfolio.from_orders().
+open : array_like of float
+First asset price at each time step. Defaults to np.nan, which gets replaced by close. Will broadcast.
+
+Used solely for stop signals.
+
+high : array_like of float
+Highest asset price at each time step. Defaults to np.nan, which gets replaced by the maximum out of open and close. Will broadcast.
+
+Used solely for stop signals.
+
+low : array_like of float
+Lowest asset price at each time step. Defaults to np.nan, which gets replaced by the minimum out of open and close. Will broadcast.
+
+Used solely for stop signals.
+
+sl_stop : array_like of float
+Stop loss. Will broadcast.
+
+A percentage below/above the acquisition price for long/short position. Note that 0.01 = 1%.
+
+sl_trail : array_like of bool
+Whether sl_stop should be trailing. Will broadcast.
+tp_stop : array_like of float
+Take profit. Will broadcast.
+
+A percentage above/below the acquisition price for long/short position. Note that 0.01 = 1%.
+
+stop_entry_price : StopEntryPrice or array_like
+See StopEntryPrice. Will broadcast.
+
+If provided on per-element basis, gets applied upon entry.
+
+stop_exit_price : StopExitPrice or array_like
+See StopExitPrice. Will broadcast.
+
+If provided on per-element basis, gets applied upon exit.
+
+upon_stop_exit : StopExitMode or array_like
+See StopExitMode. Will broadcast.
+
+If provided on per-element basis, gets applied upon exit.
+
+upon_stop_update : StopUpdateMode or array_like
+See StopUpdateMode. Will broadcast.
+
+Only has effect if accumulation is enabled.
+
+If provided on per-element basis, gets applied upon repeated entry.
+
+adjust_sl_func_nb : callable
+Function to adjust stop loss. Defaults to no_adjust_sl_func_nb().
+
+Called for each element before each row.
+
+Should accept AdjustSLContext and *adjust_sl_args. Should return a tuple of a new stop value and trailing flag.
+
+adjust_sl_args : tuple
+Packed arguments passed to adjust_sl_func_nb. Defaults to ().
+adjust_tp_func_nb : callable
+Function to adjust take profit. Defaults to no_adjust_tp_func_nb().
+
+Called for each element before each row.
+
+Should accept AdjustTPContext and *adjust_tp_args. of the stop, and *adjust_tp_args. Should return a new stop value.
+
+adjust_tp_args : tuple
+Packed arguments passed to adjust_tp_func_nb. Defaults to ().
+use_stops : bool
+Whether to use stops. Defaults to None, which becomes True if any of the stops are not NaN or any of the adjustment functions are custom.
+
+Disable this to make simulation a bit faster for simple use cases.
+
+init_cash : InitCashMode, float or array_like of float
+See Portfolio.from_orders().
+cash_sharing : bool
+See Portfolio.from_orders().
+call_seq : CallSeqType or array_like
+See Portfolio.from_orders().
+ffill_val_price : bool
+See Portfolio.from_orders().
+update_value : bool
+See Portfolio.from_orders().
+max_orders : int
+See Portfolio.from_orders().
+max_logs : int
+See Portfolio.from_orders().
+seed : int
+See Portfolio.from_orders().
+group_by : any
+See Portfolio.from_orders().
+broadcast_named_args : dict
+Dictionary with named arguments to broadcast.
+
+You can then pass argument names to the functions and this method will substitute them by their corresponding broadcasted objects.
+
+broadcast_kwargs : dict
+See Portfolio.from_orders().
+template_mapping : mapping
+Mapping to replace templates in arguments.
+wrapper_kwargs : dict
+See Portfolio.from_orders().
+freq : any
+See Portfolio.from_orders().
+attach_call_seq : bool
+See Portfolio.from_orders().
+**kwargs
+Keyword arguments passed to the __init__ method.
+All broadcastable arguments will broadcast using broadcast() but keep original shape to utilize flexible indexing and to save memory.
+
+For defaults, see portfolio in settings.
+
+Note
+
+Stop signal has priority - it's executed before other signals within the same bar. That is, if a stop signal is present, no other signals are generated and executed since there is a limit of one order per symbol and bar.
+
+Hint
+
+If you generated signals using close price, don't forget to shift your signals by one tick forward, for example, with signals.vbt.fshift(1). In general, make sure to use a price that comes after the signal.
+
+Also see notes and hints for Portfolio.from_orders().
+
+Usage
+
+By default, if all signal arrays are None, entries becomes True, which opens a position at the very first tick and does nothing else:
+close = pd.Series([1, 2, 3, 4, 5])
+pf = vbt.Portfolio.from_signals(close, size=1)
+pf.asset_flow()
+
+
+
+
+
+
+Entry opens long, exit closes long:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1,
+    direction='longonly'
+)
+pf.asset_flow()
+
+
+
+
+
+
+
+# Using direction-aware arrays instead of `direction`
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),  # long_entries
+    exits=pd.Series([False, False, True, True, True]),  # long_exits
+    short_entries=False,
+    short_exits=False,
+    size=1
+)
+pf.asset_flow()
+
+
+
+
+
+
+Notice how both short_entries and short_exits are provided as constants - as any other broadcastable argument, they are treated as arrays where each element is False.
+
+Entry opens short, exit closes short:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1,
+    direction='shortonly'
+)
+pf.asset_flow()
+
+
+
+
+
+
+
+# Using direction-aware arrays instead of `direction`
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=False,  # long_entries
+    exits=False,  # long_exits
+    short_entries=pd.Series([True, True, True, False, False]),
+    short_exits=pd.Series([False, False, True, True, True]),
+    size=1
+)
+pf.asset_flow()
+
+
+
+
+
+
+Entry opens long and closes short, exit closes long and opens short:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1,
+    direction='both'
+)
+pf.asset_flow()
+
+
+
+
+
+
+
+# Using direction-aware arrays instead of `direction`
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),  # long_entries
+    exits=False,  # long_exits
+    short_entries=pd.Series([False, False, True, True, True]),
+    short_exits=False,
+    size=1
+)
+pf.asset_flow()
+
+
+
+
+
+
+More complex signal combinations are best expressed using direction-aware arrays. For example, ignore opposite signals as long as the current position is open:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries      =pd.Series([True, False, False, False, False]),  # long_entries
+    exits        =pd.Series([False, False, True, False, False]),  # long_exits
+    short_entries=pd.Series([False, True, False, True, False]),
+    short_exits  =pd.Series([False, False, False, False, True]),
+    size=1,
+    upon_opposite_entry='ignore'
+)
+pf.asset_flow()
+
+
+
+
+
+
+First opposite signal closes the position, second one opens a new position:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1,
+    direction='both',
+    upon_opposite_entry='close'
+)
+pf.asset_flow()
+
+
+
+
+
+
+If both long entry and exit signals are True (a signal conflict), choose exit:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1.,
+    direction='longonly',
+    upon_long_conflict='exit')
+pf.asset_flow()
+
+
+
+
+
+
+If both long entry and short entry signal are True (a direction conflict), choose short:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1.,
+    direction='both',
+    upon_dir_conflict='short')
+pf.asset_flow()
+
+
+
+
+
+
+Note
+
+Remember that when direction is set to 'both', entries become long_entries and exits become short_entries, so this becomes a conflict of directions rather than signals.
+
+If there are both signal and direction conflicts:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=True,  # long_entries
+    exits=True,  # long_exits
+    short_entries=True,
+    short_exits=True,
+    size=1,
+    upon_long_conflict='entry',
+    upon_short_conflict='entry',
+    upon_dir_conflict='short'
+)
+pf.asset_flow()
+
+
+
+
+
+
+Turn on accumulation of signals. Entry means long order, exit means short order (acts similar to from_orders):
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1.,
+    direction='both',
+    accumulate=True)
+pf.asset_flow()
+
+
+
+
+
+
+Allow increasing a position (of any direction), deny decreasing a position:
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    size=1.,
+    direction='both',
+    accumulate='addonly')
+pf.asset_flow()
+
+
+
+
+
+
+Testing multiple parameters (via broadcasting):
+pf = vbt.Portfolio.from_signals(
+    close,
+    entries=pd.Series([True, True, True, False, False]),
+    exits=pd.Series([False, False, True, True, True]),
+    direction=[list(Direction)],
+    broadcast_kwargs=dict(columns_from=Direction._fields))
+pf.asset_flow()
+
+
+
+
+
+
+Set risk/reward ratio by passing trailing stop loss and take profit thresholds:
+close = pd.Series([10, 11, 12, 11, 10, 9])
+entries = pd.Series([True, False, False, False, False, False])
+exits = pd.Series([False, False, False, False, False, True])
+pf = vbt.Portfolio.from_signals(
+    close, entries, exits,
+    sl_stop=0.1, sl_trail=True, tp_stop=0.2)  # take profit hit
+pf.asset_flow()
+
+
+
+
+
+
+
+
+pf = vbt.Portfolio.from_signals(
+    close, entries, exits,
+    sl_stop=0.1, sl_trail=True, tp_stop=0.3)  # stop loss hit
+pf.asset_flow()
+
+
+
+
+
+
+
+
+pf = vbt.Portfolio.from_signals(
+    close, entries, exits,
+    sl_stop=np.inf, sl_trail=True, tp_stop=np.inf)  # nothing hit, exit as usual
+pf.asset_flow()
+
+
+
+
+
+
+
+Note
+
+When the stop price is hit, the stop signal invalidates any other signal defined for this bar. Thus, make sure that your signaling logic happens at the very end of the bar (for example, by using the closing price), otherwise you may expose yourself to a look-ahead bias.
+
+See StopExitPrice for more details.
+
+We can implement our own stop loss or take profit, or adjust the existing one at each time step. Let's implement stepped stop-loss:
+@njit
+def adjust_sl_func_nb(c):
+    current_profit = (c.val_price_now - c.init_price) / c.init_price
+    if current_profit >= 0.40:
+        return 0.25, True
+    elif current_profit >= 0.25:
+        return 0.15, True
+    elif current_profit >= 0.20:
+        return 0.07, True
+    return c.curr_stop, c.curr_trail
+
+close = pd.Series([10, 11, 12, 11, 10])
+pf = vbt.Portfolio.from_signals(close, adjust_sl_func_nb=adjust_sl_func_nb)
+pf.asset_flow()
+
+
+
+
+
+
+Sometimes there is a need to provide or transform signals dynamically. For this, we can implement a custom signal function signal_func_nb. For example, let's implement a signal function that takes two numerical arrays - long and short one - and transforms them into 4 direction-aware boolean arrays that vectorbt understands:
+@njit
+def signal_func_nb(c, long_num_arr, short_num_arr):
+    long_num = nb.get_elem_nb(c, long_num_arr)
+    short_num = nb.get_elem_nb(c, short_num_arr)
+    is_long_entry = long_num > 0
+    is_long_exit = long_num < 0
+    is_short_entry = short_num > 0
+    is_short_exit = short_num < 0
+    return is_long_entry, is_long_exit, is_short_entry, is_short_exit
+
+pf = vbt.Portfolio.from_signals(
+    pd.Series([1, 2, 3, 4, 5]),
+    signal_func_nb=signal_func_nb,
+    signal_args=(vbt.Rep('long_num_arr'), vbt.Rep('short_num_arr')),
+    broadcast_named_args=dict(
+        long_num_arr=pd.Series([1, 0, -1, 0, 0]),
+        short_num_arr=pd.Series([0, 1, 0, 1, -1])
+    ),
+    size=1,
+    upon_opposite_entry='ignore'
+)
+pf.asset_flow()
+
+
+
+
+Passing both arrays as broadcast_named_args broadcasts them internally as any other array, so we don't have to worry about their dimensions every time we change our data.
