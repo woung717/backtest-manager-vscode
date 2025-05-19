@@ -113,15 +113,7 @@ Dive deep into your strategy's performance with comprehensive analytics:
 - Trade history (time, price, size, profit, etc.)
 
 ## 📷 Example Screens
-
-### Backtest Settings Screen
-![Backtest Settings Screen](placeholder_설정화면.png)
-
-### Backtest Results Screen
-![Backtest Results Screen](placeholder_결과화면.png)
-
-### Project Management Screen
-![Project Management Screen](placeholder_프로젝트화면.png)
+[![Backtest Manager](https://i.vimeocdn.com/video/1998265908-b78f568d767156b4a1ec8bbcd0434f7f4375dcff483e38d039d1b22f46b4afc3-d)](https://vimeo.com/1069857383/4c069a8b7f "Backtest Manager")
 
 ## 📜 License
 
