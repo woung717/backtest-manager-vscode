@@ -1,10 +1,10 @@
-import backtrader as bt
 import json
-from datetime import datetime
 import os
+from datetime import datetime
+
+import backtrader as bt
 
 
-# Define TradeAndEquityAnalyzer
 class TradeAndEquityAnalyzer(bt.Analyzer):
     def __init__(self):
         super(TradeAndEquityAnalyzer, self).__init__()
@@ -45,7 +45,6 @@ class TradeAndEquityAnalyzer(bt.Analyzer):
                 print(f"trade: {json.dumps(exit_info)}")
 
     def next(self):
-        # Print current portfolio value at each tick
         portfolio_value = self.strategy.broker.getvalue()
         equity_data = {
             'datetime': self.strategy.datetime.datetime().isoformat(),
@@ -60,7 +59,7 @@ class TradeAndEquityAnalyzer(bt.Analyzer):
             'equity': self.equity
         }
 
-# Create Cerebro instance
+
 cerebro = bt.Cerebro(
 <% if (config.preload != null) { %>    preload=<%= config.preload ? 'True' : 'False' %>,<% } %>
 <% if (config.runonce != null) { %>    runonce=<%= config.runonce ? 'True' : 'False' %>,<% } %>
@@ -72,18 +71,12 @@ cerebro = bt.Cerebro(
 <% if (config.exactbars != null) { %>    exactbars=<%= typeof config.exactbars === 'boolean' ? (config.exactbars ? 'True' : 'False') : config.exactbars %>,<% } %>
 )
 
-# Basic settings
 cerebro.broker.setcash(<%= config.broker.initialCapital %>)
-
-# Add Analyzer
 cerebro.addanalyzer(TradeAndEquityAnalyzer, _name='trade_and_equity')
 
 <% if (config.broker) { %>
-# Broker settings
 <% if (config.broker.checkSubmit != null) { %>cerebro.broker.set_checksubmit(<%= config.broker.checkSubmit ? 'True' : 'False' %>)<% } %>
 <% if (config.broker.eosbar != null) { %>cerebro.broker.set_eosbar(<%= config.broker.eosbar ? 'True' : 'False' %>)<% } %>
-
-# Additional broker settings
 <% if (config.broker.coc != null) { %>cerebro.broker.set_coc(<%= config.broker.coc ? 'True' : 'False' %>)<% } %>
 <% if (config.broker.coo != null) { %>cerebro.broker.set_coo(<%= config.broker.coo ? 'True' : 'False' %>)<% } %>
 <% if (config.broker.int2pnl != null) { %>cerebro.broker.set_int2pnl(<%= config.broker.int2pnl ? 'True' : 'False' %>)<% } %>
@@ -92,7 +85,6 @@ cerebro.addanalyzer(TradeAndEquityAnalyzer, _name='trade_and_equity')
 <% if (config.broker.fundmode != null) { %>cerebro.broker.set_fundmode(<%= config.broker.fundmode ? 'True' : 'False' %>)<% } %>
 
 <% if (config.broker.commissionScheme) { %>
-# Commission settings
 cerebro.broker.setcommission(
     <% if (config.broker.commissionScheme.commission != null) { %>commission=<%= config.broker.commissionScheme.commission %>,<% } %>
     <% if (config.broker.commissionScheme.margin != null) { %>margin=<%= config.broker.commissionScheme.margin %>,<% } %>
@@ -107,7 +99,6 @@ cerebro.broker.setcommission(
 <% } %>
 
 <% if (config.broker.slippage) { %>
-# Slippage settings
 <% if (config.broker.slippage.slippagePerc != null) { %>
 cerebro.broker.set_slippage_perc(<%= config.broker.slippage.slippagePerc %>
     <% if (config.broker.slippage.slippageOpen != null) { %>, slip_open=<%= config.broker.slippage.slippageOpen ? 'True' : 'False' %><% } %>
@@ -126,16 +117,13 @@ cerebro.broker.set_slippage_fixed(<%= config.broker.slippage.slippageFixed %>
 <% } %>
 <% } %>
 
-# Execute user code (Data feed setup and strategy class definition)
 <%- userCode %>
 
 try:
     cerebro_init(cerebro)
 except NameError as e:
-    print("Seems like there is no cerebro configuration. Pass.")
+    print("Seems no initial configuration function.")
 
-
-# Strategy settings
 <% if (config.strategyParams) { %>
 cerebro.addstrategy(<%= config.strategy %>, <%= Object.entries(config.strategyParams).map(([key, value]) => typeof value === 'string' ? `${key}='${value}'` : `${key}=${value}`).join(', ') %>)
 <% } else { %>

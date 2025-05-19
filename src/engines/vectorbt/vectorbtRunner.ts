@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as ejs from 'ejs';
 import * as vscode from 'vscode';
-import { BacktestResult } from '../../backtrader/impl/types';
+import { BacktestResult } from '../backtrader/types';
 import { ProjectInfo, TradeEnterData, TradeExitData } from '../../types';
 import { generateShortHash } from '../../util';
 import { VSCodeOutputLogger } from '../../vscodeOutputLogger';
@@ -15,12 +15,12 @@ export class VectorBTRunner {
     private readonly templatePath: string;
     private currentProject?: ProjectInfo;
     private currentBacktest?: BacktestResult;
-    private logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("VectorBT Runner");
+    private logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("Backtest Runner");
 
     constructor(project: ProjectInfo, config: VectorBTConfig) {
         this.config = config;
         this.currentProject = project;
-        this.templatePath = path.join(__dirname, 'templates', 'vectorbt.ejs');
+        this.templatePath = path.join(__dirname, 'engines', 'templates', 'vectorbt.ejs');
     }
 
     public loadConfig(): VectorBTConfig {

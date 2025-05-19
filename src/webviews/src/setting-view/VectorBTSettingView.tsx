@@ -9,124 +9,82 @@ type VectorBTSettingViewProps = {
 };
 
 const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProject, datasets = [], lastConfig }) => {
-  const [backtestType, setBacktestType] = useState<'signals' | 'order_func'>('signals');
-  
-  // Common settings
-  const [commonSettings, setCommonSettings] = useState({
-    initCash: 100000,
-    fees: 0.001,
-    fixedFees: 0,
-    freq: '1D',
-    slippage: 0,
-    size: 1.0,
-    sizeType: 'amount', // 'amount', 'value', 'percent'
-    minSize: null as number | null,
-    maxSize: null as number | null,
-    sizeGranularity: null as number | null,
-    rejectProb: 0,
-    lockCash: false,
-    allowPartial: true,
-    raiseReject: false,
-    log: false,
-    seed: null as number | null,
-    groupBy: null as string | null,
-    cashSharing: false,
-    callSeq: 'auto',
-    ffillValPrice: true,
-    updateValue: true,
-    maxOrders: null as number | null,
-    maxLogs: null as number | null,
-    broadcastNamedArgs: {} as Record<string, any>,
-    broadcastKwargs: {} as Record<string, any>,
-    templateMapping: {} as Record<string, any>,
-    wrapperKwargs: {} as Record<string, any>,
-    attachCallSeq: false
-  });
+  // Function type selection
+  const [selectedFunction, setSelectedFunction] = useState<'from_signals' | 'from_order_func' | 'from_orders'>('from_signals');
 
-  // Signal specific settings
+  // from_signals settings
   const [signalSettings, setSignalSettings] = useState({
-    entries: true,
-    exits: false,
-    shortEntries: false,
-    shortExits: false,
-    signalFuncNb: null as string | null,
-    signalArgs: [] as any[],
-    direction: 'longonly', // 'longonly', 'shortonly', 'both'
-    accumulate: 'disabled', // 'disabled', 'both', 'addonly'
-    uponLongConflict: 'ignore', // ConflictMode
-    uponShortConflict: 'ignore', // ConflictMode
-    uponDirConflict: 'ignore', // DirectionConflictMode
-    uponOppositeEntry: 'ignore', // OppositeEntryMode
-    price: 'close', // 'open', 'high', 'low', 'close'
-    valPrice: null as string | null,
-    open: null as number | null,
-    high: null as number | null,
-    low: null as number | null,
-    slStop: null as number | null,
-    slTrail: false,
-    tpStop: null as number | null,
-    stopEntryPrice: 'close', // StopEntryPrice
-    stopExitPrice: 'close', // StopExitPrice
-    uponStopExit: 'close', // StopExitMode
-    uponStopUpdate: 'override', // StopUpdateMode
-    adjustSlFuncNb: null as string | null,
-    adjustSlArgs: [] as any[],
-    adjustTpFuncNb: null as string | null,
-    adjustTpArgs: [] as any[],
-    useStops: null as boolean | null
+    size: 1.0,
+    size_type: 'Amount', // 'Amount', 'Value', 'Percent'
+    fees: 0,
+    fixed_fees: 0,
+    slippage: 0,
+    min_size: 0,
+    max_size: undefined as number | undefined,
+    size_granularity: 0,
+    reject_prob: 0,
+    lock_cash: false,
+    allow_partial: true,
+    raise_reject: false,
+    log: true,
+    accumulate: false,
+    direction: 'both', // 'both', 'longonly', 'shortonly'
+    sl_stop: 0,
+    sl_trail: false,
+    tp_stop: 0,
+    use_stops: false,
+    init_cash: 100000,
+    cash_sharing: false,
+    ffill_val_price: true,
+    update_value: true,
   });
 
-  // Order function specific settings
+  // from_order_func settings
   const [orderFuncSettings, setOrderFuncSettings] = useState({
-    price: 'close',
+    flexible: false,
+    init_cash: 100000,
+    cash_sharing: false,
+    segment_mask: undefined as number | undefined,
+    call_pre_segment: false,
+    call_post_segment: false,
+    ffill_val_price: true,
+    update_value: true,
+    fill_pos_record: true,
+    row_wise: false,
+    use_numba: true,
+  });
+
+  // from_orders settings
+  const [orderSettings, setOrderSettings] = useState({
     size: 1.0,
-    fees: 0.001,
+    size_type: 'Amount', // 'Amount', 'Value', 'Percent'
+    direction: 'both', // 'both', 'longonly', 'shortonly'
+    fees: 0,
+    fixed_fees: 0,
     slippage: 0,
-    stopPrice: null as number | null,
-    trailStopPrice: null as number | null,
-    stopUpdatePrice: null as number | null,
-    trailStopUpdatePrice: null as number | null,
+    min_size: 0,
+    max_size: undefined as number | undefined,
+    size_granularity: 0,
+    reject_prob: 0,
+    lock_cash: false,
+    allow_partial: true,
+    raise_reject: false,
+    log: true,
+    init_cash: 100000,
+    cash_sharing: false,
+    ffill_val_price: true,
+    update_value: true,
   });
 
   // Dataset state management
   const [selectedDataset, setSelectedDataset] = useState<string | null>(null);
-  
+
   // Environment variable state management
   const [envVariables, setEnvVariables] = useState<{
     id: string;
     key: string;
     value: string;
   }[]>([]);
-
-  // Initialize settings based on last configuration
-  React.useEffect(() => {
-    if (lastConfig) {
-      setBacktestType(lastConfig.type || 'signals');
-      setCommonSettings(prev => ({ ...prev, ...lastConfig.common }));
-      setSignalSettings(prev => ({ ...prev, ...lastConfig.signal }));
-      setOrderFuncSettings(prev => ({ ...prev, ...lastConfig.orderFunc }));
-      
-      if (lastConfig.env && lastConfig.env.DATASET_PATH) {
-        setSelectedDataset(lastConfig.env.DATASET_PATH);
-      }
-      
-      if (lastConfig.env) {
-        const envVars: { id: string; key: string; value: string }[] = [];
-        Object.entries(lastConfig.env).forEach(([key, value]) => {
-          if (key !== 'DATASET_PATH') {
-            envVars.push({
-              id: `env_${Date.now()}_${key}`,
-              key,
-              value: value as string
-            });
-          }
-        });
-        if (envVars.length > 0) {
-          setEnvVariables(envVars);
-        }
-      }
-    }
-  }, [lastConfig]);
 
   // Add new environment variable
   const addEnvVariable = () => {
@@ -148,6 +106,60 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
     );
   };
 
+  // Initialize settings based on last configuration
+  React.useEffect(() => {
+    if (lastConfig) {
+      // Function type selection
+      if (lastConfig.functionType) {
+        setSelectedFunction(lastConfig.functionType);
+      }
+
+      // Settings based on function type
+      if (lastConfig) {
+        switch (lastConfig.functionType) {
+          case 'from_signals':
+            setSignalSettings(prev => ({
+              ...prev,
+              ...lastConfig.settings.from_signals
+            }));
+            break;
+          case 'from_order_func':
+            setOrderFuncSettings(prev => ({
+              ...prev,
+              ...lastConfig.settings.from_order_func
+            }));
+            break;
+          case 'from_orders':
+            setOrderSettings(prev => ({
+              ...prev,
+              ...lastConfig.settings.from_orders
+            }));
+            break;
+        }
+      }
+      
+      // Dataset selection
+      if (lastConfig.dataset) {
+        setSelectedDataset(lastConfig.dataset);
+      }
+
+      // Environment variables
+      if (lastConfig.env) {
+        const envVars: { id: string; key: string; value: string }[] = [];
+        Object.entries(lastConfig.env).forEach(([key, value]) => {
+          envVars.push({
+            id: `env_${Date.now()}_${key}`,
+            key,
+            value: value as string
+          });
+        });
+        if (envVars.length > 0) {
+          setEnvVariables(envVars);
+        }
+      }
+    }
+  }, [lastConfig]);
+
   const handleRunBacktest = () => {
     // Create environment variable object
     const envObject: Record<string, string> = {};
@@ -157,16 +169,14 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
       }
     });
 
-    // Add selected dataset to environment variables if present
-    if (selectedDataset) {
-      envObject['DATASET_PATH'] = selectedDataset;
-    }
-
     const config = {
-      type: backtestType,
-      common: commonSettings,
-      signal: signalSettings,
-      orderFunc: orderFuncSettings,
+      functionType: selectedFunction,
+      settings: {
+        from_signals: signalSettings,
+        from_order_func: orderFuncSettings,
+        from_orders: orderSettings
+      },
+      dataset: selectedDataset,
       env: envObject
     };
 
@@ -199,23 +209,6 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
         )}
       </div>
 
-      {/* Backtest Type Selection */}
-      <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-        <div className="mb-1">
-          <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-            Backtest Type
-          </label>
-        </div>
-        <select
-          className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] rounded p-1"
-          value={backtestType}
-          onChange={(e) => setBacktestType(e.target.value as 'signals' | 'order_func')}
-        >
-          <option value="signals">from_signals()</option>
-          <option value="order_func">from_order_func()</option>
-        </select>
-      </div>
-
       {/* Dataset Selection Section */}
       <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
         <div className="mb-1">
@@ -224,7 +217,7 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
           </label>
         </div>
         <div className="text-sm text-[var(--vscode-descriptionForeground)] mb-2">
-          Select the dataset to use for backtesting. The selected dataset will be passed as the DATASET_PATH environment variable.
+          Select the dataset to use for backtesting.
         </div>
         
         {datasets.length === 0 ? (
@@ -252,217 +245,177 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 </optgroup>
               ))}
             </select>
+
+            <button
+              className="text-sm text-[var(--vscode-button-foreground)] bg-[var(--vscode-button-background)] rounded px-2 py-1 hover:bg-[var(--vscode-button-hoverBackground)]"
+              onClick={() => {
+                VSCodeAPI.postMessage({ type: 'refresh' });
+              }}
+            >
+              Reload Datasets
+            </button>
           </div>
         )}
       </div>
 
-      {/* Common Settings */}
+      {/* Function Type Selection */}
       <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
         <div className="mb-1">
           <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-            Common Settings
+            Backtest Function
           </label>
         </div>
-        <div className="grid grid-cols-2 gap-2">
-          <div className="space-y-1">
-            <label htmlFor="initCash" className="text-sm">Initial Cash</label>
-            <input
-              type="number"
-              id="initCash"
-              value={commonSettings.initCash}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, initCash: parseFloat(e.target.value) }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="fees" className="text-sm">Fees</label>
-            <input
-              type="number"
-              id="fees"
-              value={commonSettings.fees}
-              step="0.001"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, fees: parseFloat(e.target.value) }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="fixedFees" className="text-sm">Fixed Fees</label>
-            <input
-              type="number"
-              id="fixedFees"
-              value={commonSettings.fixedFees}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, fixedFees: parseFloat(e.target.value) }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="freq" className="text-sm">Frequency</label>
-            <input
-              type="text"
-              id="freq"
-              value={commonSettings.freq}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, freq: e.target.value }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="slippage" className="text-sm">Slippage</label>
-            <input
-              type="number"
-              id="slippage"
-              value={commonSettings.slippage}
-              step="0.001"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, slippage: parseFloat(e.target.value) }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="sizeType" className="text-sm">Size Type</label>
-            <select
-              id="sizeType"
-              value={commonSettings.sizeType}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, sizeType: e.target.value }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            >
-              <option value="amount">Amount</option>
-              <option value="value">Value</option>
-              <option value="percent">Percent</option>
-            </select>
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="minSize" className="text-sm">Min Size</label>
-            <input
-              type="number"
-              id="minSize"
-              value={commonSettings.minSize || ''}
-              step="0.1"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, minSize: e.target.value ? parseFloat(e.target.value) : null }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-              placeholder="Optional"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="maxSize" className="text-sm">Max Size</label>
-            <input
-              type="number"
-              id="maxSize"
-              value={commonSettings.maxSize || ''}
-              step="0.1"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, maxSize: e.target.value ? parseFloat(e.target.value) : null }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-              placeholder="Optional"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="sizeGranularity" className="text-sm">Size Granularity</label>
-            <input
-              type="number"
-              id="sizeGranularity"
-              value={commonSettings.sizeGranularity || ''}
-              step="0.01"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, sizeGranularity: e.target.value ? parseFloat(e.target.value) : null }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-              placeholder="Optional"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="rejectProb" className="text-sm">Reject Probability</label>
-            <input
-              type="number"
-              id="rejectProb"
-              value={commonSettings.rejectProb}
-              step="0.01"
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, rejectProb: parseFloat(e.target.value) }))}
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="lockCash" className="text-sm">Lock Cash</label>
-            <input
-              type="checkbox"
-              id="lockCash"
-              checked={commonSettings.lockCash}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, lockCash: e.target.checked }))}
-              className="form-checkbox"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="allowPartial" className="text-sm">Allow Partial</label>
-            <input
-              type="checkbox"
-              id="allowPartial"
-              checked={commonSettings.allowPartial}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, allowPartial: e.target.checked }))}
-              className="form-checkbox"
-            />
-          </div>
-          <div className="space-y-1">
-            <label htmlFor="raiseReject" className="text-sm">Raise Reject</label>
-            <input
-              type="checkbox"
-              id="raiseReject"
-              checked={commonSettings.raiseReject}
-              onChange={(e) => setCommonSettings(prev => ({ ...prev, raiseReject: e.target.checked }))}
-              className="form-checkbox"
-            />
-          </div>
-        </div>
+        <select
+          className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] rounded p-1"
+          value={selectedFunction}
+          onChange={(e) => setSelectedFunction(e.target.value as 'from_signals' | 'from_order_func' | 'from_orders')}
+        >
+          <option value="from_signals">from_signals() - Vectorized</option>
+          <option value="from_orders">from_orders() - Vectorized</option>
+          <option value="from_order_func">from_order_func() - Event Driven</option>
+        </select>
       </div>
 
-      {/* Signal Settings */}
-      {backtestType === 'signals' && (
-        <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-          <div className="mb-1">
-            <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Signal Settings
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label htmlFor="entries" className="text-sm">Enable Long Entries</label>
-              <input
-                type="checkbox"
-                id="entries"
-                checked={signalSettings.entries}
-                onChange={(e) => setSignalSettings(prev => ({ ...prev, entries: e.target.checked }))}
-                className="form-checkbox"
-              />
+      {/* Function Specific Settings */}
+      {selectedFunction === 'from_signals' ? (
+        <div className="space-y-3">
+          {/* Size Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Size Settings
+              </label>
             </div>
-            <div className="space-y-1">
-              <label htmlFor="exits" className="text-sm">Enable Long Exits</label>
-              <input
-                type="checkbox"
-                id="exits"
-                checked={signalSettings.exits}
-                onChange={(e) => setSignalSettings(prev => ({ ...prev, exits: e.target.checked }))}
-                className="form-checkbox"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="shortEntries" className="text-sm">Enable Short Entries</label>
-              <input
-                type="checkbox"
-                id="shortEntries"
-                checked={signalSettings.shortEntries}
-                onChange={(e) => setSignalSettings(prev => ({ ...prev, shortEntries: e.target.checked }))}
-                className="form-checkbox"
-              />
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="shortExits" className="text-sm">Enable Short Exits</label>
-              <input
-                type="checkbox"
-                id="shortExits"
-                checked={signalSettings.shortExits}
-                onChange={(e) => setSignalSettings(prev => ({ ...prev, shortExits: e.target.checked }))}
-                className="form-checkbox"
-              />
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label htmlFor="size" className="text-sm">Size</label>
+                <input
+                  type="number"
+                  id="size"
+                  value={signalSettings.size}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="size_type" className="text-sm">Size Type</label>
+                <select
+                  id="size_type"
+                  value={signalSettings.size_type}
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, size_type: e.target.value }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                >
+                  <option value="Amount">Amount</option>
+                  <option value="Value">Value</option>
+                  <option value="Percent">Percent</option>
+                </select>
+              </div>
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Direction Settings</div>
+          {/* Fee Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Fee Settings
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label htmlFor="fees" className="text-sm">Fees (%)</label>
+                <input
+                  type="number"
+                  id="fees"
+                  value={signalSettings.fees}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, fees: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="fixed_fees" className="text-sm">Fixed Fees</label>
+                <input
+                  type="number"
+                  id="fixed_fees"
+                  value={signalSettings.fixed_fees}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, fixed_fees: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Stop Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Stop Settings
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label htmlFor="sl_stop" className="text-sm">Stop Loss (%)</label>
+                <input
+                  type="number"
+                  id="sl_stop"
+                  value={signalSettings.sl_stop}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, sl_stop: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="tp_stop" className="text-sm">Take Profit (%)</label>
+                <input
+                  type="number"
+                  id="tp_stop"
+                  value={signalSettings.tp_stop}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, tp_stop: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+            </div>
+            <div className="mt-2">
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={signalSettings.sl_trail}
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, sl_trail: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Trailing Stop Loss</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Other Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Other Settings
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="space-y-1">
+                <label htmlFor="init_cash" className="text-sm">Initial Cash</label>
+                <input
+                  type="number"
+                  id="init_cash"
+                  value={signalSettings.init_cash}
+                  min="0"
+                  step="1000"
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, init_cash: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
               <div className="space-y-1">
                 <label htmlFor="direction" className="text-sm">Direction</label>
                 <select
@@ -471,288 +424,354 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   onChange={(e) => setSignalSettings(prev => ({ ...prev, direction: e.target.value }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 >
+                  <option value="both">Both</option>
                   <option value="longonly">Long Only</option>
                   <option value="shortonly">Short Only</option>
-                  <option value="both">Both</option>
                 </select>
               </div>
             </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Accumulate Settings</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label htmlFor="accumulate" className="text-sm">Accumulate</label>
-                <select
-                  id="accumulate"
-                  value={signalSettings.accumulate}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, accumulate: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="disabled">Disabled</option>
-                  <option value="both">Both</option>
-                  <option value="addonly">Add Only</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Conflict Settings</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label htmlFor="uponLongConflict" className="text-sm">Upon Long Conflict</label>
-                <select
-                  id="uponLongConflict"
-                  value={signalSettings.uponLongConflict}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, uponLongConflict: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="ignore">Ignore</option>
-                  <option value="entry">Entry</option>
-                  <option value="exit">Exit</option>
-                  <option value="close">Close</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="uponShortConflict" className="text-sm">Upon Short Conflict</label>
-                <select
-                  id="uponShortConflict"
-                  value={signalSettings.uponShortConflict}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, uponShortConflict: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="ignore">Ignore</option>
-                  <option value="entry">Entry</option>
-                  <option value="exit">Exit</option>
-                  <option value="close">Close</option>
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="uponDirConflict" className="text-sm">Upon Direction Conflict</label>
-                <select
-                  id="uponDirConflict"
-                  value={signalSettings.uponDirConflict}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, uponDirConflict: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="ignore">Ignore</option>
-                  <option value="entry">Entry</option>
-                  <option value="exit">Exit</option>
-                  <option value="close">Close</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Price Settings</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label htmlFor="price" className="text-sm">Price</label>
-                <select
-                  id="price"
-                  value={signalSettings.price}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, price: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="open">Open</option>
-                  <option value="high">High</option>
-                  <option value="low">Low</option>
-                  <option value="close">Close</option>
-                </select>
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Val Price Settings</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label htmlFor="valPrice" className="text-sm">Val Price</label>
-                <input
-                  type="text"
-                  id="valPrice"
-                  value={signalSettings.valPrice || ''}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, valPrice: e.target.value }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                  placeholder="Optional"
-                />
-              </div>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Stop Loss/Take Profit Settings</div>
-            <div className="grid grid-cols-2 gap-2">
-              <div className="space-y-1">
-                <label htmlFor="slStop" className="text-sm">Stop Loss (%)</label>
-                <input
-                  type="number"
-                  id="slStop"
-                  value={signalSettings.slStop || ''}
-                  step="0.01"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, slStop: e.target.value ? parseFloat(e.target.value) / 100 : null }))}
-                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                  placeholder="Optional (e.g. 1 = 1%)"
-                />
-              </div>
-              <div className="space-y-1">
-                <label htmlFor="slTrail" className="text-sm">Trailing Stop Loss</label>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
                 <input
                   type="checkbox"
-                  id="slTrail"
-                  checked={signalSettings.slTrail}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, slTrail: e.target.checked }))}
+                  checked={signalSettings.accumulate}
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, accumulate: e.target.checked }))}
                   className="form-checkbox"
                 />
-              </div>
+                <span>Accumulate</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={signalSettings.cash_sharing}
+                  onChange={(e) => setSignalSettings(prev => ({ ...prev, cash_sharing: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Cash Sharing</span>
+              </label>
+            </div>
+          </div>
+        </div>
+      ) : selectedFunction === 'from_orders' ? (
+        <div className="space-y-3">
+          {/* Size Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Size Settings
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label htmlFor="tpStop" className="text-sm">Take Profit (%)</label>
+                <label htmlFor="size" className="text-sm">Size</label>
                 <input
                   type="number"
-                  id="tpStop"
-                  value={signalSettings.tpStop || ''}
-                  step="0.01"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, tpStop: e.target.value ? parseFloat(e.target.value) / 100 : null }))}
+                  id="size"
+                  value={orderSettings.size}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                  placeholder="Optional (e.g. 1 = 1%)"
                 />
               </div>
               <div className="space-y-1">
-                <label htmlFor="useStops" className="text-sm">Use Stops</label>
+                <label htmlFor="size_type" className="text-sm">Size Type</label>
                 <select
-                  id="useStops"
-                  value={signalSettings.useStops === null ? '' : signalSettings.useStops.toString()}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, useStops: e.target.value === '' ? null : e.target.value === 'true' }))}
+                  id="size_type"
+                  value={orderSettings.size_type}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, size_type: e.target.value }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 >
-                  <option value="">Auto</option>
-                  <option value="true">Enable</option>
-                  <option value="false">Disable</option>
+                  <option value="Amount">Amount</option>
+                  <option value="Value">Value</option>
+                  <option value="Percent">Percent</option>
                 </select>
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Stop Entry Price Settings</div>
+          {/* Fee Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Fee Settings
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label htmlFor="stopEntryPrice" className="text-sm">Stop Entry Price</label>
-                <select
-                  id="stopEntryPrice"
-                  value={signalSettings.stopEntryPrice}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, stopEntryPrice: e.target.value }))}
+                <label htmlFor="fees" className="text-sm">Fees (%)</label>
+                <input
+                  type="number"
+                  id="fees"
+                  value={orderSettings.fees}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, fees: parseFloat(e.target.value) }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="open">Open</option>
-                  <option value="high">High</option>
-                  <option value="low">Low</option>
-                  <option value="close">Close</option>
-                </select>
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="fixed_fees" className="text-sm">Fixed Fees</label>
+                <input
+                  type="number"
+                  id="fixed_fees"
+                  value={orderSettings.fixed_fees}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, fixed_fees: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Stop Exit Price Settings</div>
+          {/* Size Constraints */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Size Constraints
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label htmlFor="stopExitPrice" className="text-sm">Stop Exit Price</label>
-                <select
-                  id="stopExitPrice"
-                  value={signalSettings.stopExitPrice}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, stopExitPrice: e.target.value }))}
+                <label htmlFor="min_size" className="text-sm">Minimum Size</label>
+                <input
+                  type="number"
+                  id="min_size"
+                  value={orderSettings.min_size}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, min_size: parseFloat(e.target.value) }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="open">Open</option>
-                  <option value="high">High</option>
-                  <option value="low">Low</option>
-                  <option value="close">Close</option>
-                </select>
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="max_size" className="text-sm">Maximum Size</label>
+                <input
+                  type="number"
+                  id="max_size"
+                  value={orderSettings.max_size || ''}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, max_size: e.target.value ? parseFloat(e.target.value) : undefined }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+            </div>
+            <div className="mt-2">
+              <div className="space-y-1">
+                <label htmlFor="size_granularity" className="text-sm">Size Granularity</label>
+                <input
+                  type="number"
+                  id="size_granularity"
+                  value={orderSettings.size_granularity}
+                  min="0"
+                  step="0.00000001"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, size_granularity: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
               </div>
             </div>
           </div>
 
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Stop Update Settings</div>
+          {/* Other Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Other Settings
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label htmlFor="uponStopExit" className="text-sm">Upon Stop Exit</label>
+                <label htmlFor="init_cash" className="text-sm">Initial Cash</label>
+                <input
+                  type="number"
+                  id="init_cash"
+                  value={orderSettings.init_cash}
+                  min="0"
+                  step="1000"
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, init_cash: parseFloat(e.target.value) }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="direction" className="text-sm">Direction</label>
                 <select
-                  id="uponStopExit"
-                  value={signalSettings.uponStopExit}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, uponStopExit: e.target.value }))}
+                  id="direction"
+                  value={orderSettings.direction}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, direction: e.target.value }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 >
-                  <option value="close">Close</option>
-                  <option value="override">Override</option>
+                  <option value="both">Both</option>
+                  <option value="longonly">Long Only</option>
+                  <option value="shortonly">Short Only</option>
                 </select>
               </div>
             </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.lock_cash}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, lock_cash: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Lock Cash</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.allow_partial}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, allow_partial: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Allow Partial</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.raise_reject}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, raise_reject: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Raise Reject</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.log}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, log: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Log</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.cash_sharing}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, cash_sharing: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Cash Sharing</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderSettings.ffill_val_price}
+                  onChange={(e) => setOrderSettings(prev => ({ ...prev, ffill_val_price: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Fill Val Price</span>
+              </label>
+            </div>
           </div>
-
-          <div className="mt-4">
-            <div className="text-sm font-bold text-[var(--vscode-input-foreground)] mb-2">Stop Update Settings</div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          {/* Order Function Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Order Function Settings
+              </label>
+            </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label htmlFor="uponStopUpdate" className="text-sm">Upon Stop Update</label>
-                <select
-                  id="uponStopUpdate"
-                  value={signalSettings.uponStopUpdate}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, uponStopUpdate: e.target.value }))}
+                <label htmlFor="init_cash" className="text-sm">Initial Cash</label>
+                <input
+                  type="number"
+                  id="init_cash"
+                  value={orderFuncSettings.init_cash}
+                  min="0"
+                  step="1000"
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, init_cash: parseFloat(e.target.value) }))}
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                >
-                  <option value="override">Override</option>
-                  <option value="ignore">Ignore</option>
-                </select>
+                />
               </div>
+              <div className="space-y-1">
+                <label htmlFor="segment_mask" className="text-sm">Segment Mask</label>
+                <input
+                  type="number"
+                  id="segment_mask"
+                  value={orderFuncSettings.segment_mask || ''}
+                  min="1"
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, segment_mask: e.target.value ? parseInt(e.target.value) : undefined }))}
+                  className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+                />
+              </div>
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2">
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.flexible}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, flexible: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Flexible</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.cash_sharing}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, cash_sharing: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Cash Sharing</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.call_pre_segment}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, call_pre_segment: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Call Pre Segment</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.call_post_segment}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, call_post_segment: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Call Post Segment</span>
+              </label>
+            </div>
+          </div>
+
+          {/* Performance Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
+            <div className="mb-1">
+              <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
+                Performance Settings
+              </label>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.row_wise}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, row_wise: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Row Wise</span>
+              </label>
+              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.use_numba}
+                  onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, use_numba: e.target.checked }))}
+                  className="form-checkbox"
+                />
+                <span>Use Numba</span>
+              </label>
             </div>
           </div>
         </div>
       )}
 
-      {/* Order Function Settings */}
-      {backtestType === 'order_func' && (
-        <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-          <div className="mb-1">
-            <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Order Function Settings
-            </label>
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <label htmlFor="price" className="text-sm">Price</label>
-              <select
-                id="price"
-                value={orderFuncSettings.price}
-                onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, price: e.target.value }))}
-                className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-              >
-                <option value="open">Open</option>
-                <option value="high">High</option>
-                <option value="low">Low</option>
-                <option value="close">Close</option>
-              </select>
-            </div>
-            <div className="space-y-1">
-              <label htmlFor="size" className="text-sm">Size</label>
-              <input
-                type="number"
-                id="size"
-                value={orderFuncSettings.size}
-                step="0.1"
-                onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
-                className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-              />
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Environment Variables */}
+      {/* Environment variables setup */}
       <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
         <div className="mb-3 flex justify-between items-center">
           <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
@@ -805,7 +824,6 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
 
       <button
         onClick={handleRunBacktest}
-        disabled={!currentProject}
         className="w-full bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] py-2 px-4 rounded hover:bg-[var(--vscode-button-hoverBackground)] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
       >
         Run Backtest

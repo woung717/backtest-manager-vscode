@@ -26,9 +26,10 @@ export class BacktestSettingView {
 
     public async openBacktestSetting(projectName: string) {
         const project = await this._database.getProjectByName(projectName);
+
         if (project) {
-            // open project entry file and read strategy code
             const entryFilePath = vscode.Uri.joinPath(vscode.Uri.file(project.path), project.entryFile);
+
             try {
                 vscode.workspace.fs.stat(entryFilePath);
             } catch (error) {
@@ -40,20 +41,16 @@ export class BacktestSettingView {
             const strategyCode = Buffer.from(buffer).toString('utf8');
             const strategyClassMatch = strategyCode.match(this.backtraderStrategyClassPattern);
 
-            project.strategy = strategyClassMatch?.[1] || 'undefined';
+            project.strategy = strategyClassMatch?.[1] || undefined;
             
             this._currentProject = project;
             
-            // Load datasets and last backtest configuration
             const [_, lastConfig] = await Promise.all([
                 this._loadDatasets(),
                 this._getLastBacktestConfig()
             ]);
             
-            // Show webview
             this.show();
-            
-            // Update webview
             this._updateWebview(lastConfig);
         }
     }
@@ -117,7 +114,6 @@ export class BacktestSettingView {
         }
 
         try {
-            // Get lastConfig directly from the project
             const project = await this._database.getProject(this._currentProject._id);
             return project?.lastConfig;
         } catch (error) {
@@ -134,6 +130,7 @@ export class BacktestSettingView {
                 vscode.ViewColumn.Two,
                 {
                     enableScripts: true,
+                    retainContextWhenHidden: true,
                     localResourceRoots: [this._extensionUri]
                 }
             );
@@ -146,33 +143,22 @@ export class BacktestSettingView {
                                 vscode.window.showErrorMessage('Please select a project.');
                                 return;
                             }
-                            if (!BacktestRunner.validateConfig(data.config)) {
-                                vscode.window.showErrorMessage('Invalid configuration value.');
-                                return;
-                            }
+                            
                             try {
                                 const backtest = new BacktestRunner(data.config, this._currentProject);
                                 const result = await backtest.run();
                                 
-                                // Add config info to backtest result
                                 result.config = data.config;
                                 
-                                // Save backtest result to database
                                 await this._database.addBacktestResult(this._currentProject._id, result);
-                                
-                                // Save last configuration to project
                                 await this._database.updateLastConfig(this._currentProject._id, data.config);
                                 
-                                // Show backtest result
                                 this._resultProvider.showResult(result);
                                 this._treeProvider.updateData();
                                 
-                                // Close backtest setting panel
                                 if (this._panel) {
                                     this._panel.dispose();
                                 }
-                                
-                                vscode.window.showInformationMessage('Backtest completed successfully.');
                             } catch (error) {
                                 vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error}`);
                             }
@@ -196,7 +182,6 @@ export class BacktestSettingView {
 
         this._panel.webview.html = this.getHtmlContent(this._panel.webview);
         
-        // Update webview after loading datasets and last backtest configuration
         Promise.all([this._loadDatasets(), this._getLastBacktestConfig()])
             .then(([_, lastConfig]) => {
                 this._updateWebview(lastConfig);

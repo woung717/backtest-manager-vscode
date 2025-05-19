@@ -5,8 +5,8 @@ const TerserPlugin = require('terser-webpack-plugin');
 
 // EJS 파일 복사 함수
 function copyEjsFiles() {
-  const sourceDir = path.resolve(__dirname, 'src/backtrader/impl/templates');
-  const targetDir = path.resolve(__dirname, 'out/backtrader/impl/templates');
+  const sourceDir = path.resolve(__dirname, 'src/engines');
+  const targetDir = path.resolve(__dirname, 'out/engines/templates');
   
   // 대상 디렉토리가 없으면 생성
   if (!fs.existsSync(targetDir)) {
@@ -14,11 +14,12 @@ function copyEjsFiles() {
   }
   
   // EJS 파일 복사
-  const files = fs.readdirSync(sourceDir);
+  const files = fs.readdirSync(sourceDir, { recursive: true });
   files.forEach(file => {
     if (file.endsWith('.ejs')) {
+      const filename = file.split('/').pop();
       const sourcePath = path.join(sourceDir, file);
-      const targetPath = path.join(targetDir, file);
+      const targetPath = path.join(targetDir, filename);
       fs.copyFileSync(sourcePath, targetPath);
       console.log(`Copied ${sourcePath} to ${targetPath}`);
     }

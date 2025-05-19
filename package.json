@@ -49,28 +49,32 @@
       },
       {
         "command": "myExtension.deleteBacktestResult",
-        "title": "Delete result"
+        "title": "Delete"
+      },
+      {
+        "command": "myExtension.renameProject",
+        "title": "Rename"
       },
       {
         "command": "myExtension.deleteProject",
-        "title": "프로젝트 삭제"
+        "title": "Delete"
       },
       {
         "command": "myExtension.refreshDatasetView",
-        "title": "데이터셋 새로고침",
+        "title": "Refresh",
         "icon": "$(refresh)"
       },
       {
         "command": "myExtension.deleteDataset",
-        "title": "데이터셋 삭제"
+        "title": "Delete"
       },
       {
         "command": "myExtension.openDatasetFile",
-        "title": "데이터셋 파일 열기"
+        "title": "Open"
       },
       {
         "command": "myExtension.showDatasetDownloader",
-        "title": "데이터 다운로드",
+        "title": "Download Datasets",
         "icon": "$(cloud-download)"
       }
     ],
@@ -131,6 +135,10 @@
         {
           "command": "myExtension.deleteBacktestResult",
           "when": "view == myExtensionTreeView && viewItem == backtestResult"
+        },
+        {
+          "command": "myExtension.renameProject",
+          "when": "view == myExtensionTreeView && viewItem == project"
         },
         {
           "command": "myExtension.deleteProject",

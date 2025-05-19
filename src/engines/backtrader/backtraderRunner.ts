@@ -3,30 +3,30 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as ejs from 'ejs';
 import * as vscode from 'vscode';
-import { BacktestConfig, BacktestResult, BacktestRunner } from './types';
+import { BacktraderConfig, BacktestResult, BacktestRunner } from './types';
 import { ProjectInfo, TradeEnterData, TradeExitData } from '../../types';
 import { generateShortHash } from '../../util';
 import { VSCodeOutputLogger } from '../../vscodeOutputLogger';
 
 export class BacktraderRunner implements BacktestRunner {
-    private config: BacktestConfig;
+    private config: BacktraderConfig;
     private tempFilePath: string = '';
     private readonly templatePath: string;
     private currentProject?: ProjectInfo;
     private currentBacktest?: BacktestResult;
     private logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("Backtest Runner");
 
-    constructor(project: ProjectInfo, config: BacktestConfig) {
+    constructor(project: ProjectInfo, config: BacktraderConfig) {
         this.config = config;
         this.currentProject = project;
-        this.templatePath = path.join(__dirname, 'templates', 'backtrader.ejs');
+        this.templatePath = path.join(__dirname, 'engines','templates', 'backtrader.ejs');
     }
 
-    public loadConfig(): BacktestConfig {
+    public loadConfig(): BacktraderConfig {
         return this.config;
     }
 
-    public setConfig(config: BacktestConfig): void {
+    public setConfig(config: BacktraderConfig): void {
         this.config = config;
     }
 

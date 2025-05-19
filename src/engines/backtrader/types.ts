@@ -36,7 +36,7 @@ export interface BrokerConfig {
     fundmode?: boolean;        // Enable fund mode
 }
 
-export interface BacktestConfig {
+export interface BacktraderConfig {
     pythonPath: string;        // Python binary path
     
     strategy: string;
@@ -60,8 +60,8 @@ export interface BacktestConfig {
 }
 
 export interface BacktestRunner {
-    loadConfig(): BacktestConfig;
-    setConfig(config: BacktestConfig): void;
+    loadConfig(): BacktraderConfig;
+    setConfig(config: BacktraderConfig): void;
     runBacktest(pythonCode: string): Promise<BacktestResult>;
 }
 

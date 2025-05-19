@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
 import { ProjectTreeProvider, ProjectTreeItem } from './projectTreeProvider';
 import { BacktestSettingView } from './backtestSettingView';
-import { ExtensionServer } from './server';
 import * as path from 'path';
 import { BacktestResultView } from './backtestResultView';
 import { Backtest, DatasetInfo, Engine } from './types';
 import { DatasetTreeProvider, DatasetTreeItem } from './datasetTreeProvider';
 import { DatasetDownloaderView } from './datasetDownloaderView';
 import { VSCodeOutputLogger } from './vscodeOutputLogger';
-
+import { Database } from './database';
 /**
  * This function logs the extension logo to the output channel.
  */
@@ -40,26 +39,6 @@ export function activate(context: vscode.ExtensionContext) {
         return;
     }
 
-    // Start the extension server
-    const server = new ExtensionServer();
-    let serverPort: number;
-    
-    // Start the server and store the server port for later use
-    server.start()
-        .then(port => { serverPort = port; })
-        .catch(error => {
-            vscode.window.showErrorMessage(`Failed to start extension server: ${error.message}`);
-        });
-
-    // Make sure to stop the server when the extension is deactivated
-    context.subscriptions.push({
-        dispose: () => {
-            server.stop()
-                .then(() => console.log('Extension server stopped'))
-                .catch(err => console.error('Error stopping server:', err));
-        }
-    });
-
     // Sample data for the tree view
     const sampleData: any[] = [];
 
@@ -74,7 +53,6 @@ export function activate(context: vscode.ExtensionContext) {
         if (event.selection.length > 0) {
             const item = event.selection[0];
             if (item.projectInfo) {
-                // open project entry file
                 const entryFilePath = vscode.Uri.file(path.join(item.projectInfo.path, item.projectInfo.entryFile));
                 const document = await vscode.workspace.openTextDocument(entryFilePath);
                 await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
@@ -120,6 +98,7 @@ export function activate(context: vscode.ExtensionContext) {
                     return null;
                 }
             });
+            
             const engine = await vscode.window.showQuickPick([
                 { label: '🚀 Backtrader', value: 'backtrader', description: 'Full featured event-driven backtesting engine.' },
                 { label: '⚡ VectorBT', value: 'vectorbt', description: 'Ultra rapid vectorized backtesting engine.' }
@@ -162,42 +141,6 @@ export function activate(context: vscode.ExtensionContext) {
             }
         }),
 
-        // Add command to check server status
-        vscode.commands.registerCommand('myExtension.checkServerStatus', async () => {
-            try {
-                const response = await fetch(`http://localhost:${serverPort}/status`);
-                const result = await response.text();
-                vscode.window.showInformationMessage(`Server status: ${result}`);
-            } catch (error: any) {
-                vscode.window.showErrorMessage(`Error checking server status: ${error.message}`);
-            }
-        }),
-
-        // Add commands for editing settings
-        vscode.commands.registerCommand('myExtension.editStartDate', async (currentValue: string) => {
-            const value = await vscode.window.showInputBox({
-                value: currentValue,
-                prompt: 'Enter start date (YYYY-MM-DD)',
-                validateInput: (value) => {
-                    if (!value) return 'Start date cannot be empty';
-                    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Invalid date format (YYYY-MM-DD)';
-                    return null;
-                }
-            });
-        }),
-
-        vscode.commands.registerCommand('myExtension.editEndDate', async (currentValue: string) => {
-            const value = await vscode.window.showInputBox({
-                value: currentValue,
-                prompt: 'Enter end date (YYYY-MM-DD)',
-                validateInput: (value) => {
-                    if (!value) return 'End date cannot be empty';
-                    if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return 'Invalid date format (YYYY-MM-DD)';
-                    return null;
-                }
-            });
-        }),
-
         // Add command to show backtest result
         vscode.commands.registerCommand('myExtension.showBacktestResult', (backtest: Backtest) => {
             const resultView = new BacktestResultView(context.extensionUri);
@@ -211,6 +154,31 @@ export function activate(context: vscode.ExtensionContext) {
                 if (result === 'Delete') {
                     await projectTreeProvider.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
                 }
+            }
+        }),
+
+        vscode.commands.registerCommand('myExtension.renameProject', async (item: ProjectTreeItem) => {
+            const projectName = await vscode.window.showInputBox({
+                placeHolder: 'Enter new project name',
+                prompt: 'Rename Project',
+                validateInput: (value) => {
+                    if (!value) {
+                        return 'Project name cannot be empty';
+                    }
+                    if (value.includes('/') || value.includes('\\')) {
+                        return 'Project name cannot contain path separators';
+                    }
+                    return null;
+                }
+            });
+
+            if (!projectName) {
+                vscode.window.showErrorMessage('Project name cannot be empty');
+                return;
+            }
+
+            if (item.projectInfo && item.projectInfo._id) {
+                await projectTreeProvider.renameProject(item.projectInfo._id, projectName);
             }
         }),
 
@@ -255,4 +223,6 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 // This method is called when your extension is deactivated
-export function deactivate() {}
+export function deactivate() {
+    Database.getInstance().saveDatabase();
+}

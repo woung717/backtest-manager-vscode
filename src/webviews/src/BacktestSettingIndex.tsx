@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import BacktraderSettingView from './setting-view/BacktraderSettingView';
+import VectorBTSettingView from './setting-view/VectorBTSettingView';
 import { ProjectInfo, DatasetInfo } from '../../types';
 import '../lib/VSCode.css';
 const root = document.getElementById('root');
@@ -28,11 +29,19 @@ if (root) {
     function render() {
         reactRoot.render(
             <React.StrictMode>
-                <BacktraderSettingView 
-                    currentProject={currentProject} 
-                    datasets={datasets}
-                    lastConfig={lastConfig}
-                />
+                {currentProject?.engine === 'vectorbt' ? (
+                    <VectorBTSettingView 
+                        currentProject={currentProject} 
+                        datasets={datasets}
+                        lastConfig={lastConfig}
+                    />
+                ) : (
+                    <BacktraderSettingView 
+                        currentProject={currentProject} 
+                        datasets={datasets}
+                        lastConfig={lastConfig}
+                    />
+                )}
             </React.StrictMode>
         );
     }

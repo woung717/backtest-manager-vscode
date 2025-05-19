@@ -1,5 +1,7 @@
 import * as path from 'path';
 import * as vscode from 'vscode';
+import * as zlib from 'zlib';
+import { promisify } from 'util';
 import { Backtest } from './types';
 import { ProjectInfo } from './types';
 
@@ -9,6 +11,9 @@ export class Database {
     private readonly CONFIG_FILE_NAME: string = '.backtest-man';
     private db: any;
     private initialized: boolean = false;
+    private dbPath: string = '';
+    private readonly gzip = promisify(zlib.gzip);
+    private readonly gunzip = promisify(zlib.gunzip);
 
     private constructor() {}
 
@@ -35,15 +40,49 @@ export class Database {
         return Database.instance;
     }
 
-    private initialize(workspacePath: string): void {
+    private async unzipIfNeeded(line: string): Promise<string> {
+        try {
+            const buffer = Buffer.from(line, 'base64');
+            if (buffer[0] === 0x1f && buffer[1] === 0x8b) {
+                const decompressed = await this.gunzip(buffer);
+                return decompressed.toString('utf-8');
+            }
+            return line;
+        } catch (error) {
+            throw new Error(`Error unzipping file: ${error}`);
+        }
+    }
+
+    private async zip(line: string): Promise<string> {
+        try {
+            const compressed = await this.gzip(Buffer.from(line, 'utf-8'));
+            return compressed.toString('base64');
+        } catch (error) {
+            throw new Error(`Error zipping file: ${error}`);
+        }
+    }
+
+    private async initialize(workspacePath: string): Promise<void> {
         if (this.initialized) {
             return;
         }
 
         try {
-            const dbPath = path.join(workspacePath, this.CONFIG_FILE_NAME);
-            this.db = new this.Datastore({ filename: dbPath, autoload: true });
+            this.dbPath = path.join(workspacePath, this.CONFIG_FILE_NAME);
+            
+            this.db = new this.Datastore({ 
+                filename: this.dbPath, 
+                autoload: true,
+                beforeDeserialization: async (line: string) => {
+                    return await this.unzipIfNeeded(line);
+                },
+                afterSerialization: async (line: string) => {
+                    return await this.zip(line);
+                }
+            });
+            
             this.db.setAutocompactionInterval(1000 * 60 * 10);
+            
             this.initialized = true;
         } catch (error) {
             throw new Error(`Error initializing database: ${error}`);
@@ -111,5 +150,9 @@ export class Database {
         if (numUpdated === 0) {
             throw new Error(`Project not found or backtest result not found: ${projectId}, ${resultId}`);
         }
+    }
+
+    public async saveDatabase(): Promise<void> {
+        await this.db.persistence.compactDatafileAsync();
     }
 }

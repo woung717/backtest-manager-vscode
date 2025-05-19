@@ -66,58 +66,6 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
   
   // Initialize settings based on last configuration
   React.useEffect(() => {
-    // Initialize all settings with default values
-    setCerebroSettings({
-      preload: true,
-      runonce: true,
-      live: false,
-      maxcpus: undefined,
-      stdstats: true,
-      oldbuysell: false,
-      oldtrades: false,
-      exactbars: false,
-      plotEnabled: true,
-    });
-    
-    setBrokerSettings({
-      initialCapital: 10000,
-      checkSubmit: true,
-      eosbar: false,
-      coc: false,
-      coo: false,
-      int2pnl: true,
-      shortcash: true,
-      fundstartval: 100,
-      fundmode: false,
-    });
-    
-    setCommissionSettings({
-      commission: 0,
-      margin: 0,
-      mult: 1.0,
-      percabs: true,
-      stocklike: true,
-      interest: 0,
-      interestLong: false,
-      leverage: 1.0,
-      automargin: false,
-    });
-    
-    setSlippageSettings({
-      slippagePerc: 0,
-      slippageFixed: 0,
-      slippageOpen: false,
-      slippageLimit: true,
-      slippageMatch: true,
-      slippageOut: false,
-    });
-    
-    // Dataset selection
-    setSelectedDataset(null);
-    
-    // Initialize environment variables
-    setEnvVariables([]);
-    
     if (lastConfig) {
       // Cerebro settings
       if (lastConfig.preload !== undefined) setCerebroSettings(prev => ({ ...prev, preload: lastConfig.preload }));
@@ -193,18 +141,15 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
     }
   }, [lastConfig, currentProject]);
   
-  // Add new environment variable
   const addEnvVariable = () => {
     const newId = `env_${Date.now()}`;
     setEnvVariables([...envVariables, { id: newId, key: '', value: '' }]);
   };
   
-  // Remove environment variable
   const removeEnvVariable = (id: string) => {
     setEnvVariables(envVariables.filter(env => env.id !== id));
   };
   
-  // Change environment variable value
   const updateEnvVariable = (id: string, field: 'key' | 'value', newValue: string) => {
     setEnvVariables(
       envVariables.map(env => 
@@ -214,7 +159,6 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
   };
 
   const handleRunBacktest = () => {
-    // Create environment variable object
     const envObject: Record<string, string> = {};
     envVariables.forEach(env => {
       if (env.key.trim()) {
@@ -222,10 +166,8 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
       }
     });
 
-    // Find selected dataset
     const datasetPath = selectedDataset || '';
     
-    // Add selected dataset to environment variables if present
     if (datasetPath) {
       envObject['DATASET_PATH'] = datasetPath;
     }
@@ -282,7 +224,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
           </label>
         </div>
         <div className="text-sm text-[var(--vscode-descriptionForeground)] mb-2">
-          Select the dataset to use for backtesting. The selected dataset will be passed as the DATASET_PATH environment variable.
+          Select the dataset to use for backtesting.
         </div>
         
         {datasets.length === 0 ? (
@@ -317,7 +259,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
                 VSCodeAPI.postMessage({ type: 'refresh' });
               }}
             >
-              Refresh Datasets
+              Reload Datasets
             </button>
           </div>
         )}
