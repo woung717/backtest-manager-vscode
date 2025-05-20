@@ -18,7 +18,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
     oldbuysell: false,
     oldtrades: false,
     exactbars: false as boolean | number,
-    plotEnabled: true,
+    plotEnabled: false,
   });
 
   const [brokerSettings, setBrokerSettings] = useState({

@@ -6,7 +6,7 @@ import { VectorBTRunner } from './engines/vectorbt/vectorbtRunner';
 import { VectorBTConfig } from './engines/vectorbt/types';
 import * as path from 'path';
 
-export class Backtest {
+export class Backtester {
     private backtestConfig: BacktraderConfig | VectorBTConfig;
     private project: ProjectInfo;
 
@@ -35,19 +35,41 @@ export class Backtest {
         return true;
     }
 
-    private async getPythonPath(): Promise<string | undefined> {
-        const pythonExtension = vscode.extensions.getExtension('ms-python.python');
+    public static async getPythonPath(): Promise<string | undefined> {
+        const pythonExtensionName = 'ms-python.python';
+        const pythonExtensionLink = 'https://marketplace.visualstudio.com/items?itemName=ms-python.python';
+        const pythonDownloadLink = 'https://www.python.org/downloads/';
+
+        const pythonExtension = vscode.extensions.getExtension(pythonExtensionName);
         if (!pythonExtension) {
-            vscode.window.showErrorMessage('Python 확장이 설치되어 있지 않습니다.');
+            vscode.window.showErrorMessage(
+                'Python 확장을 찾을 수 없습니다. 확장 프로그램 마켓플레이스에서 Python 확장을 설치해 주세요.',
+                ...['설치', '닫기']
+            ).then(result => {
+                if (result === '설치') {
+                    vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(pythonExtensionLink));
+                }
+            });
             return undefined;
+        }
+
+        while (!pythonExtension.isActive) {
+            await new Promise(resolve => setTimeout(resolve, 100));
         }
 
         const pythonPath = await pythonExtension.exports.settings.getExecutionDetails().execCommand[0];
         if (!pythonPath) {
-            vscode.window.showErrorMessage('Python 인터프리터를 찾을 수 없습니다. Python 확장에서 인터프리터를 선택해 주세요.');
+            vscode.window.showErrorMessage(
+                'Python 인터프리터를 찾을 수 없습니다. Python 3.8 이상의 버전을 설치하고 Python 확장에서 인터프리터를 선택해 주세요.',
+                ...['설치', '닫기']
+            ).then(result => {
+                if (result === '설치') {
+                    vscode.commands.executeCommand('vscode.open', vscode.Uri.parse(pythonDownloadLink));
+                }
+            });
             return undefined;
         }
-
+        
         return pythonPath;
     }
 
@@ -68,7 +90,7 @@ export class Backtest {
             throw new Error(`백테스트 설정이 유효하지 않습니다: ${error}`);
         }
 
-        const pythonPath = await this.getPythonPath();
+        const pythonPath = await Backtester.getPythonPath();
         
         if (!pythonPath) {
             throw new Error('Python 경로를 찾을 수 없습니다.');
@@ -87,7 +109,6 @@ export class Backtest {
                 ...this.backtestConfig as BacktraderConfig,
                 pythonPath: pythonPath,
                 strategy: this.project.strategy!,
-                plotEnabled: true,
                 logLevel: 'debug' as 'debug',
             };
             const runner = new BacktraderRunner(this.project, backtraderConfig);

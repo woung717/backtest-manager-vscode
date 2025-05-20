@@ -19,7 +19,7 @@ export class BacktraderRunner implements BacktestRunner {
     constructor(project: ProjectInfo, config: BacktraderConfig) {
         this.config = config;
         this.currentProject = project;
-        this.templatePath = path.join(__dirname, 'engines','templates', 'backtrader.ejs');
+        this.templatePath = path.join(__dirname, '..', 'templates', 'backtrader.ejs');
     }
 
     public loadConfig(): BacktraderConfig {

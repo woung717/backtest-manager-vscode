@@ -3,7 +3,7 @@ import { BacktestResultView } from './backtestResultView';
 import { ProjectInfo, DatasetInfo } from './types';
 import { Database } from './database';
 import { ProjectTreeProvider } from './projectTreeProvider';
-import { Backtest as BacktestRunner } from './backtest';
+import { Backtester as BacktestRunner } from './backtester';
 import * as path from 'path';
 
 export class BacktestSettingView {
@@ -155,10 +155,6 @@ export class BacktestSettingView {
                                 
                                 this._resultProvider.showResult(result);
                                 this._treeProvider.updateData();
-                                
-                                if (this._panel) {
-                                    this._panel.dispose();
-                                }
                             } catch (error) {
                                 vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error}`);
                             }

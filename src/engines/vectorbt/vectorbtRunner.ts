@@ -20,7 +20,7 @@ export class VectorBTRunner {
     constructor(project: ProjectInfo, config: VectorBTConfig) {
         this.config = config;
         this.currentProject = project;
-        this.templatePath = path.join(__dirname, 'engines', 'templates', 'vectorbt.ejs');
+        this.templatePath = path.join(__dirname, '..', 'templates', 'vectorbt.ejs');
     }
 
     public loadConfig(): VectorBTConfig {

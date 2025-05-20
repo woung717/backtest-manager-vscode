@@ -248,14 +248,14 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
         </div>
 
         <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] rounded-lg overflow-hidden">
-          <div className="p-2 border-b border-[var(--vscode-panel-border)]">
+          <div className="p-2 border-b border-[var(--vscode-panel-border)] ">
             <h3 className="text-base font-bold">Equity Curve</h3>
           </div>
-          <div className="p-2">
+          <div className="p-2 ">
             <div 
               id="equityChart" 
               ref={equityChartRef} 
-              className="w-full h-[300px]"
+              className="w-full h-[300px] overflow-hidden"
               title="Drag to zoom in/out. Double-click to reset view."
             ></div>
           </div>
@@ -268,7 +268,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
               <table className="w-full border-collapse">
                 <thead className="bg-[var(--vscode-editor-inactiveSelectionBackground)] border-b-2 border-[var(--vscode-panel-border)]">
                   <tr>
-                    <th className="p-2 text-left">ID</th>
+                    <th className="p-2 text-center">ID</th>
                     <th className="p-2 text-left">Direction</th>
                     <th className="p-2 text-left">Size</th>
                     <th className="p-2 text-left">Entry Time</th>
@@ -285,7 +285,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
                           ? 'bg-[rgba(46, 160, 67, 0.08)]' 
                           : 'bg-[rgba(218, 54, 51, 0.08)]'
                       }`}>
-                        <td className="p-2 font-bold">{trade.id}</td>
+                        <td className="p-2 font-bold text-center">{trade.id}</td>
                         <td className="p-2">{trade.type === 'Long' ? 'Buy' : 'Sell'}</td>
                         <td className="p-2">{trade.size.toFixed(2)}</td>
                         <td className="p-2">{new Date(trade.time).toLocaleString()}</td>

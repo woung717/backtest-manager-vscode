@@ -16,7 +16,7 @@ export class BacktestResultView {
             this.panel = vscode.window.createWebviewPanel(
                 'backtestResult',
                 'Backtest Results',
-                vscode.ViewColumn.Beside,
+                vscode.ViewColumn.Two,
                 {
                     enableScripts: true,
                     retainContextWhenHidden: true,

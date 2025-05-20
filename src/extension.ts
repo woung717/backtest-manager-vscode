@@ -8,6 +8,7 @@ import { DatasetTreeProvider, DatasetTreeItem } from './datasetTreeProvider';
 import { DatasetDownloaderView } from './datasetDownloaderView';
 import { VSCodeOutputLogger } from './vscodeOutputLogger';
 import { Database } from './database';
+import { Backtester } from './backtester';
 /**
  * This function logs the extension logo to the output channel.
  */
@@ -28,7 +29,12 @@ function printLogo(logger: VSCodeOutputLogger) {
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
     const logger = VSCodeOutputLogger.getInstance("Backtest Manager");
+    
     printLogo(logger);
+
+    Backtester.getPythonPath().then(pythonPath => {
+        logger.log(`Python path: ${pythonPath}`);
+    });
 
     // Get workspace path
     let workspacePath = '';
