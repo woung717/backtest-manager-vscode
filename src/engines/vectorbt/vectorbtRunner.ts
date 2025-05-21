@@ -43,7 +43,7 @@ export class VectorBTRunner {
       }
       return null;
     } catch (error) {
-      this.logger.log('거래 데이터 파싱 오류: ' + error);
+      this.logger.log('Trade data parse error: ' + error);
       return null;
     }
   }
@@ -56,7 +56,7 @@ export class VectorBTRunner {
       }
       return null;
     } catch (error) {
-      this.logger.log('자산 데이터 파싱 오류: ' + error);
+      this.logger.log('Equity data parse error: ' + error);
       return null;
     }
   }
@@ -108,17 +108,17 @@ export class VectorBTRunner {
         });
       }
     } catch (error) {
-      this.logger.log('백테스트 결과 업데이트 오류: ' + error);
+      this.logger.log('Backtest result update error: ' + error);
     }
   }
 
   /**
-   * 백테스트 성능 지표 계산
+   * Calculate backtest performance metrics
    */
   private calculatePerformanceMetrics(): void {
     if (!this.currentBacktest) return;
 
-    // 거래 관련 지표 계산
+    // Calculate trade-related metrics
     const tradeCount = Object.keys(this.currentBacktest.trades).length;
     if (tradeCount > 0) {
       const profitableTrades = Object.values(this.currentBacktest.trades)
@@ -128,28 +128,28 @@ export class VectorBTRunner {
       this.currentBacktest.performance.winRate = profitableTrades / tradeCount;
     }
 
-    // 자산 관련 지표 계산
+    // Calculate equity-related metrics
     if (this.currentBacktest.equity.length > 0) {
       const initialValue = this.currentBacktest.equity[0].value;
       const finalValue = this.currentBacktest.equity[this.currentBacktest.equity.length - 1].value;
       this.currentBacktest.performance.totalReturn = (finalValue - initialValue) / initialValue;
       
-      // 최대 낙폭 계산
+      // Calculate maximum drawdown
       let maxDrawdown = 0;
       let peak = initialValue;
       
       for (const equityPoint of this.currentBacktest.equity) {
         const currentValue = equityPoint.value;
         
-        // 새로운 피크 찾기
+        // Find new peak
         if (currentValue > peak) {
           peak = currentValue;
         }
         
-        // 현재 낙폭 계산
+        // Calculate current drawdown
         const drawdown = (peak - currentValue) / peak;
         
-        // 최대 낙폭 업데이트
+        // Update maximum drawdown
         if (drawdown > maxDrawdown) {
           maxDrawdown = drawdown;
         }
@@ -157,11 +157,11 @@ export class VectorBTRunner {
       
       this.currentBacktest.performance.maxDrawdown = maxDrawdown;
 
-      // 샤프 비율 계산
-      // 무위험 수익률 2% 가정
+      // Calculate Sharpe ratio
+      // Assume 2% risk-free rate
       const riskFreeRate = 0.02;
       
-      // 일별 수익률 계산
+      // Calculate daily returns
       const dailyReturns: number[] = [];
       for (let i = 1; i < this.currentBacktest.equity.length; i++) {
         const prevValue = this.currentBacktest.equity[i-1].value;
@@ -170,10 +170,10 @@ export class VectorBTRunner {
         dailyReturns.push(dailyReturn);
       }
       
-      // 평균 수익률 계산
+      // Calculate average return
       const avgReturn = dailyReturns.reduce((sum, return_) => sum + return_, 0) / dailyReturns.length;
       
-      // 표준편차 계산
+      // Calculate standard deviation
       const variance = dailyReturns.reduce((sum, return_) => {
         const diff = return_ - avgReturn;
         return sum + (diff * diff);
@@ -181,12 +181,12 @@ export class VectorBTRunner {
       
       const stdDev = Math.sqrt(variance);
       
-      // 연간화된 샤프 비율 계산 (252 거래일 가정)
+      // Calculate annualized Sharpe ratio (assume 252 trading days)
       const annualizedAvgReturn = avgReturn * 252;
       const annualizedStdDev = stdDev * Math.sqrt(252);
       const sharpeRatio = (annualizedAvgReturn - riskFreeRate) / annualizedStdDev;
       
-      // NaN 방지
+      // Prevent NaN
       this.currentBacktest.performance.sharpeRatio = isNaN(sharpeRatio) ? 0 : sharpeRatio;
     }
   }
@@ -203,17 +203,17 @@ export class VectorBTRunner {
   private async createTempPythonFile(pythonCode: string): Promise<string> {
     const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
     if (!workspaceFolder) {
-      throw new Error('워크스페이스 폴더를 찾을 수 없습니다.');
+      throw new Error('Workspace folder not found.');
     }
     
     const tempDirPath = path.join(workspaceFolder.uri.fsPath, '.temp');
     const tempDirUri = vscode.Uri.file(tempDirPath);
     
     try {
-      // .temp 디렉토리 존재 여부 확인
+      // Check if .temp directory exists
       await vscode.workspace.fs.stat(tempDirUri);
     } catch (error) {
-      // 디렉토리가 없으면 생성
+      // Create directory if it doesn't exist
       await vscode.workspace.fs.createDirectory(tempDirUri);
     }
     
@@ -230,10 +230,10 @@ export class VectorBTRunner {
 
   public async runBacktest(pythonCode: string): Promise<BacktestResult> {
     try {
-      // 출력 채널 표시
+      // Show output channel
       this.logger.revealPanel();
       
-      // 새 백테스트 결과 객체 생성
+      // Create new backtest result object
       this.currentBacktest = {
         id: generateShortHash(Date.now().toString()),
         date: new Date().toISOString(),
@@ -251,12 +251,12 @@ export class VectorBTRunner {
         trades: {}
       };
 
-      // 백테스트 시작 메시지 출력
+      // Output backtest start message
       this.logger.log('========================================');
-      this.logger.log('[+] 백테스트 시작...');
-      this.logger.log(`[+] 전략: ${this.config.strategy}`);
-      this.logger.log(`[+] 프로젝트 경로: ${this.currentProject?.path}`);
-      this.logger.log(`[+] 백테스트 엔진: vectorbt`);
+      this.logger.log('[+] Backtest started...');
+      this.logger.log(`[+] Strategy: ${this.config.strategy}`);
+      this.logger.log(`[+] Project path: ${this.currentProject?.path}`);
+      this.logger.log(`[+] Backtest engine: vectorbt`);
       this.logger.log('========================================');
 
       return await this.run(pythonCode);
@@ -305,7 +305,7 @@ export class VectorBTRunner {
         pythonProcess.stderr.on('data', (data) => {
           const chunk = data.toString();
           if (this.config.logLevel !== 'error') {
-            this.logger.log('오류: ' + chunk);
+            this.logger.log('Error: ' + chunk);
           }
         });
 
@@ -316,15 +316,15 @@ export class VectorBTRunner {
               await vscode.workspace.fs.delete(tempFileUri);
             }
           } catch (error) {
-            this.logger.log('임시 파일 삭제 오류: ' + error);
+            this.logger.log('Error deleting temporary file: ' + error);
           }
 
           if (code === 0 && this.currentBacktest) {
-            // 성능 지표 계산
+            // Calculate performance metrics
             this.calculatePerformanceMetrics();
             resolve(this.currentBacktest);
           } else {
-            reject(new Error(`Python 프로세스가 코드 ${code}로 종료되었습니다.`));
+            reject(new Error(`Python process exited with code ${code}.`));
           }
         });
 
@@ -335,7 +335,7 @@ export class VectorBTRunner {
               await vscode.workspace.fs.delete(tempFileUri);
             }
           } catch (deleteError) {
-            console.error('임시 파일 삭제 오류:', deleteError);
+            console.error('Error deleting temporary file:', deleteError);
           }
           reject(error);
         });

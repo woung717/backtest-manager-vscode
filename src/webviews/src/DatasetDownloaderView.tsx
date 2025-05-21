@@ -9,7 +9,7 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
   const defaultExchange = 'coinbase';
   const searchInputRef = useRef<HTMLInputElement>(null);
   const [inputFocused, setInputFocused] = useState(false);
-  // 폼 상태
+  // Form state
   const [exchange, setExchange] = useState('');
   const [symbol, setSymbol] = useState('');
   const [symbolSearch, setSymbolSearch] = useState('');
@@ -28,12 +28,12 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
   const [isLoadingExchanges, setIsLoadingExchanges] = useState(false);
   const [showSymbolList, setShowSymbolList] = useState(false);
   
-  // 거래소별 사용 가능한 심볼 및 타임프레임
+  // Available symbols and timeframes per exchange
   const [availableSymbols, setAvailableSymbols] = useState<string[]>([]);
   const [availableTimeframes, setAvailableTimeframes] = useState<string[]>([]);
   const [availableExchanges, setAvailableExchanges] = useState<string[]>([]);
 
-  // 검색어에 따른 필터링된 심볼 목록
+  // Filtered symbol list by search term
   const filteredSymbols = symbolSearch 
     ? availableSymbols.filter(s => s.toLowerCase().includes(symbolSearch.toLowerCase()))
     : availableSymbols;
@@ -65,7 +65,7 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
           const exchanges: string[] = message.data;
           setAvailableExchanges(exchanges || []);
           
-          // 첫 번째 거래소 선택
+          // Select the first exchange
           if (exchanges && exchanges.length > 0) {
             setExchange(exchanges.find(ex => ex === defaultExchange) || exchanges[0]);
           }

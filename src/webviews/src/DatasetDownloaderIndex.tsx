@@ -21,7 +21,7 @@ if (root) {
     }
   });
 
-  // 초기 렌더링 후 거래소 목록 요청
+  // Request exchange list after initial render
   function requestExchangeList() {
     VSCodeAPI.postMessage({
       type: 'getAvailableExchanges'
@@ -36,7 +36,7 @@ if (root) {
       </React.StrictMode>
     );
 
-    // 약간의 지연 후 거래소 목록 요청 (React 렌더링 완료 후)
+    // Request exchange list after a short delay (after React rendering)
     setTimeout(requestExchangeList, 100);
   }
 

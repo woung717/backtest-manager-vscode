@@ -36,7 +36,7 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
 
   private datasetRoot: string = '';
   private data: DatasetTreeItem[] = [
-    new DatasetTreeItem('loading', 'Loading Projects...')
+    new DatasetTreeItem('loading', 'Loading Datasets...')
   ];
 
   constructor(private workspaceRoot: string) {
