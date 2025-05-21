@@ -34,6 +34,7 @@ def cerebro_init(cerebro: bt.Cerebro):
 
 
 # No driver code (e.g. cerebro.run()) needed
+# Backtrader Documentation: https://www.backtrader.com/docu/quickstart/quickstart/
 `;
 
 export const vectorbtTemplate = `import vectorbt as vbt
@@ -56,15 +57,16 @@ def portfolio_init() -> dict:
 
 
 # No driver code (e.g. vbt.Portfolio.from_signals()) needed
+# VectorBT Documentation: https://vectorbt.dev/
 `;
 
 export function templateCodeFactory(engine: Engine): string {
-    switch (engine) {
-        case 'backtrader':
-            return backtraderTemplate;
-        case 'vectorbt':
-            return vectorbtTemplate;
-        default:
-            return '';
-    }
+  switch (engine) {
+    case 'backtrader':
+      return backtraderTemplate;
+    case 'vectorbt':
+      return vectorbtTemplate;
+    default:
+      return '';
+  }
 }

@@ -13,222 +13,227 @@ import { Backtester } from './backtester';
  * This function logs the extension logo to the output channel.
  */
 function printLogo(logger: VSCodeOutputLogger) {
-    // Print logo
-    logger.log(`
-        ██████╗  █████╗  ██████╗██╗  ██╗████████╗███████╗███████╗████████╗    ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗██████╗ 
-        ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝    ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝██╔══██╗
-        ██████╔╝███████║██║     █████╔╝    ██║   █████╗  ███████╗   ██║       ██╔████╔██║███████║██╔██╗ ██║███████║██║  ███╗█████╗  ██████╔╝
-        ██╔══██╗██╔══██║██║     ██╔═██╗    ██║   ██╔══╝  ╚════██║   ██║       ██║╚██╔╝██║██╔══██║██║╚██╗██║██╔══██║██║   ██║██╔══╝  ██╔══██╗
-        ██████╔╝██║  ██║╚██████╗██║  ██╗   ██║   ███████╗███████║   ██║       ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║  ██║
-        ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝   ╚═╝       ╚═╝     ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
-        `);
-        
-    logger.log('Extension "my-vscode-extension" is now active!');
+  // Print logo
+  logger.log(`
+    ██████╗  █████╗  ██████╗██╗  ██╗████████╗███████╗███████╗████████╗  ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗██████╗ 
+    ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝  ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝██╔══██╗
+    ██████╔╝███████║██║   █████╔╝  ██║   █████╗  ███████╗   ██║     ██╔████╔██║███████║██╔██╗ ██║███████║██║  ███╗█████╗  ██████╔╝
+    ██╔══██╗██╔══██║██║   ██╔═██╗  ██║   ██╔══╝  ╚════██║   ██║     ██║╚██╔╝██║██╔══██║██║╚██╗██║██╔══██║██║   ██║██╔══╝  ██╔══██╗
+    ██████╔╝██║  ██║╚██████╗██║  ██╗   ██║   ███████╗███████║   ██║     ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║  ██║
+    ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝   ╚═╝     ╚═╝   ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
+    `);
+    
+  logger.log('Extension "my-vscode-extension" is now active!');
 }
 
 // This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
-    const logger = VSCodeOutputLogger.getInstance("Backtest Manager");
-    
-    printLogo(logger);
+  const logger = VSCodeOutputLogger.getInstance("Backtest Manager");
 
-    Backtester.getPythonPath().then(pythonPath => {
-        logger.log(`Python path: ${pythonPath}`);
-    });
+  printLogo(logger);
 
-    // Get workspace path
-    let workspacePath = '';
-    if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-        workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-    } else {
-        vscode.window.showErrorMessage('Workspace folder is not open.');
-        return;
+  Backtester.getPythonPath();
+
+  // Get workspace path
+  let workspacePath = '';
+  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
+    workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+  } else {
+    vscode.window.showErrorMessage('Workspace folder is not open.');
+    return;
+  }
+
+  // Sample data for the tree view
+  const sampleData: any[] = [];
+
+  // Register tree view
+  const projectTreeProvider = new ProjectTreeProvider(sampleData, context.extensionUri);
+  const projectTreeView = vscode.window.createTreeView('myExtensionTreeView', { 
+    treeDataProvider: projectTreeProvider
+  });
+
+  // Register tree view selection change event
+  projectTreeView.onDidChangeSelection(async (event) => {
+    if (event.selection.length > 0) {
+      const item = event.selection[0];
+      if (item.projectInfo) {
+        const entryFilePath = vscode.Uri.file(path.join(item.projectInfo.path, item.projectInfo.entryFile));
+        const document = await vscode.workspace.openTextDocument(entryFilePath);
+        await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+      }
     }
+  });
 
-    // Sample data for the tree view
-    const sampleData: any[] = [];
+  context.subscriptions.push(projectTreeView);
 
-    // Register tree view
-    const projectTreeProvider = new ProjectTreeProvider(sampleData, context.extensionUri);
-    const projectTreeView = vscode.window.createTreeView('myExtensionTreeView', { 
-        treeDataProvider: projectTreeProvider
-    });
+  // Register dataset tree view
+  const datasetTreeProvider = new DatasetTreeProvider(workspacePath);
+  const datasetTreeView = vscode.window.createTreeView('myDatasetTreeView', { 
+    treeDataProvider: datasetTreeProvider
+  });
+  context.subscriptions.push(datasetTreeView);
 
-    // Register tree view selection change event
-    projectTreeView.onDidChangeSelection(async (event) => {
-        if (event.selection.length > 0) {
-            const item = event.selection[0];
-            if (item.projectInfo) {
-                const entryFilePath = vscode.Uri.file(path.join(item.projectInfo.path, item.projectInfo.entryFile));
-                const document = await vscode.workspace.openTextDocument(entryFilePath);
-                await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-            }
+  // Register sidebar panel provider
+  const backtestSettingView = new BacktestSettingView(context.extensionUri, projectTreeProvider);
+  context.subscriptions.push(
+    vscode.commands.registerCommand('myExtension.showBacktestSettings', () => {
+      backtestSettingView.show();
+    })
+  );
+
+  // Register commands
+  context.subscriptions.push(
+    vscode.commands.registerCommand('myExtension.refreshTreeView', () => {
+      projectTreeProvider.updateData();
+    }),
+
+    // Add command to create new project
+    vscode.commands.registerCommand('myExtension.createNewProject', async () => {
+      const projectName = await vscode.window.showInputBox({
+        placeHolder: 'Enter project name',
+        prompt: 'Create New Project',
+        validateInput: async (value) => {
+          if (!value) {
+            return 'Project name cannot be empty.';
+          }
+
+          if (value.includes('/') || value.includes('\\')) {
+            return 'Project name cannot contain path separators.';
+          }
+
+          const project = await Database.getInstance().getProjectByName(value);
+          if (project) {
+            return 'Project name already exists.';
+          }
+
+          return null;
         }
-    });
+      });
+      
+      const engine = await vscode.window.showQuickPick([
+        { label: '🚀 Backtrader', value: 'backtrader', description: 'Full featured event-driven backtesting engine.' },
+        { label: '⚡ VectorBT', value: 'vectorbt', description: 'Ultra rapid vectorized backtesting engine.' }
+      ], {
+        placeHolder: 'Select engine',
+      });
 
-    context.subscriptions.push(projectTreeView);
+      if (projectName && engine) {
+        await projectTreeProvider.createNewProject(projectName, engine.value as Engine);
+      }
+    }),
 
-    // Register dataset tree view
-    const datasetTreeProvider = new DatasetTreeProvider(workspacePath);
-    const datasetTreeView = vscode.window.createTreeView('myDatasetTreeView', { 
-        treeDataProvider: datasetTreeProvider
-    });
-    context.subscriptions.push(datasetTreeView);
+    // Add command to run backtest
+    vscode.commands.registerCommand('myExtension.runBacktest', async () => {
+      const activeEditor = vscode.window.activeTextEditor;
+      if (!activeEditor) {
+        vscode.window.showErrorMessage('No active editor found.');
+        return;
+      }
 
-    // Register sidebar panel provider
-    const backtestSettingView = new BacktestSettingView(context.extensionUri, projectTreeProvider);
-    context.subscriptions.push(
-        vscode.commands.registerCommand('myExtension.showBacktestSettings', () => {
-            backtestSettingView.show();
-        })
-    );
+      const filePath = activeEditor.document.uri.fsPath;
+      
+      // Check if the current file is the entryFile of a project
+      const projects = await projectTreeProvider.getProjects();
+      const project = projects.find(p => path.join(p.path, p.entryFile) === filePath);
+      
+      if (!project) {
+        vscode.window.showErrorMessage('This file is not the entryFile of a backtest project.');
+        return;
+      }
 
-    // Register commands
-    context.subscriptions.push(
-        vscode.commands.registerCommand('myExtension.refreshTreeView', () => {
-            projectTreeProvider.updateData();
-        }),
+      // Open Backtest Settings panel
+      await backtestSettingView.openBacktestSetting(project.name);
+    }),
 
-        // Add command to create new project
-        vscode.commands.registerCommand('myExtension.createNewProject', async () => {
-            const projectName = await vscode.window.showInputBox({
-                placeHolder: 'Enter project name',
-                prompt: 'Create New Project',
-                validateInput: (value) => {
-                    if (!value) {
-                        return 'Project name cannot be empty';
-                    }
-                    if (value.includes('/') || value.includes('\\')) {
-                        return 'Project name cannot contain path separators';
-                    }
-                    return null;
-                }
-            });
-            
-            const engine = await vscode.window.showQuickPick([
-                { label: '🚀 Backtrader', value: 'backtrader', description: 'Full featured event-driven backtesting engine.' },
-                { label: '⚡ VectorBT', value: 'vectorbt', description: 'Ultra rapid vectorized backtesting engine.' }
-            ], {
-                placeHolder: 'Select engine',
-            });
+    // Run backtest from TreeView context menu
+    vscode.commands.registerCommand('myExtension.runBacktestFromTree', async (item: ProjectTreeItem) => {
+      if (item.projectInfo) {
+        await backtestSettingView.openBacktestSetting(item.projectInfo.name);
+      }
+    }),
 
-            if (projectName && engine) {
-                await projectTreeProvider.createNewProject(projectName, engine.value as Engine);
-            }
-        }),
+    // Add command to show backtest result
+    vscode.commands.registerCommand('myExtension.showBacktestResult', (backtest: Backtest) => {
+      const resultView = new BacktestResultView(context.extensionUri);
+      resultView.showResult(backtest);
+    }),
 
-        // Add command to run backtest
-        vscode.commands.registerCommand('myExtension.runBacktest', async () => {
-            const activeEditor = vscode.window.activeTextEditor;
-            if (!activeEditor) {
-                vscode.window.showErrorMessage('No active editor found.');
-                return;
-            }
+    // Add command to delete backtest result
+    vscode.commands.registerCommand('myExtension.deleteBacktestResult', async (item) => {
+      if (item.backtestResult && item.projectInfo && item.projectInfo._id) {
+        const result = await vscode.window.showWarningMessage('Are you sure you want to delete this backtest result?', { modal: true }, 'Delete');
+        if (result === 'Delete') {
+          await projectTreeProvider.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
+        }
+      }
+    }),
 
-            const filePath = activeEditor.document.uri.fsPath;
-            
-            // Check if the current file is the entryFile of a project
-            const projects = await projectTreeProvider.getProjects();
-            const project = projects.find(p => path.join(p.path, p.entryFile) === filePath);
-            
-            if (!project) {
-                vscode.window.showErrorMessage('This file is not the entryFile of a backtest project.');
-                return;
-            }
+    vscode.commands.registerCommand('myExtension.renameProject', async (item: ProjectTreeItem) => {
+      const projectName = await vscode.window.showInputBox({
+        placeHolder: 'Enter new project name',
+        prompt: 'Rename Project',
+        validateInput: (value) => {
+          if (!value) {
+            return 'Project name cannot be empty';
+          }
+          if (value.includes('/') || value.includes('\\')) {
+            return 'Project name cannot contain path separators';
+          }
+          return null;
+        }
+      });
 
-            // Open Backtest Settings panel
-            await backtestSettingView.openBacktestSetting(project.name);
-        }),
+      if (!projectName) {
+        vscode.window.showErrorMessage('Project name cannot be empty');
+        return;
+      }
 
-        // Run backtest from TreeView context menu
-        vscode.commands.registerCommand('myExtension.runBacktestFromTree', async (item: ProjectTreeItem) => {
-            if (item.projectInfo) {
-                await backtestSettingView.openBacktestSetting(item.projectInfo.name);
-            }
-        }),
+      if (item.projectInfo && item.projectInfo._id) {
+        await projectTreeProvider.renameProject(item.projectInfo._id, projectName);
+      }
+    }),
 
-        // Add command to show backtest result
-        vscode.commands.registerCommand('myExtension.showBacktestResult', (backtest: Backtest) => {
-            const resultView = new BacktestResultView(context.extensionUri);
-            resultView.showResult(backtest);
-        }),
+    // Add command to delete project
+    vscode.commands.registerCommand('myExtension.deleteProject', async (item) => {
+      if (item.projectInfo && item.projectInfo._id) {
+        const result = await vscode.window.showWarningMessage('Are you sure you want to delete this project? (Project folder will remain)', { modal: true }, 'Delete');
+        if (result === 'Delete') {
+          await projectTreeProvider.deleteProject(item.projectInfo._id);
+        }
+      }
+    }),
 
-        // Add command to delete backtest result
-        vscode.commands.registerCommand('myExtension.deleteBacktestResult', async (item) => {
-            if (item.backtestResult && item.projectInfo && item.projectInfo._id) {
-                const result = await vscode.window.showWarningMessage('Are you sure you want to delete this backtest result?', { modal: true }, 'Delete');
-                if (result === 'Delete') {
-                    await projectTreeProvider.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
-                }
-            }
-        }),
+    // Dataset management commands
+    vscode.commands.registerCommand('myExtension.refreshDatasetView', () => {
+      datasetTreeProvider.updateData();
+    }),
 
-        vscode.commands.registerCommand('myExtension.renameProject', async (item: ProjectTreeItem) => {
-            const projectName = await vscode.window.showInputBox({
-                placeHolder: 'Enter new project name',
-                prompt: 'Rename Project',
-                validateInput: (value) => {
-                    if (!value) {
-                        return 'Project name cannot be empty';
-                    }
-                    if (value.includes('/') || value.includes('\\')) {
-                        return 'Project name cannot contain path separators';
-                    }
-                    return null;
-                }
-            });
+    vscode.commands.registerCommand('myExtension.deleteDataset', async (item: DatasetTreeItem) => {
+      if (item.dataset) {
+        await datasetTreeProvider.deleteDataset(item.dataset);
+      }
+    }),
 
-            if (!projectName) {
-                vscode.window.showErrorMessage('Project name cannot be empty');
-                return;
-            }
+    vscode.commands.registerCommand('myExtension.openDatasetFile', async (dataset: DatasetInfo) => {
+      try {
+        const document = await vscode.workspace.openTextDocument(dataset.path);
+        await vscode.window.showTextDocument(document);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Cannot open file: ${error}`);
+      }
+    }),
 
-            if (item.projectInfo && item.projectInfo._id) {
-                await projectTreeProvider.renameProject(item.projectInfo._id, projectName);
-            }
-        }),
-
-        // Add command to delete project
-        vscode.commands.registerCommand('myExtension.deleteProject', async (item) => {
-            if (item.projectInfo && item.projectInfo._id) {
-                const result = await vscode.window.showWarningMessage('Are you sure you want to delete this project? (Project folder will remain)', { modal: true }, 'Delete');
-                if (result === 'Delete') {
-                    await projectTreeProvider.deleteProject(item.projectInfo._id);
-                }
-            }
-        }),
-
-        // Dataset management commands
-        vscode.commands.registerCommand('myExtension.refreshDatasetView', () => {
-            datasetTreeProvider.updateData();
-        }),
-
-        vscode.commands.registerCommand('myExtension.deleteDataset', async (item: DatasetTreeItem) => {
-            if (item.dataset) {
-                await datasetTreeProvider.deleteDataset(item.dataset);
-            }
-        }),
-
-        vscode.commands.registerCommand('myExtension.openDatasetFile', async (dataset: DatasetInfo) => {
-            try {
-                const document = await vscode.workspace.openTextDocument(dataset.path);
-                await vscode.window.showTextDocument(document);
-            } catch (error) {
-                vscode.window.showErrorMessage(`Cannot open file: ${error}`);
-            }
-        }),
-
-        // Add command to show dataset downloader webview for specific asset type
-        vscode.commands.registerCommand('myExtension.showDatasetDownloader', (item: DatasetTreeItem) => {
-            if (item.assetType) {
-                const downloader = new DatasetDownloaderView(context.extensionUri, item.assetType, workspacePath);
-                downloader.show();
-            }
-        })
-    );
+    // Add command to show dataset downloader webview for specific asset type
+    vscode.commands.registerCommand('myExtension.showDatasetDownloader', (item: DatasetTreeItem) => {
+      if (item.assetType) {
+        const downloader = new DatasetDownloaderView(context.extensionUri, item.assetType, workspacePath);
+        downloader.show();
+      }
+    })
+  );
 }
 
 // This method is called when your extension is deactivated
 export function deactivate() {
-    Database.getInstance().saveDatabase();
+  Database.getInstance().saveDatabase();
 }

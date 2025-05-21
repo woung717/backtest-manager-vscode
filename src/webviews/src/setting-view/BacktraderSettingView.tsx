@@ -166,13 +166,10 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
       }
     });
 
-    const datasetPath = selectedDataset || '';
-    
-    if (datasetPath) {
-      envObject['DATASET_PATH'] = datasetPath;
-    }
+    const datasetPaths = selectedDataset ? [selectedDataset] : [];
 
     const config = {
+      datasetPaths,
       ...cerebroSettings,
       broker: {
         ...brokerSettings,
@@ -184,7 +181,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
         },
         slippage: slippageSettings,
       },
-      env: envObject
+      env: envObject,
     };
 
     VSCodeAPI.postMessage({

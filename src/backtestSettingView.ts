@@ -5,6 +5,7 @@ import { Database } from './database';
 import { ProjectTreeProvider } from './projectTreeProvider';
 import { Backtester as BacktestRunner } from './backtester';
 import * as path from 'path';
+import { execSync, spawnSync } from 'child_process';
 
 export class BacktestSettingView {
     private _extensionUri: vscode.Uri;
@@ -49,7 +50,9 @@ export class BacktestSettingView {
                 this._loadDatasets(),
                 this._getLastBacktestConfig()
             ]);
-            
+
+            await this._checkEngineLibrary();
+
             this.show();
             this._updateWebview(lastConfig);
         }
@@ -119,6 +122,41 @@ export class BacktestSettingView {
         } catch (error) {
             console.error('Failed to get last backtest config:', error);
             return undefined;
+        }
+    }
+
+    private async _checkEngineLibrary(): Promise<void> {
+        if (!this._currentProject) {
+            return;
+        }
+
+        const pythonPath = await BacktestRunner.getPythonPath();
+        if (!pythonPath) {
+            return;
+        }
+
+        switch(this._currentProject?.engine) {
+            case 'backtrader': {
+                try {
+                    execSync(pythonPath + " -c 'import backtrader'");
+                } catch (error: any) {
+                    if (error.stderr.toString().includes('ModuleNotFoundError:')) {
+                        vscode.window.showErrorMessage("Backtrader library is not installed. Please install it using the following command: 'pip install backtrader'");
+                    }
+                }
+                break;
+            }
+            case 'vectorbt': {
+                try {
+                    execSync(pythonPath + " -c 'import vectorbt'");
+                } catch (error: any) {
+                    if (error.stderr.toString().includes('ModuleNotFoundError:')) {
+                        vscode.window.showErrorMessage("VectorBT library is not installed. Please install it using the following command: 'pip install vectorbt'");
+                    }
+                }
+                break;
+            }
+            default: break;
         }
     }
 
