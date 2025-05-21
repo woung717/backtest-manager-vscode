@@ -8,6 +8,22 @@ import { ProjectInfo, TradeEnterData, TradeExitData } from '../../types';
 import { generateShortHash } from '../../util';
 import { VSCodeOutputLogger } from '../../vscodeOutputLogger';
 
+function splitUserCode(userCode: string): { userImports: string; userCode: string } {
+  const importLines: string[] = [];
+  const otherLines: string[] = [];
+  for (const line of userCode.split('\n')) {
+    if (/^\s*(from .+ import )/.test(line)) {
+      importLines.push(line);
+    } else {
+      otherLines.push(line);
+    }
+  }
+  return {
+    userImports: importLines.join('\n'),
+    userCode: otherLines.join('\n'),
+  };
+}
+
 export class BacktraderRunner implements BacktestRunner {
   private config: BacktraderConfig;
   private tempFilePath: string = '';
@@ -189,10 +205,12 @@ export class BacktraderRunner implements BacktestRunner {
 
   private async renderScript(pythonCode: string): Promise<string> {
     const template = await fs.promises.readFile(this.templatePath, 'utf8');
+    const { userImports, userCode } = splitUserCode(pythonCode);
     return ejs.render(template, {
       project: this.currentProject,
       config: this.config,
-      userCode: pythonCode
+      userImports,
+      userCode
     });
   }
 
