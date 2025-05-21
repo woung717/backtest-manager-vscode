@@ -24,7 +24,9 @@ export class ProjectTreeItem {
 
 export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeItem> {
   private db: Database;
-  private data: ProjectTreeItem[] = [];
+  private data: ProjectTreeItem[] = [
+    new ProjectTreeItem('loading', 'Loading Projects...', undefined, undefined, undefined, undefined)
+  ];
   private entryFileName: string = 'main.py';
   
   private _onDidChangeTreeData: vscode.EventEmitter<ProjectTreeItem | undefined | null | void> = new vscode.EventEmitter<ProjectTreeItem | undefined | null | void>();

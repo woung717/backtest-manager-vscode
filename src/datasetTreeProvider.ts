@@ -35,7 +35,9 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   readonly onDidChangeTreeData: vscode.Event<DatasetTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   private datasetRoot: string = '';
-  private data: DatasetTreeItem[] = [];
+  private data: DatasetTreeItem[] = [
+    new DatasetTreeItem('loading', 'Loading Projects...')
+  ];
 
   constructor(private workspaceRoot: string) {
     this.datasetRoot = path.join(workspaceRoot, 'dataset');
