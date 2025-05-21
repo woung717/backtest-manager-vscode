@@ -117,6 +117,27 @@ cerebro.broker.set_slippage_fixed(<%= config.broker.slippage.slippageFixed %>
 <% } %>
 <% } %>
 
+
+<% if (config.datasetPaths) { %>
+<% config.datasetPaths.forEach(function(datasetPath) { %>
+cerebro.adddata(
+    bt.feeds.GenericCSVData(
+        dataname='<%= datasetPath %>',
+        name='<%= datasetPath.split('/').pop() %>',
+        dtformat='%Y-%m-%dT%H:%M:%S.%fZ',
+        datetime=0,
+        open=1,
+        high=2,
+        low=3,
+        close=4,
+        volume=5,
+        openinterest=-1,
+        timeframe=bt.TimeFrame.Ticks,
+    )
+)
+<% }) %>
+<% } %>
+
 <%- userCode %>
 
 try:

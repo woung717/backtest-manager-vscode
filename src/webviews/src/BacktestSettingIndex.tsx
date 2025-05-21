@@ -12,7 +12,6 @@ if (root) {
   let lastConfig: any = undefined;
   const reactRoot = createRoot(root);
 
-  // Message handling
   window.addEventListener('message', event => {
     const message = event.data;
     switch (message.type) {
@@ -25,7 +24,6 @@ if (root) {
     }
   });
 
-  // Render function
   function render() {
     reactRoot.render(
       <React.StrictMode>
@@ -46,6 +44,5 @@ if (root) {
     );
   }
 
-  // Initial render
   render();
 } 

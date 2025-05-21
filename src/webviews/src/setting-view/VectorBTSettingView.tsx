@@ -233,13 +233,13 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
             >
               <option value="">-- Select Dataset --</option>
               {Object.entries(groupedDatasets).map(([assetType, datasets]) => (
-                <optgroup key={assetType} label={assetType.toUpperCase()}>
+                <optgroup key={assetType} label={assetType}>
                   {datasets.map(dataset => (
                     <option 
                       key={dataset.path} 
                       value={dataset.path}
                     >
-                      {dataset.symbol} - {dataset.timeframe} ({dataset.name})
+                      {dataset.exchange} - {dataset.symbol} - {dataset.timeframe} ({dataset.name})
                     </option>
                   ))}
                 </optgroup>

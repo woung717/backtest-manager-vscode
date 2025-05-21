@@ -111,9 +111,6 @@ export class BacktraderRunner implements BacktestRunner {
     }
   }
 
-  /**
-   * Calculate backtest performance metrics.
-   */
   private calculatePerformanceMetrics(): void {
     if (!this.currentBacktest) return;
 
