@@ -109,7 +109,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     
     if (element.contextValue === 'backtestResult' && element.backtestResult) {
       treeItem.command = {
-        command: 'myExtension.showBacktestResult',
+        command: 'backtestManager.showBacktestResult',
         title: 'View Backtest Result',
         arguments: [element.backtestResult]
       };

@@ -10,71 +10,63 @@
     "Other"
   ],
   "activationEvents": [
-    "onCommand:backtest-manager-vscode.start"
+    "onView:backtest-manager-vscode"
   ],
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
-        "command": "myExtension.helloWorld",
-        "title": "Hello World"
+        "command": "backtestManager.feedback",
+        "title": "Backtest Manager: Leave Feedback"
       },
       {
-        "command": "myExtension.refreshTreeView",
-        "title": "Refresh",
+        "command": "backtestManager.refreshProjectTreeView",
+        "title": "Backtest Manager: Refresh Project Tree",
         "icon": "$(refresh)"
       },
       {
-        "command": "myExtension.executeShellCommand",
-        "title": "Execute Shell Command on Server"
-      },
-      {
-        "command": "myExtension.checkServerStatus",
-        "title": "Check Server Status"
-      },
-      {
-        "command": "myExtension.createNewProject",
-        "title": "새 프로젝트 생성",
+        "command": "backtestManager.createNewProject",
+        "title": "Backtest Manager: Create New Project",
         "icon": "$(add)"
       },
       {
-        "command": "myExtension.runBacktest",
-        "title": "Backtest",
+        "command": "backtestManager.runBacktest",
+        "title": "Backtest Manager: Run Backtest",
         "icon": "$(dashboard)"
       },
       {
-        "command": "myExtension.runBacktestFromTree",
-        "title": "Run Backtest",
+        "command": "backtestManager.runBacktestFromTree",
+        "title": "Backtest Manager: Run Backtest from Tree",
         "icon": "$(play)"
       },
       {
-        "command": "myExtension.deleteBacktestResult",
-        "title": "Delete"
+        "command": "backtestManager.deleteBacktestResult",
+        "title": "Backtest Manager: Delete Backtest Result"
       },
       {
-        "command": "myExtension.renameProject",
-        "title": "Rename"
+        "command": "backtestManager.renameProject",
+        "title": "Backtest Manager: Rename Project"
       },
       {
-        "command": "myExtension.deleteProject",
-        "title": "Delete"
+        "command": "backtestManager.deleteProject",
+        "title": "Backtest Manager: Delete Project"
       },
       {
-        "command": "myExtension.refreshDatasetView",
-        "title": "Refresh",
+        "command": "backtestManager.refreshDatasetView",
+        "title": "Backtest Manager: Refresh Dataset View",
         "icon": "$(refresh)"
       },
       {
-        "command": "myExtension.deleteDataset",
-        "title": "Delete"
+        "command": "backtestManager.deleteDataset",
+        "title": "Backtest Manager: Delete Dataset"
       },
       {
-        "command": "myExtension.openDatasetFile",
-        "title": "Open"
+        "command": "backtestManager.openDataset",
+        "title": "Backtest Manager: Open Dataset"
       },
       {
-        "command": "myExtension.showDatasetDownloader",
-        "title": "Download Datasets",
+        "command": "backtestManager.showDatasetDownloader",
+        "title": "Backtest Manager: Show Dataset Downloader",
         "icon": "$(cloud-download)"
       }
     ],
@@ -91,7 +83,7 @@
       "my-extension-explorer": [
         {
           "type": "tree",
-          "id": "myExtensionTreeView",
+          "id": "projectTreeView",
           "name": "Projects"
         },
         {
@@ -104,52 +96,52 @@
     "menus": {
       "view/title": [
         {
-          "command": "myExtension.refreshTreeView",
-          "when": "view == myExtensionTreeView",
+          "command": "backtestManager.refreshProjectTreeView",
+          "when": "view == projectTreeView",
           "group": "navigation"
         },
         {
-          "command": "myExtension.createNewProject",
-          "when": "view == myExtensionTreeView",
+          "command": "backtestManager.createNewProject",
+          "when": "view == projectTreeView",
           "group": "navigation"
         },
         {
-          "command": "myExtension.refreshDatasetView",
+          "command": "backtestManager.refreshDatasetView",
           "when": "view == myDatasetTreeView",
           "group": "navigation"
         }
       ],
       "editor/title": [
         {
-          "command": "myExtension.runBacktest",
+          "command": "backtestManager.runBacktest",
           "when": "resourceScheme == 'file' && resourcePath in backtestManager.entryFiles",
           "group": "navigation"
         }
       ],
       "view/item/context": [
         {
-          "command": "myExtension.runBacktestFromTree",
-          "when": "view == myExtensionTreeView && viewItem == project",
+          "command": "backtestManager.runBacktestFromTree",
+          "when": "view == projectTreeView && viewItem == project",
           "group": "inline"
         },
         {
-          "command": "myExtension.deleteBacktestResult",
-          "when": "view == myExtensionTreeView && viewItem == backtestResult"
+          "command": "backtestManager.deleteBacktestResult",
+          "when": "view == projectTreeView && viewItem == backtestResult"
         },
         {
-          "command": "myExtension.renameProject",
-          "when": "view == myExtensionTreeView && viewItem == project"
+          "command": "backtestManager.renameProject",
+          "when": "view == projectTreeView && viewItem == project"
         },
         {
-          "command": "myExtension.deleteProject",
-          "when": "view == myExtensionTreeView && viewItem == project"
+          "command": "backtestManager.deleteProject",
+          "when": "view == projectTreeView && viewItem == project"
         },
         {
-          "command": "myExtension.deleteDataset",
+          "command": "backtestManager.deleteDataset",
           "when": "view == myDatasetTreeView && viewItem == dataset"
         },
         {
-          "command": "myExtension.showDatasetDownloader",
+          "command": "backtestManager.showDatasetDownloader",
           "when": "view == myDatasetTreeView && viewItem == assetFolder",
           "group": "inline"
         }

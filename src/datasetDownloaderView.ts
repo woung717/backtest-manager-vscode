@@ -45,7 +45,7 @@ export class DatasetDownloaderView {
               await this.downloadDataset(data.config);
               break;
             case 'refresh':
-              vscode.commands.executeCommand('myExtension.refreshDatasetView');
+              vscode.commands.executeCommand('backtestManager.refreshDatasetView');
               break;
             case 'getExchangeInfo':
               const exchangeInfo = await this.downloader.getExchangeInfo(data.exchange);
@@ -99,7 +99,7 @@ export class DatasetDownloaderView {
         } catch (error: any) {
           vscode.window.showWarningMessage(`Actual data download failed: ${error.message}.`);
         }
-        vscode.commands.executeCommand('myExtension.refreshDatasetView');
+        vscode.commands.executeCommand('backtestManager.refreshDatasetView');
       });
     } catch (error: any) {
       vscode.window.showErrorMessage(`Error downloading data: ${error.message}`);

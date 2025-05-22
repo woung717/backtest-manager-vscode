@@ -48,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register tree view
   const projectTreeProvider = new ProjectTreeProvider(sampleData, context.extensionUri);
-  const projectTreeView = vscode.window.createTreeView('myExtensionTreeView', { 
+  const projectTreeView = vscode.window.createTreeView('projectTreeView', { 
     treeDataProvider: projectTreeProvider
   });
 
@@ -76,19 +76,19 @@ export function activate(context: vscode.ExtensionContext) {
   // Register sidebar panel provider
   const backtestSettingView = new BacktestSettingView(context.extensionUri, projectTreeProvider);
   context.subscriptions.push(
-    vscode.commands.registerCommand('myExtension.showBacktestSettings', () => {
+    vscode.commands.registerCommand('backtestManager.showBacktestSettings', () => {
       backtestSettingView.show();
     })
   );
 
   // Register commands
   context.subscriptions.push(
-    vscode.commands.registerCommand('myExtension.refreshTreeView', () => {
+    vscode.commands.registerCommand('backtestManager.refreshProjectTreeView', () => {
       projectTreeProvider.updateData();
     }),
 
     // Add command to create new project
-    vscode.commands.registerCommand('myExtension.createNewProject', async () => {
+    vscode.commands.registerCommand('backtestManager.createNewProject', async () => {
       const projectName = await vscode.window.showInputBox({
         placeHolder: 'Enter project name',
         prompt: 'Create New Project',
@@ -123,7 +123,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // Add command to run backtest
-    vscode.commands.registerCommand('myExtension.runBacktest', async () => {
+    vscode.commands.registerCommand('backtestManager.runBacktest', async () => {
       const activeEditor = vscode.window.activeTextEditor;
       if (!activeEditor) {
         vscode.window.showErrorMessage('No active editor found.');
@@ -146,20 +146,20 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // Run backtest from TreeView context menu
-    vscode.commands.registerCommand('myExtension.runBacktestFromTree', async (item: ProjectTreeItem) => {
+    vscode.commands.registerCommand('backtestManager.runBacktestFromTree', async (item: ProjectTreeItem) => {
       if (item.projectInfo) {
         await backtestSettingView.openBacktestSetting(item.projectInfo.name);
       }
     }),
 
     // Add command to show backtest result
-    vscode.commands.registerCommand('myExtension.showBacktestResult', (backtest: Backtest) => {
+    vscode.commands.registerCommand('backtestManager.showBacktestResult', (backtest: Backtest) => {
       const resultView = new BacktestResultView(context.extensionUri);
       resultView.showResult(backtest);
     }),
 
     // Add command to delete backtest result
-    vscode.commands.registerCommand('myExtension.deleteBacktestResult', async (item) => {
+    vscode.commands.registerCommand('backtestManager.deleteBacktestResult', async (item) => {
       if (item.backtestResult && item.projectInfo && item.projectInfo._id) {
         const result = await vscode.window.showWarningMessage('Are you sure you want to delete this backtest result?', { modal: true }, 'Delete');
         if (result === 'Delete') {
@@ -168,7 +168,7 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
-    vscode.commands.registerCommand('myExtension.renameProject', async (item: ProjectTreeItem) => {
+    vscode.commands.registerCommand('backtestManager.renameProject', async (item: ProjectTreeItem) => {
       const projectName = await vscode.window.showInputBox({
         placeHolder: 'Enter new project name',
         prompt: 'Rename Project',
@@ -194,7 +194,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // Add command to delete project
-    vscode.commands.registerCommand('myExtension.deleteProject', async (item) => {
+    vscode.commands.registerCommand('backtestManager.deleteProject', async (item) => {
       if (item.projectInfo && item.projectInfo._id) {
         const result = await vscode.window.showWarningMessage('Are you sure you want to delete this project? (Project folder will remain)', { modal: true }, 'Delete');
         if (result === 'Delete') {
@@ -204,17 +204,17 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // Dataset management commands
-    vscode.commands.registerCommand('myExtension.refreshDatasetView', () => {
+    vscode.commands.registerCommand('backtestManager.refreshDatasetView', () => {
       datasetTreeProvider.updateData();
     }),
 
-    vscode.commands.registerCommand('myExtension.deleteDataset', async (item: DatasetTreeItem) => {
+    vscode.commands.registerCommand('backtestManager.deleteDataset', async (item: DatasetTreeItem) => {
       if (item.dataset) {
         await datasetTreeProvider.deleteDataset(item.dataset);
       }
     }),
 
-    vscode.commands.registerCommand('myExtension.openDatasetFile', async (dataset: DatasetInfo) => {
+    vscode.commands.registerCommand('backtestManager.openDataset', async (dataset: DatasetInfo) => {
       try {
         const document = await vscode.workspace.openTextDocument(dataset.path);
         await vscode.window.showTextDocument(document);
@@ -224,12 +224,17 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     // Add command to show dataset downloader webview for specific asset type
-    vscode.commands.registerCommand('myExtension.showDatasetDownloader', (item: DatasetTreeItem) => {
+    vscode.commands.registerCommand('backtestManager.showDatasetDownloader', (item: DatasetTreeItem) => {
       if (item.assetType) {
         const downloader = new DatasetDownloaderView(context.extensionUri, item.assetType, workspacePath);
         downloader.show();
       }
+    }),
+
+    vscode.commands.registerCommand('backtestManager.feedback', () => {
+      vscode.env.openExternal(vscode.Uri.parse('https://forms.gle/pRwpMMrS66sBmHdE9'));
     })
+
   );
 }
 

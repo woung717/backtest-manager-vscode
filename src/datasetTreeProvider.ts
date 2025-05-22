@@ -149,7 +149,7 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
       
       // Add command to open dataset file
       treeItem.command = {
-        command: 'myExtension.openDatasetFile',
+        command: 'backtestManager.openDataset',
         title: 'Open Dataset File',
         arguments: [element.dataset]
       };
