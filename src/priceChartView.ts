@@ -18,7 +18,7 @@ export class PriceChartView {
       const data = lines.slice(1).map(line => {
         const [datetime, open, high, low, close, volume] = line.split(',');
         return {
-          datetime: new Date(datetime).getTime() / 1000,
+          datetime: datetime,
           open: parseFloat(open),
           high: parseFloat(high),
           low: parseFloat(low),

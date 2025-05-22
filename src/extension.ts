@@ -143,6 +143,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('backtestManager.runBacktestFromTree', async (item: ProjectTreeItem) => {
       if (item.projectInfo) {
         backtestSettingView.openBacktestSetting(item.projectInfo.name);
+        projectTreeProvider.openEntryFile(item.projectInfo);
       }
     }),
 

@@ -16,7 +16,7 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
     
     // Convert OHLCV data to chart format
     const candleData = chartData.ohlcv.map(d => ({
-      time: d.datetime,
+      time: new Date(d.datetime).getTime() / 1000,
       open: d.open,
       high: d.high,
       low: d.low,
@@ -25,28 +25,30 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
 
     // Convert volume data
     const volumeData = chartData.ohlcv.map(d => ({
-      time: d.datetime,
+      time: new Date(d.datetime).getTime() / 1000,
       value: d.volume,
       color: d.close >= d.open ? 'rgba(59, 130, 246, 0.5)' : 'rgba(239, 68, 68, 0.5)',
     }));
 
-    // Convert trades to markers
+    // Have to convert time to Local only on markers. Dunno why :(
+    const timeToLocal = (d: Date) => {
+      return Date.UTC(d.getFullYear(), d.getMonth(), d.getDate(), d.getHours(), d.getMinutes(), d.getSeconds(), d.getMilliseconds());
+    }
+
     const tradeMarkers = chartData.trades.map(trade => {
       const markers: any[] = [];
       
-      // Entry marker
       markers.push({
-        time: trade.enter.datetime,
+        time: timeToLocal(new Date(trade.enter.datetime)) / 1000, 
         position: trade.enter.side === 'long' ? 'belowBar' : 'aboveBar',
         color: trade.enter.side === 'long' ? '#22C55E' : '#EF4444',
         shape: trade.enter.side === 'long' ? 'arrowUp' : 'arrowDown',
         text: `${trade.enter.side.toUpperCase()} ${trade.enter.size.toFixed(2)}`,
       });
 
-      // Exit markers
       trade.exits.forEach(exit => {
         markers.push({
-          time: exit.datetime,
+          time: timeToLocal(new Date(exit.datetime)) / 1000,
           position: trade.enter.side === 'long' ? 'aboveBar' : 'belowBar',
           color: exit.pnlcomm > 0 ? '#22C55E' : '#EF4444',
           shape: trade.enter.side === 'long' ? 'arrowDown' : 'arrowUp',
@@ -57,11 +59,9 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
       return markers;
     }).flat();
 
-    // Calculate chart size
     const containerWidth = chartContainerRef.current.clientWidth;
     const containerHeight = window.innerHeight - 100;
 
-    // Chart options
     const chartOptions = {
       layout: {
         background: { color: '#ffffff' },
@@ -88,7 +88,6 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
       },
     };
 
-    // Create chart
     const chart = LightweightCharts.createChart(chartContainerRef.current, {
       ...chartOptions,
       width: containerWidth,
@@ -115,16 +114,13 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
       },
     })
 
-    // Set data
+
     candlestickSeries.setData(candleData);
     volumeSeries.setData(volumeData);
     LightweightCharts.createSeriesMarkers(candlestickSeries, tradeMarkers)
-    // candlestickSeries.setMarkers(tradeMarkers);
 
-    // Fit content
     chart.timeScale().fitContent();
 
-    // Handle resize
     const handleResize = () => {
       if (chartContainerRef.current) {
         chart.applyOptions({
@@ -152,7 +148,7 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
   return (
     <div className="bg-[var(--vscode-editor-background)] text-[var(--vscode-editor-foreground)] font-[var(--vscode-font-family)] p-3">
       <div className="flex flex-col space-y-5">
-        <div className="flex flex-col space-y-2">
+        <div className="flex flex-col space-y-2 mb-3">
           <h1 className="text-2xl font-bold">Price Chart</h1>
           <div className="text-sm text-[var(--vscode-descriptionForeground)]">
             {chartData.backtestId && (

@@ -91,7 +91,7 @@ export interface DatasetInfo {
 }
 
 export interface OHLCV {
-  datetime: number;
+  datetime: string;
   open: number;
   high: number;
   low: number;
