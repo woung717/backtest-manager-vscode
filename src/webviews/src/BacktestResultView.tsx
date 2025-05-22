@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
-import { Backtest, TradeInfo } from '../../types';
-import VSCodeAPI from '../lib/VSCodeAPI';
+import { Backtest } from '../../types';
 
 // Lightweight Charts type definition
 declare const LightweightCharts: any;

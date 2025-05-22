@@ -169,6 +169,12 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     }
   }
 
+  async openEntryFile(project: ProjectInfo): Promise<void> {
+    const entryFilePath = vscode.Uri.file(path.join(project.path, project.entryFile));
+    const document = await vscode.workspace.openTextDocument(entryFilePath);
+    await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+  }
+
   async renameProject(projectId: string, newName: string): Promise<void> {
     await this.db.updateProject(projectId, { name: newName });
     await this.loadProjects();

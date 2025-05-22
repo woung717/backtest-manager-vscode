@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { createRoot } from 'react-dom/client';
-import BacktestResultView from './BacktestResultView';
-import { Backtest } from '../../types';
+import PriceChartView from './PriceChartView';
+import { ChartData } from '../../types';
 import '../lib/VSCode.css';
 
 const root = document.getElementById('root');
 
 if (root) {
-  let backtestResult: Backtest | undefined;
+  let chartData: ChartData | undefined;
   const reactRoot = createRoot(root);
 
   // Message handling
@@ -15,7 +15,7 @@ if (root) {
     const message = event.data;
     switch (message.type) {
       case 'update':
-        backtestResult = message.data.backtest;
+        chartData = message.data.chartData;
         render();
         break;
     }
@@ -25,7 +25,7 @@ if (root) {
   function render() {
     reactRoot.render(
       <React.StrictMode>
-        <BacktestResultView backtest={backtestResult} />
+        <PriceChartView chartData={chartData} />
       </React.StrictMode>
     );
   }

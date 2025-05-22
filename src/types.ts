@@ -90,4 +90,20 @@ export interface DatasetInfo {
   totalBars?: number;   // Total number of data rows
 }
 
+export interface OHLCV {
+  datetime: number;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface ChartData {
+  backtestId: string | undefined;
+  datasetPath: string;
+  ohlcv: OHLCV[];
+  trades: TradeInfo[];
+}
+
 

@@ -9,11 +9,10 @@ import { DatasetDownloaderView } from './datasetDownloaderView';
 import { VSCodeOutputLogger } from './vscodeOutputLogger';
 import { Database } from './database';
 import { Backtester } from './backtester';
-/**
- * This function logs the extension logo to the output channel.
- */
+import { PriceChartView } from './priceChartView';
+
 function printLogo(logger: VSCodeOutputLogger) {
-  // Print logo
+
   logger.log(`
     ██████╗  █████╗  ██████╗██╗  ██╗████████╗███████╗███████╗████████╗  ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗██████╗ 
     ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝  ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝██╔══██╗
@@ -22,11 +21,8 @@ function printLogo(logger: VSCodeOutputLogger) {
     ██████╔╝██║  ██║╚██████╗██║  ██╗   ██║   ███████╗███████║   ██║     ██║ ╚═╝ ██║██║  ██║██║ ╚████║██║  ██║╚██████╔╝███████╗██║  ██║
     ╚═════╝ ╚═╝  ╚═╝ ╚═════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚══════╝   ╚═╝     ╚═╝   ╚═╝╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝╚═╝  ╚═╝
     `);
-    
-  logger.log('Extension "my-vscode-extension" is now active!');
 }
 
-// This method is called when your extension is activated
 export function activate(context: vscode.ExtensionContext) {
   const logger = VSCodeOutputLogger.getInstance("Backtest Manager");
 
@@ -57,10 +53,8 @@ export function activate(context: vscode.ExtensionContext) {
     if (event.selection.length > 0) {
       const item = event.selection[0];
       if (item.projectInfo) {
-        const entryFilePath = vscode.Uri.file(path.join(item.projectInfo.path, item.projectInfo.entryFile));
-        const document = await vscode.workspace.openTextDocument(entryFilePath);
-        await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
-      }
+      projectTreeProvider.openEntryFile(item.projectInfo);
+    }
     }
   });
 
@@ -68,7 +62,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Register dataset tree view
   const datasetTreeProvider = new DatasetTreeProvider(workspacePath);
-  const datasetTreeView = vscode.window.createTreeView('myDatasetTreeView', { 
+  const datasetTreeView = vscode.window.createTreeView('datasetTreeView', { 
     treeDataProvider: datasetTreeProvider
   });
   context.subscriptions.push(datasetTreeView);
@@ -148,7 +142,7 @@ export function activate(context: vscode.ExtensionContext) {
     // Run backtest from TreeView context menu
     vscode.commands.registerCommand('backtestManager.runBacktestFromTree', async (item: ProjectTreeItem) => {
       if (item.projectInfo) {
-        await backtestSettingView.openBacktestSetting(item.projectInfo.name);
+        backtestSettingView.openBacktestSetting(item.projectInfo.name);
       }
     }),
 
@@ -156,6 +150,13 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand('backtestManager.showBacktestResult', (backtest: Backtest) => {
       const resultView = new BacktestResultView(context.extensionUri);
       resultView.showResult(backtest);
+    }),
+
+    vscode.commands.registerCommand('backtestManager.showPriceChart', (item: ProjectTreeItem) => {
+      if (item.backtestResult) {
+        const resultView = new PriceChartView(context.extensionUri);
+        resultView.showPriceChart(item.backtestResult);
+      }
     }),
 
     // Add command to delete backtest result
@@ -206,6 +207,13 @@ export function activate(context: vscode.ExtensionContext) {
     // Dataset management commands
     vscode.commands.registerCommand('backtestManager.refreshDatasetView', () => {
       datasetTreeProvider.updateData();
+    }),
+
+    vscode.commands.registerCommand('backtestManager.showDatasetChart', async (item: DatasetTreeItem) => {
+      if (item.dataset) {
+        const resultView = new PriceChartView(context.extensionUri);
+        resultView.showDatasetOnlyPriceChart(item.dataset.path);    
+      }
     }),
 
     vscode.commands.registerCommand('backtestManager.deleteDataset', async (item: DatasetTreeItem) => {

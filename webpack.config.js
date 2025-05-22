@@ -35,7 +35,8 @@ module.exports = {
   entry: {
     'backtestSetting': path.resolve(__dirname, 'src/webviews/src/BacktestSettingIndex.tsx'),
     'backtestResult': path.resolve(__dirname, 'src/webviews/src/BacktestResultIndex.tsx'),
-    'datasetDownloader': path.resolve(__dirname, 'src/webviews/src/DatasetDownloaderIndex.tsx')
+    'datasetDownloader': path.resolve(__dirname, 'src/webviews/src/DatasetDownloaderIndex.tsx'),
+    'priceChart': path.resolve(__dirname, 'src/webviews/src/PriceChartIndex.tsx')
   },
   output: {
     path: path.resolve(__dirname, 'out/webviews'),

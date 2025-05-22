@@ -10,24 +10,21 @@ export class BacktestResultView {
   }
 
   public showResult(backtest: Backtest) {
-    if (this.panel) {
-      this.panel.reveal(vscode.ViewColumn.Beside);
-    } else {
-      this.panel = vscode.window.createWebviewPanel(
-        'backtestResult',
-        'Backtest Results',
-        vscode.ViewColumn.Two,
-        {
-          enableScripts: true,
-          retainContextWhenHidden: true,
-          localResourceRoots: [this.extensionUri]
-        }
-      );
+    this.panel = vscode.window.createWebviewPanel(
+      'backtestResult',
+      'Backtest Results',
+      vscode.ViewColumn.Two,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+        localResourceRoots: [this.extensionUri]
+      }
+    );
 
-      this.panel.onDidDispose(() => {
-        this.panel = undefined;
-      });
-    }
+    this.panel.onDidDispose(() => {
+      this.panel = undefined;
+    });
+    
 
     this.panel.webview.html = this.getHtmlContent();
     this.updateWebview(backtest);

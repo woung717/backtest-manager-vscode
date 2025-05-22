@@ -36,20 +36,24 @@
       },
       {
         "command": "backtestManager.runBacktestFromTree",
-        "title": "Backtest Manager: Run Backtest from Tree",
+        "title": "Run Backtest",
         "icon": "$(play)"
       },
       {
+        "command": "backtestManager.showPriceChart",
+        "title": "Show Price Chart"
+      },
+      {
         "command": "backtestManager.deleteBacktestResult",
-        "title": "Backtest Manager: Delete Backtest Result"
+        "title": "Delete Backtest Result"
       },
       {
         "command": "backtestManager.renameProject",
-        "title": "Backtest Manager: Rename Project"
+        "title": "Rename"
       },
       {
         "command": "backtestManager.deleteProject",
-        "title": "Backtest Manager: Delete Project"
+        "title": "Delete"
       },
       {
         "command": "backtestManager.refreshDatasetView",
@@ -58,11 +62,15 @@
       },
       {
         "command": "backtestManager.deleteDataset",
-        "title": "Backtest Manager: Delete Dataset"
+        "title": "Delete"
       },
       {
         "command": "backtestManager.openDataset",
         "title": "Backtest Manager: Open Dataset"
+      },
+      {
+        "command": "backtestManager.showDatasetChart",
+        "title": "Show Chart"
       },
       {
         "command": "backtestManager.showDatasetDownloader",
@@ -73,14 +81,14 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "my-extension-explorer",
+          "id": "tree-view-container",
           "title": "Backtest Manager",
           "icon": "$(dashboard)"
         }
       ]
     },
     "views": {
-      "my-extension-explorer": [
+      "tree-view-container": [
         {
           "type": "tree",
           "id": "projectTreeView",
@@ -88,7 +96,7 @@
         },
         {
           "type": "tree",
-          "id": "myDatasetTreeView",
+          "id": "datasetTreeView",
           "name": "Datasets"
         }
       ]
@@ -107,7 +115,7 @@
         },
         {
           "command": "backtestManager.refreshDatasetView",
-          "when": "view == myDatasetTreeView",
+          "when": "view == datasetTreeView",
           "group": "navigation"
         }
       ],
@@ -125,25 +133,33 @@
           "group": "inline"
         },
         {
-          "command": "backtestManager.deleteBacktestResult",
+          "command": "backtestManager.renameProject",
+          "when": "view == projectTreeView && viewItem == project"
+        },
+        {
+          "command": "backtestManager.showPriceChart",
           "when": "view == projectTreeView && viewItem == backtestResult"
         },
         {
-          "command": "backtestManager.renameProject",
-          "when": "view == projectTreeView && viewItem == project"
+          "command": "backtestManager.deleteBacktestResult",
+          "when": "view == projectTreeView && viewItem == backtestResult"
         },
         {
           "command": "backtestManager.deleteProject",
           "when": "view == projectTreeView && viewItem == project"
         },
         {
-          "command": "backtestManager.deleteDataset",
-          "when": "view == myDatasetTreeView && viewItem == dataset"
+          "command": "backtestManager.showDatasetDownloader",
+          "when": "view == datasetTreeView && viewItem == assetFolder",
+          "group": "inline"
         },
         {
-          "command": "backtestManager.showDatasetDownloader",
-          "when": "view == myDatasetTreeView && viewItem == assetFolder",
-          "group": "inline"
+          "command": "backtestManager.showDatasetChart",
+          "when": "view == datasetTreeView && viewItem == dataset"
+        },
+        {
+          "command": "backtestManager.deleteDataset",
+          "when": "view == datasetTreeView && viewItem == dataset"
         }
       ]
     }
