@@ -211,7 +211,7 @@
     "ccxt": "^4.4.71",
     "ejs": "^3.1.10",
     "express": "^4.21.2",
-    "lightweight-charts": "^5.0.3",
+    "lightweight-charts": "^5.0.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   }

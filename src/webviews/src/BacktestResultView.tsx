@@ -8,17 +8,30 @@ interface BacktestResultViewProps {
   backtest?: Backtest;
 }
 
+interface EquityData {
+  time: number;
+  value: number;
+}
+
 const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => {
   const equityChartRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!backtest || !equityChartRef.current) return;
-    
+
     // Equity chart data
-    const equityData = backtest.equity.map(e => ({
-      time: typeof e.datetime === 'string' ? new Date(e.datetime).getTime() / 1000 : e.datetime,
-      value: e.value
-    }));
+    const equityData = Object.values(
+      backtest.equity.reduce((acc, e) => {
+        const time = new Date(e.datetime).getTime() / 1000;
+        acc[time] = {
+          time: time,
+          value: e.value,
+        };
+        return acc;
+      }, {} as Record<number, EquityData>)
+    ) as EquityData[];
+
+    equityData.sort((a, b) => a.time - b.time);
 
     // Calculate chart size
     const containerWidth = equityChartRef.current.clientWidth;

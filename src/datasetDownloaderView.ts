@@ -24,7 +24,7 @@ export class DatasetDownloaderView {
       // Create webview panel
       this.panel = vscode.window.createWebviewPanel(
         'datasetDownloader',
-        `${this.assetType.charAt(0).toUpperCase() + this.assetType.slice(1)} Data Download`, // Title based on asset type
+        `${this.assetType.charAt(0).toUpperCase() + this.assetType.slice(1)} Data Download`,
         vscode.ViewColumn.Two,
         {
           enableScripts: true,
@@ -97,7 +97,7 @@ export class DatasetDownloaderView {
           await this.downloader.download(config, progress);
           vscode.window.showInformationMessage(`${exchange} ${symbol} ${timeframe} data downloaded successfully.`);
         } catch (error: any) {
-          vscode.window.showWarningMessage(`Actual data download failed: ${error.message}.`);
+          vscode.window.showWarningMessage(`Data download failed: ${error.message}.`);
         }
         vscode.commands.executeCommand('backtestManager.refreshDatasetView');
       });
