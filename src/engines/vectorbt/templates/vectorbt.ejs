@@ -1,5 +1,6 @@
 import numpy as np
 import pandas as pd
+import json
 
 import vectorbt as vbt
 
@@ -91,3 +92,49 @@ elif portfolio_func == 'from_order_func':
     }
 
     portfolio = vbt.Portfolio.from_order_func(**{**kwargs, **code_kwargs})
+
+    
+if portfolio is not None:
+    # Outputting Trades
+    trades_df = portfolio.trades.records_readable
+    for i in range(len(trades_df)):
+        record = trades_df.iloc[i]
+        
+        # Entry trade
+        entry_trade = {
+            "ref": record["Trade Id"],
+            "datetime": pd.to_datetime(record["Entry Timestamp"]).isoformat(),
+            "price": record["Avg Entry Price"],
+            "size": record["Size"],
+            "value": record["Avg Entry Price"] * record["Size"], # Calculate value
+            "commission": record["Entry Fees"],
+            "side": "long" if record["Direction"] == "Long" else "short" # Assuming Direction is "Long" or "Short"
+        }
+
+        print(f"trade: {json.dumps(entry_trade)}")
+
+        # Exit trade
+        # Check if it's a closed trade by looking at PnL or Exit Timestamp
+        if pd.notna(record["Exit Timestamp"]): # Or check if record["PnL"] is not NaN
+            exit_trade = {
+                "ref": record["Trade Id"],
+                "datetime": pd.to_datetime(record["Exit Timestamp"]).isoformat(),
+                "price": record["Avg Exit Price"],
+                "pnl": record["PnL"],
+                "pnlcomm": record["Return"], # PnL after commission
+                "commission": record["Exit Fees"],
+                "hold_bars": record["Duration"],
+                "size": record["Size"] # Size should be positive as per requirement
+            }
+            print(f"trade: {json.dumps(exit_trade)}")
+
+    # Outputting Equity
+    equity_series = portfolio.value()
+    for timestamp, equity_value in equity_series.items():
+        equity_point = {
+            "datetime": pd.to_datetime(timestamp).isoformat(),
+            "value": equity_value
+        }
+        print(f"equity: {json.dumps(equity_point)}")
+else:
+    print("Portfolio object not created. No data to output.")
