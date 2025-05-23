@@ -227,7 +227,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
           <h1 className="text-2xl font-bold">Backtest Results</h1>
           <div className="text-sm">
             <p>Date: {backtest.date}</p>
-            <p>Strategy: {backtest.strategy}</p>
+            {backtest.strategy && <p>Strategy: {backtest.strategy}</p>}
             <p>ID: {backtest.id}</p>
           </div>
         </div>

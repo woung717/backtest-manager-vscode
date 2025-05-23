@@ -69,8 +69,9 @@ export type VectorBTFunctionType = 'from_signals' | 'from_order_func' | 'from_or
 
 // VectorBT backtest config
 export interface VectorBTConfig {
-  pythonPath: string;        // Python binary path
-    
+  pythonPath: string;
+  datasetPaths?: string[]; 
+
   strategy: string;
   strategyParams?: Record<string, any>;
   logLevel?: 'debug' | 'info' | 'warning' | 'error';
@@ -81,6 +82,6 @@ export interface VectorBTConfig {
     from_order_func: VectorBTFromOrderFuncSettings;
     from_orders: VectorBTFromOrdersSettings;
   }
-  dataset?: string;
+  
   env?: Record<string, string>;
 }

@@ -40,7 +40,7 @@ def cerebro_init(cerebro: bt.Cerebro):
 export const vectorbtTemplate = `import vectorbt as vbt
 
 # Build portfolio args 
-def portfolio_init() -> dict:
+def portfolio_init(close) -> dict:
     portfolio_kwargs = {}
     
     # Example for from_signals()

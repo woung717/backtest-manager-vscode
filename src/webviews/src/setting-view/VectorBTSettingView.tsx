@@ -169,14 +169,16 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
       }
     });
 
+    const datasetPaths = selectedDataset ? [selectedDataset] : [];
+
     const config = {
+      datasetPaths,
       functionType: selectedFunction,
       settings: {
         from_signals: signalSettings,
         from_order_func: orderFuncSettings,
         from_orders: orderSettings
       },
-      dataset: selectedDataset,
       env: envObject
     };
 
@@ -279,7 +281,7 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
       {/* Function Specific Settings */}
       {selectedFunction === 'from_signals' ? (
         <div className="space-y-3">
-          {/* Size Settings */}
+          {/* Size Settings (min/max/size granularity 포함) */}
           <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
             <div className="mb-1">
               <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
@@ -295,7 +297,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.size}
                   min="0"
                   step="0.1"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, size: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, size: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -304,13 +308,62 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 <select
                   id="size_type"
                   value={signalSettings.size_type}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, size_type: e.target.value }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, size_type: e.target.value }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 >
                   <option value="Amount">Amount</option>
                   <option value="Value">Value</option>
                   <option value="Percent">Percent</option>
                 </select>
+              </div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 mt-2">
+              <div className="space-y-1">
+                <label htmlFor="min_size_signal" className="text-sm">Min Size</label>
+                <input
+                  type="number"
+                  id="min_size_signal"
+                  value={signalSettings.min_size}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, min_size: parseFloat(e.target.value) }))
+                  }
+                  className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="max_size_signal" className="text-sm">Max Size</label>
+                <input
+                  type="number"
+                  id="max_size_signal"
+                  value={signalSettings.max_size || ''}
+                  min="0"
+                  step="0.1"
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({
+                      ...prev,
+                      max_size: e.target.value ? parseFloat(e.target.value) : undefined
+                    }))
+                  }
+                  className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
+                />
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="size_granularity_signal" className="text-sm">Size Granularity</label>
+                <input
+                  type="number"
+                  id="size_granularity_signal"
+                  value={signalSettings.size_granularity}
+                  min="0"
+                  step="0.00000001"
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, size_granularity: parseFloat(e.target.value) }))
+                  }
+                  className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
+                />
               </div>
             </div>
           </div>
@@ -331,7 +384,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.fees}
                   min="0"
                   step="0.01"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, fees: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, fees: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -343,7 +398,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.fixed_fees}
                   min="0"
                   step="0.01"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, fixed_fees: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, fixed_fees: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -366,7 +423,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.sl_stop}
                   min="0"
                   step="0.1"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, sl_stop: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, sl_stop: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -378,7 +437,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.tp_stop}
                   min="0"
                   step="0.1"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, tp_stop: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, tp_stop: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -388,7 +449,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 <input
                   type="checkbox"
                   checked={signalSettings.sl_trail}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, sl_trail: e.target.checked }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, sl_trail: e.target.checked }))
+                  }
                   className="form-checkbox"
                 />
                 <span>Trailing Stop Loss</span>
@@ -396,7 +459,7 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
             </div>
           </div>
 
-          {/* Other Settings */}
+          {/* Other Settings (합쳐서 관리) */}
           <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
             <div className="mb-1">
               <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
@@ -412,7 +475,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                   value={signalSettings.init_cash}
                   min="0"
                   step="1000"
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, init_cash: parseFloat(e.target.value) }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, init_cash: parseFloat(e.target.value) }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 />
               </div>
@@ -421,7 +486,9 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 <select
                   id="direction"
                   value={signalSettings.direction}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, direction: e.target.value }))}
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, direction: e.target.value }))
+                  }
                   className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
                 >
                   <option value="both">Both</option>
@@ -430,25 +497,61 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 </select>
               </div>
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+            <div className="grid grid-cols-2 gap-2 mt-2">
+              <div className="space-y-1">
+                <label htmlFor="slippage_signal" className="text-sm">Slippage</label>
                 <input
-                  type="checkbox"
-                  checked={signalSettings.accumulate}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, accumulate: e.target.checked }))}
-                  className="form-checkbox"
+                  type="number"
+                  id="slippage_signal"
+                  value={signalSettings.slippage}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, slippage: parseFloat(e.target.value) }))
+                  }
+                  className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
                 />
-                <span>Accumulate</span>
-              </label>
-              <label className="flex items-center space-x-2 text-sm cursor-pointer">
+              </div>
+              <div className="space-y-1">
+                <label htmlFor="reject_prob_signal" className="text-sm">Reject Probability</label>
                 <input
-                  type="checkbox"
-                  checked={signalSettings.cash_sharing}
-                  onChange={(e) => setSignalSettings(prev => ({ ...prev, cash_sharing: e.target.checked }))}
-                  className="form-checkbox"
+                  type="number"
+                  id="reject_prob_signal"
+                  value={signalSettings.reject_prob}
+                  min="0"
+                  step="0.01"
+                  onChange={(e) =>
+                    setSignalSettings(prev => ({ ...prev, reject_prob: parseFloat(e.target.value) }))
+                  }
+                  className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
                 />
-                <span>Cash Sharing</span>
-              </label>
+              </div>
+            </div>
+            <div className="mt-2 grid grid-cols-3 gap-2">
+              {[
+                { id: "lock_cash", label: "Lock Cash", value: signalSettings.lock_cash },
+                { id: "allow_partial", label: "Allow Partial", value: signalSettings.allow_partial },
+                { id: "raise_reject", label: "Raise Reject", value: signalSettings.raise_reject },
+                { id: "log", label: "Log", value: signalSettings.log },
+                { id: "use_stops", label: "Use Stops", value: signalSettings.use_stops },
+                { id: "ffill_val_price", label: "Fill Val Price", value: signalSettings.ffill_val_price },
+                { id: "update_value", label: "Update Value", value: signalSettings.update_value },
+                { id: "accumulate", label: "Accumulate", value: signalSettings.accumulate },
+                { id: "cash_sharing", label: "Cash Sharing", value: signalSettings.cash_sharing }
+              ].map(item => (
+                <label key={item.id} className="flex items-center space-x-2 text-sm cursor-pointer">
+                  <input
+                    type="checkbox"
+                    id={item.id}
+                    checked={item.value}
+                    onChange={(e) =>
+                      setSignalSettings(prev => ({ ...prev, [item.id]: e.target.checked }))
+                    }
+                    className="form-checkbox"
+                  />
+                  <span>{item.label}</span>
+                </label>
+              ))}
             </div>
           </div>
         </div>
@@ -665,6 +768,50 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
               </label>
             </div>
           </div>
+
+          {/* Additional Order Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)] grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label htmlFor="slippage_order" className="text-sm">Slippage</label>
+              <input
+                type="number"
+                id="slippage_order"
+                value={orderSettings.slippage}
+                min="0"
+                step="0.01"
+                onChange={(e) =>
+                  setOrderSettings(prev => ({ ...prev, slippage: parseFloat(e.target.value) }))
+                }
+                className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
+              />
+            </div>
+            <div className="space-y-1">
+              <label htmlFor="reject_prob_order" className="text-sm">Reject Probability</label>
+              <input
+                type="number"
+                id="reject_prob_order"
+                value={orderSettings.reject_prob}
+                min="0"
+                step="0.01"
+                onChange={(e) =>
+                  setOrderSettings(prev => ({ ...prev, reject_prob: parseFloat(e.target.value) }))
+                }
+                className="w-full p-1 text-sm border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] rounded"
+              />
+            </div>
+            <div className="space-y-1 col-span-2">
+              <label htmlFor="update_value_order" className="text-sm">Update Value</label>
+              <input
+                type="checkbox"
+                id="update_value_order"
+                checked={orderSettings.update_value}
+                onChange={(e) =>
+                  setOrderSettings(prev => ({ ...prev, update_value: e.target.checked }))
+                }
+                className="form-checkbox"
+              />
+            </div>
+          </div>
         </div>
       ) : (
         <div className="space-y-3">
@@ -767,6 +914,46 @@ const VectorBTSettingView: React.FC<VectorBTSettingViewProps> = ({ currentProjec
                 <span>Use Numba</span>
               </label>
             </div>
+          </div>
+
+          {/* Additional Order Function Settings */}
+          <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)] grid grid-cols-3 gap-2">
+            <label className="flex items-center space-x-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                id="ffill_val_price_orderFunc"
+                checked={orderFuncSettings.ffill_val_price}
+                onChange={(e) =>
+                  setOrderFuncSettings(prev => ({ ...prev, ffill_val_price: e.target.checked }))
+                }
+                className="form-checkbox"
+              />
+              <span>Fill Pos Record</span>
+            </label>
+            <label className="flex items-center space-x-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                id="update_value_orderFunc"
+                checked={orderFuncSettings.update_value}
+                onChange={(e) =>
+                  setOrderFuncSettings(prev => ({ ...prev, update_value: e.target.checked }))
+                }
+                className="form-checkbox"
+              />
+              <span>Update Value</span>
+            </label>
+            <label className="flex items-center space-x-2 text-sm cursor-pointer">
+              <input
+                type="checkbox"
+                id="fill_pos_record_orderFunc"
+                checked={orderFuncSettings.fill_pos_record}
+                onChange={(e) =>
+                  setOrderFuncSettings(prev => ({ ...prev, fill_pos_record: e.target.checked }))
+                }
+                className="form-checkbox"
+              />
+              <span>Fill Pos Record</span>
+            </label>
           </div>
         </div>
       )}

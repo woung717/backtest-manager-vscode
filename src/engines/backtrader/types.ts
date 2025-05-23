@@ -37,8 +37,8 @@ export interface BrokerConfig {
 }
 
 export interface BacktraderConfig {
-  pythonPath: string;    // Python binary path
-  datasetPaths?: string[]; // Paths to the datasets used for backtesting
+  pythonPath: string;
+  datasetPaths?: string[]; 
   
   strategy: string;
   strategyParams?: Record<string, any>;
