@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { BacktestResultView } from './backtestResultView';
-import { ProjectInfo, DatasetInfo, Engine } from './types'; // Added Engine
+import { ProjectInfo, DatasetInfo } from './types'; // Added Engine
 // import { Database } from './database'; // Removed
 import { ProjectTreeProvider } from './projectTreeProvider';
 // import { Backtester as BacktestRunner } from './backtester'; // Removed
@@ -8,10 +8,10 @@ import * as path from 'path';
 // import { execSync, spawnSync } from 'child_process'; // Removed
 
 // Import service interfaces
-import { IProjectService } from '../services/projectService';
-import { IDatasetService } from '../services/datasetService';
-import { IPythonEnvironmentService } from '../services/pythonEnvironmentService';
-import { IBacktestService, BacktestRunConfig } from '../services/backtestService'; // Added BacktestRunConfig
+import { IProjectService } from './services/projectService';
+import { IDatasetService } from './services/datasetService';
+import { IPythonEnvironmentService } from './services/pythonEnvironmentService';
+import { IBacktestService, BacktestRunConfig } from './services/backtestService'; // Added BacktestRunConfig
 
 
 export class BacktestSettingView {
@@ -65,7 +65,6 @@ export class BacktestSettingView {
                 return;
             }
 
-            project.strategy = await this.projectService.getProjectStrategyClass(project);
             this._currentProject = project;
             
             const datasetRootPath = path.join(this._workspacePath, 'dataset');
@@ -136,10 +135,10 @@ export class BacktestSettingView {
                                 // and that 'result' might not have 'config' property, so add it if needed.
                                 const resultToStore = { ...result, config: data.config };
                 
-                                await this.projectService.addBacktestResult(currentProjectId, resultToStore as Backtest);
+                                await this.projectService.addBacktestResult(currentProjectId, resultToStore);
                                 await this.projectService.updateLastConfig(currentProjectId, data.config);
                                 
-                                this._resultProvider.showResult(resultToStore as Backtest); // Ensure resultProvider still works
+                                this._resultProvider.showResult(resultToStore); // Ensure resultProvider still works
                                 this._treeProvider.refresh(); // NEW: Changed from updateData()
                             } catch (error: any) {
                                 vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error.message || error}`);
@@ -211,7 +210,6 @@ export class BacktestSettingView {
                         name: this._currentProject.name,
                         path: this._currentProject.path,
                         engine: this._currentProject.engine,
-                        strategy: this._currentProject.strategy // Send strategy to webview
                     } : undefined,
                     datasets: this._datasets,
                     lastConfig: lastConfig

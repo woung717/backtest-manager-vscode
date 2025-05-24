@@ -3,7 +3,6 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { 
     ProjectInfo, 
-    ValidationResult, 
     Engine // Assuming Engine type is in global types
 } from '../types';
 import { 
@@ -15,6 +14,7 @@ import { IPythonEnvironmentService } from './pythonEnvironmentService';
 import { IProjectService } from './projectService'; // To fetch project details
 import { BacktraderRunner } from '../engines/backtrader/backtraderRunner';
 import { VectorBTRunner } from '../engines/vectorbt/vectorbtRunner';
+import * as vscode from 'vscode';
 
 // Define a union type for possible config types if not already globally defined
 export type BacktestRunConfig = BacktraderConfig | VectorBTConfig;
@@ -25,15 +25,16 @@ export interface IBacktestService {
     backtestConfig: BacktestRunConfig, // Use the union type
     progressCallback?: (progress: number, message?: string) => void
   ): Promise<EngineBacktestResult>; // Runner returns EngineBacktestResult
-  
-  validateConfig(config: BacktestRunConfig): Promise<ValidationResult>;
+  getProjectStrategyClass(strategyCode: string): Promise<string | undefined>;
+  // validateConfig(config: BacktestRunConfig): Promise<ValidationResult>;
 }
 
 export class BacktestService implements IBacktestService {
 
   constructor(
     private pythonEnvService: IPythonEnvironmentService,
-    private projectService: IProjectService 
+    private projectService: IProjectService,
+    private readonly backtraderStrategyClassPattern = /class\s+(\w+)\s*\([^.]+\.Strategy\):/
   ) {}
 
   private async readStrategyCode(strategyFilePath: string): Promise<string> {
@@ -45,39 +46,39 @@ export class BacktestService implements IBacktestService {
     }
   }
 
-  async validateConfig(config: BacktestRunConfig): Promise<ValidationResult> {
-    console.log('BacktestService.validateConfig called with config:', config);
-    const errors: string[] = [];
-    let isValid = true;
+  // async validateConfig(config: BacktestRunConfig): Promise<ValidationResult> {
+  //   console.log('BacktestService.validateConfig called with config:', config);
+  //   const errors: string[] = [];
+  //   let isValid = true;
 
-    if (!config || typeof config !== 'object') {
-      errors.push('Config is missing or not an object.');
-      isValid = false;
-    } else {
-        // Common validation for BacktraderConfig and VectorBTConfig structure
-        if ('broker' in config && typeof (config as BacktraderConfig).broker !== 'object') {
-            errors.push('Broker configuration is missing or not an object for Backtrader.');
-            isValid = false;
-        } else if ('broker' in config && (typeof (config as BacktraderConfig).broker.initialCapital !== 'number' || (config as BacktraderConfig).broker.initialCapital <= 0)) {
-            errors.push('Initial capital in broker configuration must be a positive number for Backtrader.');
-            isValid = false;
-        }
+  //   if (!config || typeof config !== 'object') {
+  //     errors.push('Config is missing or not an object.');
+  //     isValid = false;
+  //   } else {
+  //       // Common validation for BacktraderConfig and VectorBTConfig structure
+  //       if ('broker' in config && typeof (config as BacktraderConfig).broker !== 'object') {
+  //           errors.push('Broker configuration is missing or not an object for Backtrader.');
+  //           isValid = false;
+  //       } else if ('broker' in config && (typeof (config as BacktraderConfig).broker.initialCapital !== 'number' || (config as BacktraderConfig).broker.initialCapital <= 0)) {
+  //           errors.push('Initial capital in broker configuration must be a positive number for Backtrader.');
+  //           isValid = false;
+  //       }
 
-        // VectorBT specific validation (example, adjust as needed)
-        if ('functionType' in config && !(config as VectorBTConfig).settings[(config as VectorBTConfig).functionType]) {
-            errors.push(`Settings for functionType "${(config as VectorBTConfig).functionType}" are missing for VectorBT.`);
-            isValid = false;
-        }
+  //       // VectorBT specific validation (example, adjust as needed)
+  //       if ('functionType' in config && !(config as VectorBTConfig).settings[(config as VectorBTConfig).functionType]) {
+  //           errors.push(`Settings for functionType "${(config as VectorBTConfig).functionType}" are missing for VectorBT.`);
+  //           isValid = false;
+  //       }
         
-        if (config.env !== undefined && typeof config.env !== 'object') {
-            errors.push('Environment configuration (env) must be an object if provided.');
-            isValid = false;
-        }
-        // Add more specific checks for BacktraderConfig or VectorBTConfig fields as needed
-    }
+  //       if (config.env !== undefined && typeof config.env !== 'object') {
+  //           errors.push('Environment configuration (env) must be an object if provided.');
+  //           isValid = false;
+  //       }
+  //       // Add more specific checks for BacktraderConfig or VectorBTConfig fields as needed
+  //   }
     
-    return Promise.resolve({ isValid, errors });
-  }
+  //   return Promise.resolve({ isValid, errors });
+  // }
 
   async runBacktest(
     projectId: string,
@@ -115,15 +116,19 @@ export class BacktestService implements IBacktestService {
         // For now, throw error
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
       }
-      if (!project.strategy) {
+
+      const strategyClassName = await this.getProjectStrategyClass(strategyCode);
+      if (!strategyClassName) {
         throw new Error('Strategy class name not defined in project settings for Backtrader.');
       }
+
       fullConfig = {
         ...(backtestConfig as BacktraderConfig), // Cast to specific type
         pythonPath: pythonPath,
-        strategy: project.strategy, // Ensure project.strategy is available and correct
+        strategy: strategyClassName,
         logLevel: 'debug', // Example, make this configurable
       } as BacktraderConfig;
+
       engineRunner = new BacktraderRunner(project, fullConfig);
     } else if (project.engine === 'vectorbt') {
       const libName = 'vectorbt'; // or 'vectorbtpro'
@@ -133,13 +138,9 @@ export class BacktestService implements IBacktestService {
         // As above, consider installation or throw.
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
       }
-       if (!project.strategy) { // vectorbt might not always need a class name if using functional approach
-        console.warn('Strategy identifier not defined in project settings for VectorBT. Assuming functional approach from entry file.');
-      }
       fullConfig = {
         ...(backtestConfig as VectorBTConfig), // Cast to specific type
         pythonPath: pythonPath,
-        strategy: project.strategy || '', // VectorBT might not use a class name from project.strategy
         logLevel: 'debug', // Example
       } as VectorBTConfig;
       engineRunner = new VectorBTRunner(project, fullConfig);
@@ -157,6 +158,24 @@ export class BacktestService implements IBacktestService {
       console.error('Backtesting failed:', error);
       if (progressCallback) progressCallback(100, `Backtest failed: ${error instanceof Error ? error.message : String(error)}`);
       throw new Error(`Backtesting failed: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  }
+
+  public async getProjectStrategyClass(strategyCode: string): Promise<string | undefined> {
+    const backtraderStrategyClassPattern = /class\s+(\w+)\s*\((?:bt\.|backtrader\.)?Strategy\):/gm; 
+    
+    let match;
+    let lastMatch: string | undefined;
+    while ((match = backtraderStrategyClassPattern.exec(strategyCode)) !== null) {
+        lastMatch = match[1];
+    }
+    
+    if (lastMatch) {
+        console.log(`Strategy class found: ${lastMatch}`);
+        return lastMatch;
+    } else {
+        console.log(`No Backtrader strategy class found with pattern ${backtraderStrategyClassPattern}`);
+        return undefined;
     }
   }
 }

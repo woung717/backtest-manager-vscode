@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 // import { DatasetDownloader } from './datasetDownloader'; // Removed
-import { IDatasetService } from '../services/datasetService'; // Added
+import { IDatasetService } from './services/datasetService'; // Added
 
 export class DatasetDownloaderView {
   private panel: vscode.WebviewPanel | undefined;
@@ -114,27 +114,44 @@ export class DatasetDownloaderView {
     };
   }
 
-  private async downloadDatasetWithService(config: any): Promise<void> { // Renamed from downloadDataset
+  private async downloadDatasetWithService(config: any): Promise<string> {
+    const { symbol, exchange, timeframe } = config;
+    
     try {
-        const { symbol, exchange, timeframe } = config;
-        await vscode.window.withProgress({
-            location: vscode.ProgressLocation.Notification,
-            title: `Downloading ${exchange} ${symbol} ${timeframe} data...`,
-            cancellable: false // Assuming non-cancellable for now based on original
-        }, async (progress) => {
-            try {
-                // Create the progress callback function that maps service progress to vscode.Progress
-                const progressCallback = this.handleProgress(progress);
-                await this.datasetService.downloadDataset(this.assetType, config, progressCallback);
-                vscode.window.showInformationMessage(`${exchange} ${symbol} ${timeframe} data downloaded successfully.`);
-            } catch (error: any) {
-                vscode.window.showWarningMessage(`Data download failed: ${error.message}.`);
-            }
-            // Ensure this command is correctly handled elsewhere or by the user's setup
-            vscode.commands.executeCommand('backtestManager.refreshDatasetView');
-        });
+      return await vscode.window.withProgress({
+        location: vscode.ProgressLocation.Notification,
+        title: `Downloading ${exchange} ${symbol} ${timeframe} data...`,
+        cancellable: false
+      }, async (progress) => {
+        try {
+          // Create the progress callback function
+          const progressCallback = this.handleProgress(progress);
+          
+          // Start the download
+          const filePath = await this.datasetService.downloadDataset(
+            this.assetType,
+            config,
+            progressCallback
+          );
+
+          if (filePath) {
+            vscode.window.showInformationMessage(
+              `${exchange} ${symbol} ${timeframe} data downloaded successfully.`
+            );
+            // Refresh dataset tree after successful download
+            await vscode.commands.executeCommand('backtestManager.refreshDatasetView');
+            return filePath;
+          } else {
+            throw new Error('Download failed - no file path returned');
+          }
+        } catch (error: any) {
+          vscode.window.showWarningMessage(`Download failed: ${error.message}`);
+          throw error;
+        }
+      });
     } catch (error: any) {
-        vscode.window.showErrorMessage(`Error downloading data: ${error.message}`);
+      console.error('Error in downloadDatasetWithService:', error);
+      throw error;
     }
   }
 
@@ -175,4 +192,4 @@ export class DatasetDownloaderView {
     }
     return text;
   }
-} 
+}

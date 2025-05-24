@@ -4,7 +4,6 @@ export interface ProjectInfo {
   path: string;
   entryFile: string;
   engine: Engine;
-  strategy?: string;
   description?: string;
   created?: Date;
   updated?: Date;
@@ -106,4 +105,10 @@ export interface ChartData {
   trades: TradeInfo[];
 }
 
-
+export interface ExchangeInfo {
+  id: string;
+  name: string;
+  symbols: string[];
+  timeframes: string[];
+  has: any;
+};

@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 import { Backtest, ChartData, OHLCV } from './types';
-import { IDatasetService } from '../services/datasetService'; // Added
+import { IDatasetService } from './services/datasetService'; // Added
 
 export class PriceChartView {
   private panel: vscode.WebviewPanel | undefined;

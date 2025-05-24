@@ -2,6 +2,7 @@
 import * as fs from 'fs'; // Node's fs
 import * as path from 'path';
 import * as ccxt from 'ccxt';
+import * as vscode from 'vscode';
 import { DatasetInfo, ExchangeInfo } from '../types'; // Assuming these types exist in ../types
 
 export interface IDatasetService {
@@ -24,7 +25,22 @@ import { OHLCV } from '../types';
 export class DatasetService implements IDatasetService {
   private ccxtExchanges: ccxt.Exchange[] = [];
   private readonly ASSET_TYPES: ('crypto' | 'stock' | 'forex')[] = ['crypto', 'stock', 'forex'];
-
+  private readonly timeframeMsMap: { [key: string]: number } = {
+    '1m': 60 * 1000,
+    '5m': 5 * 60 * 1000,
+    '15m': 15 * 60 * 1000,
+    '30m': 30 * 60 * 1000,
+    '1h': 60 * 60 * 1000,
+    '2h': 2 * 60 * 60 * 1000,
+    '4h': 4 * 60 * 60 * 1000,
+    '6h': 6 * 60 * 60 * 1000,
+    '8h': 8 * 60 * 60 * 1000,
+    '12h': 12 * 60 * 60 * 1000,
+    '1d': 24 * 60 * 60 * 1000,
+    '3d': 3 * 24 * 60 * 60 * 1000,
+    '1w': 7 * 24 * 60 * 60 * 1000,
+    '1M': 30 * 24 * 60 * 60 * 1000
+  };
 
   constructor(private workspacePath: string) { 
     if (!workspacePath) {
@@ -32,17 +48,26 @@ export class DatasetService implements IDatasetService {
     }
   }
 
-  // Convert CCXT OHLCV data to CSV
+  // Convert CCXT OHLCV data to CSV with error handling
   private convertCandlesToCSV(candles: any[]): string {
     if (!candles || candles.length === 0) {
       return 'datetime,open,high,low,close,volume\n';
     }
     const headers = 'datetime,open,high,low,close,volume';
     const rows = candles.map(candle => {
-      const [timestamp, open, high, low, close, volume] = candle;
-      const datetime = new Date(timestamp).toISOString();
-      return `${datetime},${open},${high},${low},${close},${volume}`;
-    });
+      try {
+        const [timestamp, open, high, low, close, volume] = candle;
+        if (!timestamp || isNaN(open) || isNaN(high) || isNaN(low) || isNaN(close) || isNaN(volume)) {
+          console.warn('Invalid candle data:', candle);
+          return null;
+        }
+        const datetime = new Date(timestamp).toISOString();
+        return `${datetime},${open},${high},${low},${close},${volume}`;
+      } catch (error) {
+        console.warn('Error processing candle:', error, candle);
+        return null;
+      }
+    }).filter(row => row !== null);
     return `${headers}\n${rows.join('\n')}`;
   }
 
@@ -92,6 +117,78 @@ export class DatasetService implements IDatasetService {
     return null;
   }
 
+  private async downloadCryptoData(
+    exchangeId: string,
+    symbol: string,
+    timeframe: string,
+    startDate: string,
+    endDate: string,
+    progressCallback?: (event: { message: string, increment?: number, overallProgress?: number }) => void
+  ): Promise<any[]> {
+    // @ts-ignore
+    const exchange = new ccxt[exchangeId]({
+      enableRateLimit: true,
+      timeout: 30000
+    });
+
+    const since = new Date(startDate).getTime();
+    const end = new Date(endDate).getTime();
+    const timeframeMs = this.timeframeMsMap[timeframe];
+    const limit = exchange.has['fetchOHLCV'] === 'emulated' ? 100 : 1000;
+    const totalExpectedCandles = Math.ceil((end - since) / timeframeMs);
+    const batchSize = Math.min(limit, totalExpectedCandles);
+    const expectedBatches = Math.ceil(totalExpectedCandles / batchSize);
+    
+    if (progressCallback) {
+      progressCallback({
+        message: '',
+        increment: 5
+      });
+    }
+
+    let allCandles: any[] = [];
+    let currentTime = since;
+    let batchCount = 0;
+
+    while (currentTime < end) {
+      try {
+        const candles = await exchange.fetchOHLCV(symbol, timeframe, currentTime, limit);
+        if (!candles || candles.length === 0) break;
+
+        allCandles = [...allCandles, ...candles];
+        const lastCandleTime = candles[candles.length - 1][0];
+        currentTime = lastCandleTime + timeframeMs;
+        batchCount++;
+
+        if (progressCallback) {
+          const progress = Math.min(90, Math.floor((batchCount / expectedBatches) * 90));
+          progressCallback({
+            message: '',
+            increment: progress / expectedBatches
+          });
+        }
+
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, exchange.rateLimit));
+      } catch (error: any) {
+        console.error(`Error downloading batch: ${error.message}`);
+        if (error.message.includes('rate limit')) {
+          await new Promise(resolve => setTimeout(resolve, 10000));
+          continue;
+        }
+        throw error;
+      }
+    }
+
+    // Filter candles to exact date range and remove duplicates
+    return allCandles
+      .filter(candle => candle[0] >= since && candle[0] <= end)
+      .sort((a, b) => a[0] - b[0])
+      .filter((candle, index, self) => 
+        index === 0 || candle[0] !== self[index - 1][0]
+      );
+  }
+
   async downloadDataset(
     assetType: 'crypto' | 'stock' | 'forex',
     config: any,
@@ -107,8 +204,22 @@ export class DatasetService implements IDatasetService {
         throw new Error(errorMessage);
     }
 
+    if (!symbol || !exchange || !timeframe || !startDate || !endDate) {
+        const errorMessage = "Missing required parameters for dataset download";
+        console.error(errorMessage);
+        if (progressCallback) progressCallback({ message: errorMessage });
+        throw new Error(errorMessage);
+    }
+
+    if (!this.timeframeMsMap[timeframe]) {
+        const errorMessage = `Unsupported timeframe: ${timeframe}`;
+        console.error(errorMessage);
+        if (progressCallback) progressCallback({ message: errorMessage });
+        throw new Error(errorMessage);
+    }
+
     const datasetDir = path.join(this.workspacePath, 'dataset', assetType);
-    await fs.promises.mkdir(datasetDir, { recursive: true });
+    await vscode.workspace.fs.createDirectory(vscode.Uri.file(datasetDir));
     
     const cleanSymbol = symbol.replace(/\//g, '-'); // Ensure all slashes are replaced
     const formattedStartDate = startDate.replace(/-/g, '').substring(0, 8);
@@ -122,40 +233,26 @@ export class DatasetService implements IDatasetService {
     if (progressCallback) progressCallback({ message: `Starting download for ${symbol}...`, overallProgress: 0 });
 
     if (assetType === 'crypto') {
-      // ... (rest of the download logic remains the same as before)
-      // This part is quite long, assuming it's correct from previous steps.
-      // For brevity, I'm not reproducing the entire crypto download block.
-      // The key is that it uses fs.promises.writeFile and fs.promises.mkdir.
-      // Ensure it's using this.workspacePath correctly.
       try {
-        const exchangeInstance = new ccxt[exchange]({ enableRateLimit: true });
-        const since = new Date(startDate).getTime();
-        const end = new Date(endDate).getTime();
-        let allCandles: any[] = [];
-        let currentSince = since;
-        let progressCount = 0;
-        const timeframeMsMap: {[key: string]: number} = { /* ... */ }; // As before
-        const timeframeMs = timeframeMsMap[timeframe] || (24 * 60 * 60 * 1000);
-        const limit = exchangeInstance.has['fetchOHLCV'] === 'emulated' ? 100 : 1000;
-        const totalExpectedCandles = Math.max(1, Math.ceil((end - since) / timeframeMs));
-        const expectedBatches = Math.max(1, Math.ceil(totalExpectedCandles / limit));
+        const candles = await this.downloadCryptoData(
+          exchange,
+          symbol,
+          timeframe,
+          startDate,
+          endDate,
+          progressCallback
+        );
 
-        while (currentSince < end) {
-          const candles = await exchangeInstance.fetchOHLCV(symbol, timeframe, currentSince, limit);
-          if (candles.length === 0) break;
-          allCandles = [...allCandles, ...candles];
-          const lastCandleTime = candles[candles.length - 1][0];
-          currentSince = (lastCandleTime >= end) ? end : lastCandleTime + timeframeMs;
-          progressCount++;
-          // ... progress reporting ...
-        }
-        if (allCandles.length > 0) {
-          allCandles = allCandles.filter(c => c[0] >= since && c[0] <= end);
-          data = this.convertCandlesToCSV(allCandles);
-          await fs.promises.writeFile(filePath, Buffer.from(data));
-          if (progressCallback) progressCallback({ message: `Data for ${symbol} saved to ${filePath}.`, increment: 100 - currentProgress, overallProgress: 100 });
-        } else {
-          if (progressCallback) progressCallback({ message: `No data downloaded for ${symbol}. File not created.`, overallProgress: 100 });
+        if (candles && candles.length > 0) {
+          const data = this.convertCandlesToCSV(candles);
+          vscode.workspace.fs.writeFile(vscode.Uri.file(filePath), Buffer.from(data, 'utf-8'));
+          if (progressCallback) {
+            progressCallback({
+              message: `Successfully saved ${candles.length} candles to ${fileName}`,
+              overallProgress: 100
+            });
+          }
+          return filePath;
         }
       } catch (error: any) {
         if (progressCallback) progressCallback({ message: `Download failed for ${symbol}: ${error.message}`, overallProgress: currentProgress });
@@ -181,19 +278,18 @@ export class DatasetService implements IDatasetService {
     const allDatasets: DatasetInfo[] = [];
 
     try {
-      // 1. Ensure datasetRootPath itself exists
-      await fs.promises.mkdir(datasetRootPath, { recursive: true });
+      await vscode.workspace.fs.createDirectory(vscode.Uri.file(datasetRootPath));
       console.log(`Ensured root dataset folder exists: ${datasetRootPath}`);
 
       // 2. Iterate over defined asset types and ensure their subfolders exist
       for (const assetType of this.ASSET_TYPES) {
         const assetTypePath = path.join(datasetRootPath, assetType);
-        await fs.promises.mkdir(assetTypePath, { recursive: true });
+
+        await vscode.workspace.fs.createDirectory(vscode.Uri.file(assetTypePath));
         console.log(`Ensured asset type folder exists: ${assetTypePath}`);
 
         try {
-          const files = await fs.promises.readdir(assetTypePath);
-          files
+          (await vscode.workspace.fs.readDirectory(vscode.Uri.file(assetTypePath))).map(([name, _]) => name)
             .filter(fileName => fileName.endsWith('.csv') || fileName.endsWith('.json')) // Assuming JSON is also a valid dataset format
             .forEach(fileName => {
               const filePath = path.join(assetTypePath, fileName);
@@ -226,7 +322,7 @@ export class DatasetService implements IDatasetService {
   async deleteDataset(datasetPath: string): Promise<boolean> {
     console.log(`DatasetService.deleteDataset called for path: ${datasetPath}`);
     try {
-      await fs.promises.unlink(datasetPath);
+      await vscode.workspace.fs.delete(vscode.Uri.file(datasetPath), { recursive: true });
       console.log(`Successfully deleted dataset: ${datasetPath}`);
       return true;
     } catch (error) {
@@ -238,7 +334,8 @@ export class DatasetService implements IDatasetService {
   public async getDatasetContent(datasetPath: string): Promise<OHLCV[]> {
     try {
         console.log(`DatasetService.getDatasetContent called for path: ${datasetPath}`);
-        const fileContent = await fs.promises.readFile(datasetPath, 'utf-8');
+        const fileContentBuffer = await vscode.workspace.fs.readFile(vscode.Uri.file(datasetPath));
+        const fileContent = fileContentBuffer.toString(); // Convert buffer to string
         const lines = fileContent.split(/\r?\n/); // Handles both CRLF and LF
         
         if (lines.length < 2) { // Needs at least header and one data line
@@ -269,18 +366,18 @@ export class DatasetService implements IDatasetService {
                 
                 const values = trimmedLine.split(',');
                 if (values.length !== header.length) {
-                    console.warn(`Skipping line ${index + 2}: expected ${header.length} columns, found ${values.length}. Line: "${trimmedLine}"`);
-                    return null;
+                  console.warn(`Skipping line ${index + 2}: expected ${header.length} columns, found ${values.length}. Line: "${trimmedLine}"`);
+                  return null;
                 }
 
                 try {
                     return {
-                        datetime: values[colIndices['datetime']],
-                        open: parseFloat(values[colIndices['open']]),
-                        high: parseFloat(values[colIndices['high']]),
-                        low: parseFloat(values[colIndices['low']]),
-                        close: parseFloat(values[colIndices['close']]),
-                        volume: parseFloat(values[colIndices['volume']])
+                      datetime: values[colIndices['datetime']],
+                      open: parseFloat(values[colIndices['open']]),
+                      high: parseFloat(values[colIndices['high']]),
+                      low: parseFloat(values[colIndices['low']]),
+                      close: parseFloat(values[colIndices['close']]),
+                      volume: parseFloat(values[colIndices['volume']])
                     } as OHLCV;
                 } catch (parseError) {
                     console.warn(`Skipping line ${index + 2} due to parsing error: ${parseError}. Line: "${trimmedLine}"`);

@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { DatasetInfo } from './types';
-import { IDatasetService } from '../services/datasetService'; // Added
+import { IDatasetService } from './services/datasetService'; // Added
 
 export class DatasetTreeItem {
   id: string;
@@ -39,7 +39,7 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   private data: DatasetTreeItem[] = [
     new DatasetTreeItem('loading', 'Loading Datasets...', true) // isFolder true for loading item
   ];
-  private readonly ASSET_TYPES: ('crypto' | 'stock' | 'forex')[] = ['crypto', 'stock', 'forex'];
+  private readonly ASSET_TYPES: ('crypto' | 'stock' | 'forex')[] = ['crypto'];  // ['crypto', 'stock', 'forex'];
 
 
   constructor(
@@ -48,69 +48,83 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   ) {
     if (!workspaceRoot) {
         vscode.window.showErrorMessage("Workspace root is not defined for DatasetTreeProvider.");
-        this.datasetRoot = ''; // Or handle error appropriately
+        this.datasetRoot = '';
     } else {
-        this.datasetRoot = path.join(this.workspaceRoot, 'dataset'); // datasetRoot is <workspace>/dataset
+        this.datasetRoot = path.join(this.workspaceRoot, 'dataset');
     }
-    this.loadDatasets();
-  }
+    // Initialize with loading state
+    this.data = [new DatasetTreeItem('loading', 'Loading Datasets...', true)];
+    // Trigger initial load
+    this.refresh().catch(err => {
+        console.error('Failed to load datasets:', err);
+        vscode.window.showErrorMessage(`Failed to load datasets: ${err instanceof Error ? err.message : String(err)}`);
+    });
+}
 
   // ensureDatasetFolders and getDatasetFilesFromFolder are removed, logic moved to DatasetService.loadDatasetsInWorkspace
 
   private async loadDatasets(): Promise<void> {
     if (!this.datasetRoot) {
         this.data = [new DatasetTreeItem('error', 'Error: Workspace root not set.', true)];
-        this.refresh();
         return;
     }
+
     try {
-      // DatasetService.loadDatasetsInWorkspace will ensure folders and get all DatasetInfo items
-      const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace(this.datasetRoot);
+        // DatasetService.loadDatasetsInWorkspace will ensure folders and get all DatasetInfo items
+        const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace(this.datasetRoot);
 
-      // Group DatasetInfo items by assetType for the tree structure
-      const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
-      for (const assetType of this.ASSET_TYPES) {
-        datasetsByAssetType[assetType] = [];
-      }
-
-      allDatasetInfos.forEach(dsInfo => {
-        if (datasetsByAssetType[dsInfo.assetType]) {
-          datasetsByAssetType[dsInfo.assetType].push(dsInfo);
-        } else {
-          console.warn(`Dataset ${dsInfo.name} has unknown assetType: ${dsInfo.assetType}`);
+        if (!allDatasetInfos || allDatasetInfos.length === 0) {
+            console.log('No datasets found');
+            this.data = [new DatasetTreeItem('empty', 'No datasets found', true)];
+            return;
         }
-      });
 
-      this.data = this.ASSET_TYPES.map(assetType => {
-        const childrenItems = (datasetsByAssetType[assetType] || []).map(dsInfo => 
-          new DatasetTreeItem(
-            dsInfo.path, // Use path as a unique ID for dataset files
-            dsInfo.name,
-            false, // isFolder = false
-            [],
-            'dataset',
-            dsInfo,
-            dsInfo.assetType
-          )
-        );
-        
-        return new DatasetTreeItem(
-          `folder-${assetType}`,
-          assetType.charAt(0).toUpperCase() + assetType.slice(1), // Capitalize asset type for display
-          true, // isFolder = true
-          childrenItems,
-          'assetFolder', // Context value for the asset type folder
-          undefined,
-          assetType
-        );
-      });
+        // Group DatasetInfo items by assetType for the tree structure
+        const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
+        for (const assetType of this.ASSET_TYPES) {
+            datasetsByAssetType[assetType] = [];
+        }
 
-      // this.refresh(); // Removed: loadDatasets should not fire the event directly.
+        // Group datasets by asset type
+        for (const dsInfo of allDatasetInfos) {
+            if (dsInfo.assetType && this.ASSET_TYPES.includes(dsInfo.assetType)) {
+                datasetsByAssetType[dsInfo.assetType].push(dsInfo);
+            } else {
+                console.warn(`Dataset ${dsInfo.name} has unknown or invalid assetType: ${dsInfo.assetType}`);
+            }
+        }
+
+        // Create tree structure
+        this.data = this.ASSET_TYPES.map(assetType => {
+            const datasets = datasetsByAssetType[assetType] || [];
+            const childrenItems = datasets.map(dsInfo => 
+                new DatasetTreeItem(
+                    dsInfo.path,
+                    dsInfo.name,
+                    false,
+                    [],
+                    'dataset',
+                    dsInfo,
+                    dsInfo.assetType
+                )
+            );
+            
+            return new DatasetTreeItem(
+                `folder-${assetType}`,
+                assetType.charAt(0).toUpperCase() + assetType.slice(1),
+                true,
+                childrenItems,
+                'assetFolder',
+                undefined,
+                assetType
+            );
+        });
+
+        console.log(`Loaded ${allDatasetInfos.length} datasets across ${this.ASSET_TYPES.length} asset types`);
     } catch (error) {
-      vscode.window.showErrorMessage(`Error loading datasets: ${error instanceof Error ? error.message : String(error)}`);
-      this.data = [new DatasetTreeItem('error', 'Error loading datasets.', true)];
-      // this.refresh(); // Removed: loadDatasets should not fire the event directly.
-      // If an error occurs, the data is set to an error message, and the next refresh (triggered by the caller) will show it.
+        console.error('Error loading datasets:', error);
+        this.data = [new DatasetTreeItem('error', `Error loading datasets: ${error instanceof Error ? error.message : String(error)}`, true)];
+        throw error; // Propagate error to refresh() method
     }
   }
 

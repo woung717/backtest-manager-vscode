@@ -44,11 +44,10 @@ def portfolio_init(close) -> dict:
     portfolio_kwargs = {}
     
     # Example for from_signals()
-    # price = vbt.YFData.download('BTC-USD').get('Close')
-    # fast_ma = vbt.MA.run(price, 10)
-    # slow_ma = vbt.MA.run(price, 50)
+    # fast_ma = vbt.MA.run(close, 10)
+    # slow_ma = vbt.MA.run(close, 50)
 
-    # portfolio_kwargs['close'] = price
+    # portfolio_kwargs['close'] = close
     # portfolio_kwargs['entries'] = fast_ma.ma_crossed_above(slow_ma)
     # portfolio_kwargs['exits'] = fast_ma.ma_crossed_below(slow_ma)
     # ...

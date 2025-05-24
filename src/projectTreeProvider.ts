@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 import { Backtest, Engine, ProjectInfo } from './types';
 // import { Database } from './database'; // Removed
-import { IProjectService } from '../services/projectService'; // Added
+import { IProjectService } from './services/projectService'; // Added
 // import { templateCodeFactory } from './userCodeTemplates'; // Will be used by ProjectService
 
 export class ProjectTreeItem {
@@ -34,8 +34,10 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
   readonly onDidChangeTreeData: vscode.Event<ProjectTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
   constructor(private projectService: IProjectService) { // Modified constructor
-    // this.db = Database.getInstance(); // Removed
-    this.loadProjects();
+    // Trigger initial load async
+    this.refresh().catch(error => {
+      vscode.window.showErrorMessage(`Error during initial project load: ${error instanceof Error ? error.message : String(error)}`);
+    });
   }
 
   private async loadProjects(): Promise<void> {
@@ -80,18 +82,19 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
         .filter(p => p.path && p.entryFile) // Ensure path and entryFile exist
         .map((project: ProjectInfo) => path.join(project.path, project.entryFile));
         
-      vscode.commands.executeCommand(
+      await vscode.commands.executeCommand(
         'setContext', 
         'backtestManager.entryFiles', 
         entryFiles
       );
 
-      // this.refresh(); // Removed: loadProjects should not fire the event directly.
+      // Trigger tree view update after data is loaded
+      this._onDidChangeTreeData.fire();
+      
     } catch (error) {
       vscode.window.showErrorMessage(`Error loading project information via ProjectService: ${error instanceof Error ? error.message : String(error)}`);
-      this.data = [new ProjectTreeItem('error', 'Error loading projects', [], 'error')]; // Show an error item
-      // this.refresh(); // Removed: loadProjects should not fire the event directly.
-      // If an error occurs, the data is set to an error message, and the next refresh (triggered by the caller) will show it.
+      this.data = [new ProjectTreeItem('error', 'Error loading projects', [], 'error')];
+      this._onDidChangeTreeData.fire(); // Ensure error state is shown
     }
   }
 
@@ -135,9 +138,8 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     return Promise.resolve(element.children || []);
   }
 
-  public async refresh(): Promise<void> { // Made public and async
-    await this.loadProjects(); // Load or reload the data
-    this._onDidChangeTreeData.fire(); // Then notify VS Code to update the view
+  public async refresh(): Promise<void> {
+    await this.loadProjects(); // loadProjects now handles firing the event
   }
 
   // This method is typically called from a command registered in extension.ts
