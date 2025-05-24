@@ -90,7 +90,7 @@ export function activate(context: vscode.ExtensionContext) {
   // Register Commands
   context.subscriptions.push(
     vscode.commands.registerCommand('backtestManager.refreshProjectTreeView', () => {
-      projectTreeProvider.updateData(); // This method should call loadProjects which uses projectService
+      projectTreeProvider.refresh(); // Changed from updateData() to refresh()
     }),
 
     vscode.commands.registerCommand('backtestManager.createNewProject', async () => {
@@ -121,7 +121,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (projectName && engineSelection) {
         try {
           const projectInfo = await projectService.createProject(projectName, engineSelection.value, workspacePath);
-          projectTreeProvider.updateData(); // Refresh tree
+          projectTreeProvider.refresh(); // Changed from updateData() to refresh()
           const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(projectInfo.path, projectInfo.entryFile)));
           await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
         } catch (e: any) {
@@ -184,7 +184,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (confirmation === 'Delete') {
           try {
             await projectService.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
-            projectTreeProvider.updateData(); // Refresh tree
+            projectTreeProvider.refresh(); // Changed from updateData() to refresh()
           } catch (e: any) {
             vscode.window.showErrorMessage(`Failed to delete backtest result: ${e.message}`);
           }
@@ -207,7 +207,7 @@ export function activate(context: vscode.ExtensionContext) {
       if (newProjectName && item.projectInfo && item.projectInfo._id) {
         try {
           await projectService.updateProject(item.projectInfo._id, { name: newProjectName });
-          projectTreeProvider.updateData(); // Refresh tree
+          projectTreeProvider.refresh(); // Changed from updateData() to refresh()
         } catch (e: any) {
           vscode.window.showErrorMessage(`Failed to rename project: ${e.message}`);
         }
@@ -224,7 +224,7 @@ export function activate(context: vscode.ExtensionContext) {
         if (confirmation === 'Delete') {
           try {
             await projectService.deleteProject(item.projectInfo._id);
-            projectTreeProvider.updateData(); // Refresh tree
+            projectTreeProvider.refresh(); // Changed from updateData() to refresh()
           } catch (e: any) {
             vscode.window.showErrorMessage(`Failed to delete project: ${e.message}`);
           }
@@ -233,7 +233,7 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('backtestManager.refreshDatasetView', () => {
-      datasetTreeProvider.updateData(); // This method should call loadDatasets which uses datasetService
+      datasetTreeProvider.refresh(); // This method should call loadDatasets which uses datasetService
     }),
 
     vscode.commands.registerCommand('backtestManager.showDatasetChart', async (item: DatasetTreeItem) => {

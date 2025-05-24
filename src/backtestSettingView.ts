@@ -98,7 +98,8 @@ export class BacktestSettingView {
         }
     }
 
-    // _loadDatasets, _getLastBacktestConfig, _checkEngineLibrary methods are removed.
+    // _loadDatasets and _getLastBacktestConfig methods are now fully removed.
+    // _checkEngineLibrary was also effectively removed by not being called and its logic moved.
 
     public show() {
         if (!this._panel) {
@@ -122,24 +123,38 @@ export class BacktestSettingView {
                                 return;
                             }
                             
+                            if (!this._currentProject || !this._currentProject._id) {
+                                vscode.window.showErrorMessage('Current project is not properly set. Cannot run backtest.');
+                                return;
+                            }
+                            const currentProjectId = this._currentProject._id; // Capture for use in closures/promises
+                            
                             try {
-                                const backtest = new BacktestRunner(data.config, this._currentProject);
-                                const result = await backtest.run();
+                                const result = await this.backtestService.runBacktest(currentProjectId, data.config as BacktestRunConfig);
                                 
-                                result.config = data.config;
+                                // Assuming 'result' from backtestService is compatible with 'BacktestResult' type for projectService
+                                // and that 'result' might not have 'config' property, so add it if needed.
+                                const resultToStore = { ...result, config: data.config };
+                
+                                await this.projectService.addBacktestResult(currentProjectId, resultToStore as Backtest);
+                                await this.projectService.updateLastConfig(currentProjectId, data.config);
                                 
-                                await this._database.addBacktestResult(this._currentProject._id, result);
-                                await this._database.updateLastConfig(this._currentProject._id, data.config);
-                                
-                                this._resultProvider.showResult(result);
-                                this._treeProvider.updateData();
-                            } catch (error) {
-                                vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error}`);
+                                this._resultProvider.showResult(resultToStore as Backtest); // Ensure resultProvider still works
+                                this._treeProvider.refresh(); // NEW: Changed from updateData()
+                            } catch (error: any) {
+                                vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error.message || error}`);
                             }
                             break;
                         case 'refresh':
-                            await this._loadDatasets();
-                            this._updateWebview();
+                            const datasetRootPathRefresh = path.join(this._workspacePath, 'dataset');
+                            this._datasets = await this.datasetService.loadDatasetsInWorkspace(datasetRootPathRefresh);
+                            
+                            let lastConfigRefresh = undefined;
+                            if (this._currentProject && this._currentProject._id) {
+                                const projectDetails = await this.projectService.getProject(this._currentProject._id);
+                                lastConfigRefresh = projectDetails?.lastConfig;
+                            }
+                            this._updateWebview(lastConfigRefresh); // Call _updateWebview with the potentially updated lastConfig
                             break;
                         default:
                             console.warn(`Unknown message type: ${data.type}`);
@@ -156,10 +171,33 @@ export class BacktestSettingView {
 
         this._panel.webview.html = this.getHtmlContent(this._panel.webview);
         
-        Promise.all([this._loadDatasets(), this._getLastBacktestConfig()])
-            .then(([_, lastConfig]) => {
-                this._updateWebview(lastConfig);
+        // Refactored data loading logic for show()
+        // If _currentProject is set, fetch its details and datasets.
+        // Otherwise, _updateWebview will be called with undefined/empty data initially.
+        if (this._currentProject && this._currentProject._id) {
+            this.projectService.getProject(this._currentProject._id).then(projectDetails => {
+                const datasetRootPath = path.join(this._workspacePath, 'dataset');
+                this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+                    this._datasets = datasets;
+                    this._updateWebview(projectDetails?.lastConfig);
+                }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
+            }).catch(error => {
+                 vscode.window.showErrorMessage(`Error loading project data in show(): ${error.message}`);
+                 // Fallback to loading datasets only
+                 const datasetRootPath = path.join(this._workspacePath, 'dataset');
+                 this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+                    this._datasets = datasets;
+                    this._updateWebview(undefined);
+                }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
             });
+        } else {
+            // If no current project, load all datasets anyway or default state
+            const datasetRootPath = path.join(this._workspacePath, 'dataset');
+            this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+                this._datasets = datasets;
+                this._updateWebview(undefined); // No specific project's last config
+            }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
+        }
             
         this._panel.reveal(vscode.ViewColumn.Two);
     }
@@ -172,7 +210,8 @@ export class BacktestSettingView {
                     currentProject: this._currentProject ? {
                         name: this._currentProject.name,
                         path: this._currentProject.path,
-                        engine: this._currentProject.engine
+                        engine: this._currentProject.engine,
+                        strategy: this._currentProject.strategy // Send strategy to webview
                     } : undefined,
                     datasets: this._datasets,
                     lastConfig: lastConfig

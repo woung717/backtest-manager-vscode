@@ -5,7 +5,7 @@ import { spawnSync } from 'child_process';
 export interface IPythonEnvironmentService {
   getPythonPath(): Promise<string | undefined>;
   checkLibraryInstalled(pythonPath: string, libraryName: string): Promise<boolean>;
-  installLibrary(pythonPath: string, libraryName: string): Promise<boolean>; // Added pythonPath
+  // installLibrary(pythonPath: string, libraryName: string): Promise<boolean>; // Removed
 }
 
 export class PythonEnvironmentService implements IPythonEnvironmentService {
@@ -68,17 +68,18 @@ export class PythonEnvironmentService implements IPythonEnvironmentService {
     }
   }
 
-  async installLibrary(pythonPath: string, libraryName: string): Promise<boolean> {
-    console.log(`PythonEnvironmentService.installLibrary called for library: ${libraryName} using python: ${pythonPath}`);
-    if (!pythonPath) {
-        console.error("Python path is undefined. Cannot install library.");
-        return false;
-    }
-    // This is a placeholder. Actual implementation would involve running pip install.
-    // For example: spawnSync(pythonPath, ['-m', 'pip', 'install', libraryName]);
-    // Ensure to handle errors and output.
-    console.warn(`Simulating installation for ${libraryName}. In a real scenario, this would run pip install.`);
-    // For now, just return true to simulate success for testing purposes.
-    return Promise.resolve(true); 
-  }
+  // Removed installLibrary method
+  // async installLibrary(pythonPath: string, libraryName: string): Promise<boolean> {
+  //   console.log(`PythonEnvironmentService.installLibrary called for library: ${libraryName} using python: ${pythonPath}`);
+  //   if (!pythonPath) {
+  //       console.error("Python path is undefined. Cannot install library.");
+  //       return false;
+  //   }
+  //   // This is a placeholder. Actual implementation would involve running pip install.
+  //   // For example: spawnSync(pythonPath, ['-m', 'pip', 'install', libraryName]);
+  //   // Ensure to handle errors and output.
+  //   console.warn(`Simulating installation for ${libraryName}. In a real scenario, this would run pip install.`);
+  //   // For now, just return true to simulate success for testing purposes.
+  //   return Promise.resolve(true); 
+  // }
 }

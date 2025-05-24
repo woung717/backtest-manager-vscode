@@ -105,11 +105,12 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
         );
       });
 
-      this.refresh();
+      // this.refresh(); // Removed: loadDatasets should not fire the event directly.
     } catch (error) {
       vscode.window.showErrorMessage(`Error loading datasets: ${error instanceof Error ? error.message : String(error)}`);
       this.data = [new DatasetTreeItem('error', 'Error loading datasets.', true)];
-      this.refresh();
+      // this.refresh(); // Removed: loadDatasets should not fire the event directly.
+      // If an error occurs, the data is set to an error message, and the next refresh (triggered by the caller) will show it.
     }
   }
 
@@ -164,13 +165,14 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
     return Promise.resolve(element.children || []);
   }
 
-  refresh(): void {
-    this._onDidChangeTreeData.fire();
+  public async refresh(): Promise<void> { // Made public and async
+    await this.loadDatasets(); // Load or reload the data
+    this._onDidChangeTreeData.fire(); // Then notify VS Code to update the view
   }
 
-  updateData(): void {
-    this.loadDatasets();
-  }
+  // updateData(): void { // Removed
+  //   this.loadDatasets();
+  // }
 
   // Method to delete dataset
   async deleteDataset(item: DatasetTreeItem): Promise<void> { // Takes DatasetTreeItem
@@ -191,7 +193,7 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
       if (result === 'Delete') {
         const success = await this.datasetService.deleteDataset(datasetPath);
         if (success) {
-          this.updateData(); // Refresh the tree view
+          await this.refresh(); // Changed from this.updateData() to this.refresh()
           vscode.window.showInformationMessage(`Dataset "${datasetName}" deleted successfully.`);
         } else {
           vscode.window.showErrorMessage(`Failed to delete dataset "${datasetName}".`);

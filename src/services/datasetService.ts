@@ -5,10 +5,10 @@ import * as ccxt from 'ccxt';
 import { DatasetInfo, ExchangeInfo } from '../types'; // Assuming these types exist in ../types
 
 export interface IDatasetService {
-  getDatasets(): Promise<DatasetInfo[]>; 
+  // getDatasets(): Promise<DatasetInfo[]>; // Removed as per plan
   loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]>; 
   deleteDataset(datasetPath: string): Promise<boolean>; 
-  getDatasetContent(datasetPath: string): Promise<OHLCV[]>; // Added for PriceChartView
+  getDatasetContent(datasetPath: string): Promise<OHLCV[]>; 
   downloadDataset(
     assetType: 'crypto' | 'stock' | 'forex',
     config: any,
@@ -170,12 +170,11 @@ export class DatasetService implements IDatasetService {
     return filePath;
   }
 
-  async getDatasets(): Promise<DatasetInfo[]> {
-    console.log('DatasetService.getDatasets called - this is a general fetch, not workspace specific for tree');
-    // This method might be used for a global list of all known datasets if needed elsewhere.
-    // For the tree provider, loadDatasetsInWorkspace is more appropriate.
-    return Promise.resolve([]);
-  }
+  // Removed getDatasets() method implementation
+  // async getDatasets(): Promise<DatasetInfo[]> {
+  //   console.log('DatasetService.getDatasets called - this is a general fetch, not workspace specific for tree');
+  //   return Promise.resolve([]);
+  // }
 
   async loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]> {
     console.log(`DatasetService.loadDatasetsInWorkspace called for datasetRootPath: ${datasetRootPath}`);

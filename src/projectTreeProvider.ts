@@ -86,11 +86,12 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
         entryFiles
       );
 
-      this.refresh();
+      // this.refresh(); // Removed: loadProjects should not fire the event directly.
     } catch (error) {
       vscode.window.showErrorMessage(`Error loading project information via ProjectService: ${error instanceof Error ? error.message : String(error)}`);
       this.data = [new ProjectTreeItem('error', 'Error loading projects', [], 'error')]; // Show an error item
-      this.refresh();
+      // this.refresh(); // Removed: loadProjects should not fire the event directly.
+      // If an error occurs, the data is set to an error message, and the next refresh (triggered by the caller) will show it.
     }
   }
 
@@ -134,8 +135,9 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     return Promise.resolve(element.children || []);
   }
 
-  refresh(): void {
-    this._onDidChangeTreeData.fire();
+  public async refresh(): Promise<void> { // Made public and async
+    await this.loadProjects(); // Load or reload the data
+    this._onDidChangeTreeData.fire(); // Then notify VS Code to update the view
   }
 
   // This method is typically called from a command registered in extension.ts
