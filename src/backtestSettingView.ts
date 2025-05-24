@@ -1,164 +1,104 @@
 import * as vscode from 'vscode';
 import { BacktestResultView } from './backtestResultView';
-import { ProjectInfo, DatasetInfo } from './types';
-import { Database } from './database';
+import { ProjectInfo, DatasetInfo, Engine } from './types'; // Added Engine
+// import { Database } from './database'; // Removed
 import { ProjectTreeProvider } from './projectTreeProvider';
-import { Backtester as BacktestRunner } from './backtester';
+// import { Backtester as BacktestRunner } from './backtester'; // Removed
 import * as path from 'path';
-import { execSync, spawnSync } from 'child_process';
+// import { execSync, spawnSync } from 'child_process'; // Removed
+
+// Import service interfaces
+import { IProjectService } from '../services/projectService';
+import { IDatasetService } from '../services/datasetService';
+import { IPythonEnvironmentService } from '../services/pythonEnvironmentService';
+import { IBacktestService, BacktestRunConfig } from '../services/backtestService'; // Added BacktestRunConfig
+
 
 export class BacktestSettingView {
     private _extensionUri: vscode.Uri;
     private _currentProject?: ProjectInfo;
-    private _resultProvider: BacktestResultView;
+    private _resultProvider: BacktestResultView; // Keeping this for now
     private _panel?: vscode.WebviewPanel;
-    private _database: Database;
-    private _treeProvider: ProjectTreeProvider;
+    // private _database: Database; // Removed
+    private _treeProvider: ProjectTreeProvider; // Keeping this for now
     private _datasets: DatasetInfo[] = [];
+    private _workspacePath: string; // Added
 
-    private readonly backtraderStrategyClassPattern = /class\s+(\w+)\s*\([^.]+\.Strategy\):/;
+    // private readonly backtraderStrategyClassPattern = /class\s+(\w+)\s*\([^.]+\.Strategy\):/; // Removed
 
-    constructor(extensionUri: vscode.Uri, treeProvider: ProjectTreeProvider) {
+    // Injected services
+    private projectService: IProjectService;
+    private datasetService: IDatasetService;
+    private pythonEnvService: IPythonEnvironmentService;
+    private backtestService: IBacktestService;
+
+    constructor(
+        extensionUri: vscode.Uri, 
+        treeProvider: ProjectTreeProvider,
+        projectService: IProjectService,
+        datasetService: IDatasetService,
+        pythonEnvService: IPythonEnvironmentService,
+        backtestService: IBacktestService, // Added
+        workspacePath: string // Added
+    ) {
         this._extensionUri = extensionUri;
-        this._resultProvider = new BacktestResultView(extensionUri);
-        this._database = Database.getInstance();
+        this._resultProvider = new BacktestResultView(extensionUri); // Assuming this is still created here
+        // this._database = Database.getInstance(); // Removed
         this._treeProvider = treeProvider;
+        this.projectService = projectService;
+        this.datasetService = datasetService;
+        this.pythonEnvService = pythonEnvService;
+        this.backtestService = backtestService;
+        this._workspacePath = workspacePath;
     }
 
     public async openBacktestSetting(projectName: string) {
-        const project = await this._database.getProjectByName(projectName);
+        const project = await this.projectService.getProjectByName(projectName);
 
-        if (project) {
+        if (project && project._id) { // Ensure project and _id exist
+            // Check if entry file exists (ProjectService could also offer a method for this)
             const entryFilePath = vscode.Uri.joinPath(vscode.Uri.file(project.path), project.entryFile);
-
             try {
-                vscode.workspace.fs.stat(entryFilePath);
+                await vscode.workspace.fs.stat(entryFilePath); // Standard VS Code API for file check
             } catch (error) {
-                vscode.window.showErrorMessage('Project file does not exist.');
+                vscode.window.showErrorMessage(`Project entry file "${project.entryFile}" not found at ${project.path}.`);
                 return;
             }
 
-            const buffer = await vscode.workspace.fs.readFile(entryFilePath);
-            const strategyCode = Buffer.from(buffer).toString('utf8');
-            const strategyClassMatch = strategyCode.match(this.backtraderStrategyClassPattern);
-
-            project.strategy = strategyClassMatch?.[1] || undefined;
-            
+            project.strategy = await this.projectService.getProjectStrategyClass(project);
             this._currentProject = project;
             
-            const [_, lastConfig] = await Promise.all([
-                this._loadDatasets(),
-                this._getLastBacktestConfig()
-            ]);
-
-            await this._checkEngineLibrary();
-
-            this.show();
-            this._updateWebview(lastConfig);
-        }
-    }
-
-    private async _loadDatasets(): Promise<void> {
-        if (!vscode.workspace.workspaceFolders || vscode.workspace.workspaceFolders.length === 0) {
-            return;
-        }
-        
-        const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-        const datasetRootPath = path.join(workspacePath, 'dataset');
-        
-        try {
-            await vscode.workspace.fs.stat(vscode.Uri.file(datasetRootPath));
-        } catch (error) {
-            this._datasets = [];
-            return;
-        }
-        
-        const datasets: DatasetInfo[] = [];
-        const assetTypes = ['crypto']; //'stock', 'forex'
-        
-        for (const assetType of assetTypes) {
-            const assetFolderPath = path.join(datasetRootPath, assetType);
-
-            try {
-                await vscode.workspace.fs.stat(vscode.Uri.file(assetFolderPath));
-            } catch (error) {
-                continue;
-            }
+            const datasetRootPath = path.join(this._workspacePath, 'dataset');
+            this._datasets = await this.datasetService.loadDatasetsInWorkspace(datasetRootPath);
             
-            const files = (await vscode.workspace.fs.readDirectory(vscode.Uri.file(assetFolderPath)))
-                .map(([name, _]) => (name));
-            
-            for (const file of files) {
-                if (file.endsWith('.csv') || file.endsWith('.json')) {
-                    const filePath = path.join(assetFolderPath, file);
-                    const nameParts = path.basename(file, path.extname(file)).split('_');
-                    const exchange = nameParts[0] || 'Unknown';
-                    const symbol = nameParts[1] || 'Unknown';
-                    const timeframe = nameParts[2] || 'Unknown';
-                    
-                    datasets.push({
-                        name: file,
-                        path: filePath,
-                        assetType: assetType as 'crypto' | 'stock' | 'forex',
-                        exchange,
-                        symbol,
-                        timeframe,
-                    });
-                }
-            }
-        }
-        
-        this._datasets = datasets;
-    }
+            // Fetch the full project details again to get the most recent lastConfig
+            // Or, if getProjectByName already returns it, use that. Assuming getProject returns full details.
+            const fullProject = await this.projectService.getProject(project._id);
+            const lastConfig = fullProject?.lastConfig;
 
-    private async _getLastBacktestConfig(): Promise<any | undefined> {
-        if (!this._currentProject || !this._currentProject._id) {
-            return undefined;
-        }
-
-        try {
-            const project = await this._database.getProject(this._currentProject._id);
-            return project?.lastConfig;
-        } catch (error) {
-            console.error('Failed to get last backtest config:', error);
-            return undefined;
-        }
-    }
-
-    private async _checkEngineLibrary(): Promise<void> {
-        if (!this._currentProject) {
-            return;
-        }
-
-        const pythonPath = await BacktestRunner.getPythonPath();
-        if (!pythonPath) {
-            return;
-        }
-
-        switch(this._currentProject?.engine) {
-            case 'backtrader': {
-                try {
-                    execSync(pythonPath + " -c 'import backtrader'");
-                } catch (error: any) {
-                    if (error.stderr.toString().includes('ModuleNotFoundError:')) {
-                        vscode.window.showErrorMessage("Backtrader library is not installed. Please install it using the following command: 'pip install backtrader'");
+            // Check engine library
+            const pythonPath = await this.pythonEnvService.getPythonPath();
+            if (pythonPath) {
+                const engineLib = project.engine === 'backtrader' ? 'backtrader' : 
+                                  project.engine === 'vectorbt' ? 'vectorbt' : undefined;
+                if (engineLib) {
+                    const isInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, engineLib);
+                    if (!isInstalled) {
+                        vscode.window.showErrorMessage(`${engineLib} library is not installed. Please install it (e.g., 'pip install ${engineLib}')`);
                     }
                 }
-                break;
+            } else {
+                 vscode.window.showWarningMessage('Python path not configured. Cannot check engine libraries.');
             }
-            case 'vectorbt': {
-                try {
-                    execSync(pythonPath + " -c 'import vectorbt'");
-                } catch (error: any) {
-                    if (error.stderr.toString().includes('ModuleNotFoundError:')) {
-                        vscode.window.showErrorMessage("VectorBT library is not installed. Please install it using the following command: 'pip install vectorbt'");
-                    }
-                }
-                break;
-            }
-            default: break;
+
+            this.show(); // Creates and shows the panel
+            this._updateWebview(lastConfig); // Update with fetched data
+        } else {
+            vscode.window.showErrorMessage(`Project "${projectName}" not found.`);
         }
     }
+
+    // _loadDatasets, _getLastBacktestConfig, _checkEngineLibrary methods are removed.
 
     public show() {
         if (!this._panel) {

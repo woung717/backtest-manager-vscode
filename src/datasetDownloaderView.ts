@@ -1,20 +1,24 @@
 import * as vscode from 'vscode';
-import { DatasetDownloader } from './datasetDownloader';
+// import { DatasetDownloader } from './datasetDownloader'; // Removed
+import { IDatasetService } from '../services/datasetService'; // Added
 
 export class DatasetDownloaderView {
   private panel: vscode.WebviewPanel | undefined;
   private readonly extensionUri: vscode.Uri;
   private assetType: 'crypto' | 'stock' | 'forex';
-  private downloader: DatasetDownloader;
+  // private downloader: DatasetDownloader; // Removed
+  private datasetService: IDatasetService; // Added
 
   constructor(
     extensionUri: vscode.Uri, 
     assetType: 'crypto' | 'stock' | 'forex',
-    workspacePath: string
+    // workspacePath: string, // Removed
+    datasetService: IDatasetService // Injected
   ) {
     this.extensionUri = extensionUri;
     this.assetType = assetType;
-    this.downloader = new DatasetDownloader(workspacePath, assetType);
+    this.datasetService = datasetService; // Store injected service
+    // this.downloader = new DatasetDownloader(workspacePath, assetType); // Removed
   }
 
   public show() {
@@ -42,20 +46,23 @@ export class DatasetDownloaderView {
         try {
           switch (data.type) {
             case 'downloadDataset':
-              await this.downloadDataset(data.config);
+              // await this.downloadDataset(data.config); // Old
+              await this.downloadDatasetWithService(data.config); // New
               break;
             case 'refresh':
               vscode.commands.executeCommand('backtestManager.refreshDatasetView');
               break;
             case 'getExchangeInfo':
-              const exchangeInfo = await this.downloader.getExchangeInfo(data.exchange);
+              // const exchangeInfo = await this.downloader.getExchangeInfo(data.exchange); // Old
+              const exchangeInfo = await this.datasetService.getExchangeInfo(data.exchange, this.assetType); // New
               this.panel?.webview.postMessage({
                 type: 'exchangeInfo',
                 data: exchangeInfo
               });
               break;
             case 'getAvailableExchanges':
-              const exchanges = this.downloader.getAvailableExchanges();
+              // const exchanges = this.downloader.getAvailableExchanges(); // Old
+              const exchanges = await this.datasetService.getAvailableExchanges(this.assetType); // New
               this.panel?.webview.postMessage({
                 type: 'availableExchanges',
                 data: exchanges
@@ -85,24 +92,49 @@ export class DatasetDownloaderView {
     }
   }
 
-  private async downloadDataset(config: any): Promise<void> {
-    try {
-      const { symbol, exchange, timeframe } = config;
-      await vscode.window.withProgress({
-        location: vscode.ProgressLocation.Notification,
-        title: `Downloading ${exchange} ${symbol} ${timeframe} data...`,
-        cancellable: false
-      }, async (progress) => {
-        try {
-          await this.downloader.download(config, progress);
-          vscode.window.showInformationMessage(`${exchange} ${symbol} ${timeframe} data downloaded successfully.`);
-        } catch (error: any) {
-          vscode.window.showWarningMessage(`Data download failed: ${error.message}.`);
+  private handleProgress(vscodeProgress: vscode.Progress<{ message?: string; increment?: number }>) {
+    return (serviceProgress: { message: string, increment?: number, overallProgress?: number }) => {
+        if (serviceProgress.increment) {
+            vscodeProgress.report({ message: serviceProgress.message, increment: serviceProgress.increment });
+        } else if (serviceProgress.overallProgress !== undefined) {
+            // This part needs care: vscode.Progress typically sums increments.
+            // If overallProgress is provided, you might need to calculate the final increment
+            // or just use it for a final message.
+            // For simplicity, let's assume the service sends incremental updates and a final overallProgress=100 update.
+            // A more robust way would be to track current progress and calculate increment if only overall is given.
+            if (serviceProgress.overallProgress === 100 && serviceProgress.increment === undefined) {
+                 // Assuming this is the final message, report without specific increment if not provided
+                 vscodeProgress.report({ message: serviceProgress.message });
+            } else {
+                 vscodeProgress.report({ message: serviceProgress.message }); // Fallback if only message or overallProgress without increment
+            }
+        } else {
+            vscodeProgress.report({ message: serviceProgress.message });
         }
-        vscode.commands.executeCommand('backtestManager.refreshDatasetView');
-      });
+    };
+  }
+
+  private async downloadDatasetWithService(config: any): Promise<void> { // Renamed from downloadDataset
+    try {
+        const { symbol, exchange, timeframe } = config;
+        await vscode.window.withProgress({
+            location: vscode.ProgressLocation.Notification,
+            title: `Downloading ${exchange} ${symbol} ${timeframe} data...`,
+            cancellable: false // Assuming non-cancellable for now based on original
+        }, async (progress) => {
+            try {
+                // Create the progress callback function that maps service progress to vscode.Progress
+                const progressCallback = this.handleProgress(progress);
+                await this.datasetService.downloadDataset(this.assetType, config, progressCallback);
+                vscode.window.showInformationMessage(`${exchange} ${symbol} ${timeframe} data downloaded successfully.`);
+            } catch (error: any) {
+                vscode.window.showWarningMessage(`Data download failed: ${error.message}.`);
+            }
+            // Ensure this command is correctly handled elsewhere or by the user's setup
+            vscode.commands.executeCommand('backtestManager.refreshDatasetView');
+        });
     } catch (error: any) {
-      vscode.window.showErrorMessage(`Error downloading data: ${error.message}`);
+        vscode.window.showErrorMessage(`Error downloading data: ${error.message}`);
     }
   }
 

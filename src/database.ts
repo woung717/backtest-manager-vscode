@@ -17,24 +17,26 @@ export class Database {
 
   private constructor() {}
 
-  public static getInstance(): Database {
+  public static getInstance(workspacePath: string): Database {
     if (!Database.instance) {
       Database.instance = new Database();
-      
-      const workspaceFolders = vscode.workspace.workspaceFolders;
-      if (!workspaceFolders) {
-        throw new Error('Workspace not found.');
-      }
-      
-      try {
-        Database.instance.initialize(workspaceFolders[0].uri.fsPath);
-      } catch (error) {
-        throw error;
-      }
+      // Initialize is called, and it can throw, so getInstance can throw.
+      Database.instance.initialize(workspacePath);
+    } else if (!Database.instance.initialized) {
+      // If instance exists but is not initialized (e.g. due to error in previous attempt)
+      // and we are trying to get it again with a path.
+      // This also handles the case where the first attempt to initialize failed.
+      Database.instance.initialize(workspacePath);
     }
-
+    
+    // After attempting initialization (either for a new instance or an existing uninitialized one),
+    // check if it's truly initialized. If not, something went wrong.
     if (!Database.instance.initialized) {
-      throw new Error('Database is not initialized.');
+      // This line is crucial. If initialize failed, instance.initialized would be false.
+      // We should throw an error here to indicate that getInstance couldn't provide an initialized Database.
+      // The error thrown by initialize would typically be more specific.
+      // This serves as a fallback or a clear indicator from getInstance's perspective.
+      throw new Error('Database could not be initialized.');
     }
 
     return Database.instance;
@@ -67,6 +69,11 @@ export class Database {
       return;
     }
 
+    if (!workspacePath) {
+        this.initialized = false; // Explicitly set to false
+        throw new Error('Workspace path is required to initialize the database.');
+    }
+
     try {
       this.dbPath = path.join(workspacePath, this.CONFIG_FILE_NAME);
       
@@ -85,7 +92,9 @@ export class Database {
       
       this.initialized = true;
     } catch (error) {
-      throw new Error(`Error initializing database: ${error}`);
+      this.initialized = false; // Ensure it's marked as not initialized on error
+      // Wrapping the original error to provide more context might be useful
+      throw new Error(`Error initializing database at ${this.dbPath}: ${error instanceof Error ? error.message : String(error)}`);
     }
   }
 
