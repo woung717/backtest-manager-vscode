@@ -24,7 +24,8 @@ if (root) {
   // Request exchange list after initial render
   function requestExchangeList() {
     VSCodeAPI.postMessage({
-      type: 'getAvailableExchanges'
+      type: 'getAvailableExchanges',
+      assetType: assetType
     });
   }
 

@@ -1,18 +1,29 @@
 import * as vscode from 'vscode';
-import { ProjectTreeProvider, ProjectTreeItem } from './projectTreeProvider';
-import { BacktestSettingView } from './backtestSettingView';
 import * as path from 'path';
-import { BacktestResultView } from './backtestResultView';
-import { Backtest, DatasetInfo, Engine } from './types';
+
+// UI Components
+import { ProjectTreeProvider, ProjectTreeItem } from './projectTreeProvider';
 import { DatasetTreeProvider, DatasetTreeItem } from './datasetTreeProvider';
+import { BacktestSettingView } from './backtestSettingView';
+import { BacktestResultView } from './backtestResultView';
 import { DatasetDownloaderView } from './datasetDownloaderView';
-import { VSCodeOutputLogger } from './vscodeOutputLogger';
-import { Database } from './database';
-import { Backtester } from './backtester';
 import { PriceChartView } from './priceChartView';
 
-function printLogo(logger: VSCodeOutputLogger) {
+// Services
+import { Database } from './database'; // Still needed for instantiation
+import { ProjectService } from './services/projectService';
+import { DatasetService } from './services/datasetService';
+import { PythonEnvironmentService } from './services/pythonEnvironmentService';
+import { BacktestService } from './services/backtestService';
 
+// Types
+import { Backtest, DatasetInfo, Engine, ProjectInfo } from './types'; // Added ProjectInfo explicitly
+
+// Utilities
+import { VSCodeOutputLogger } from './vscodeOutputLogger';
+
+
+function printLogo(logger: VSCodeOutputLogger) {
   logger.log(`
     ██████╗  █████╗  ██████╗██╗  ██╗████████╗███████╗███████╗████████╗  ███╗   ███╗ █████╗ ███╗   ██╗ █████╗  ██████╗ ███████╗██████╗ 
     ██╔══██╗██╔══██╗██╔════╝██║ ██╔╝╚══██╔══╝██╔════╝██╔════╝╚══██╔══╝  ████╗ ████║██╔══██╗████╗  ██║██╔══██╗██╔════╝ ██╔════╝██╔══██╗
@@ -25,201 +36,218 @@ function printLogo(logger: VSCodeOutputLogger) {
 
 export function activate(context: vscode.ExtensionContext) {
   const logger = VSCodeOutputLogger.getInstance("Backtest Manager");
-
   printLogo(logger);
 
-  Backtester.getPythonPath();
-
   // Get workspace path
-  let workspacePath = '';
-  if (vscode.workspace.workspaceFolders && vscode.workspace.workspaceFolders.length > 0) {
-    workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-  } else {
-    vscode.window.showErrorMessage('Workspace folder is not open.');
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (!workspaceFolders || workspaceFolders.length === 0) {
+    vscode.window.showErrorMessage('Workspace folder is not open. Please open a folder to use Backtest Manager.');
     return;
   }
+  const workspacePath = workspaceFolders[0].uri.fsPath;
 
-  // Sample data for the tree view
-  const sampleData: any[] = [];
+  // Instantiate Database (used by ProjectService)
+  const database = Database.getInstance(workspacePath);
 
-  // Register tree view
-  const projectTreeProvider = new ProjectTreeProvider(sampleData, context.extensionUri);
-  const projectTreeView = vscode.window.createTreeView('projectTreeView', { 
-    treeDataProvider: projectTreeProvider
-  });
+  // Instantiate Services
+  const projectService = new ProjectService(database, workspacePath); // Assuming constructor updated
+  const datasetService = new DatasetService(workspacePath);
+  const pythonEnvService = new PythonEnvironmentService();
+  const backtestService = new BacktestService(pythonEnvService, projectService); // Assuming constructor updated
 
-  // Register tree view selection change event
-  projectTreeView.onDidChangeSelection(async (event) => {
-    if (event.selection.length > 0) {
-      const item = event.selection[0];
-      if (item.projectInfo) {
-      projectTreeProvider.openEntryFile(item.projectInfo);
-    }
-    }
-  });
-
-  context.subscriptions.push(projectTreeView);
-
-  // Register dataset tree view
-  const datasetTreeProvider = new DatasetTreeProvider(workspacePath);
-  const datasetTreeView = vscode.window.createTreeView('datasetTreeView', { 
-    treeDataProvider: datasetTreeProvider
-  });
-  context.subscriptions.push(datasetTreeView);
-
-  // Register sidebar panel provider
-  const backtestSettingView = new BacktestSettingView(context.extensionUri, projectTreeProvider);
-  context.subscriptions.push(
-    vscode.commands.registerCommand('backtestManager.showBacktestSettings', () => {
-      backtestSettingView.show();
-    })
+  // Instantiate UI Providers/Views with injected services
+  const projectTreeProvider = new ProjectTreeProvider(projectService);
+  const datasetTreeProvider = new DatasetTreeProvider(datasetService, workspacePath);
+  const backtestSettingView = new BacktestSettingView(
+    context.extensionUri, 
+    projectTreeProvider, 
+    projectService, 
+    datasetService, 
+    pythonEnvService, 
+    backtestService, 
+    workspacePath
   );
 
-  // Register commands
+  // Register Tree Views
+  const projectTreeView = vscode.window.createTreeView('projectTreeView', { treeDataProvider: projectTreeProvider });
+  context.subscriptions.push(projectTreeView);
+  projectTreeView.onDidChangeSelection(async (event) => {
+    if (event.selection.length > 0) {
+      const item = event.selection[0] as ProjectTreeItem; // Cast for type safety
+      if (item.projectInfo) {
+        try {
+          await projectTreeProvider.openEntryFile(item.projectInfo);
+        } catch (e: any) {
+          vscode.window.showErrorMessage(`Error opening entry file: ${e.message}`);
+        }
+      }
+    }
+  });
+
+  const datasetTreeView = vscode.window.createTreeView('datasetTreeView', { treeDataProvider: datasetTreeProvider });
+  context.subscriptions.push(datasetTreeView);
+  
+  // Register Commands
   context.subscriptions.push(
     vscode.commands.registerCommand('backtestManager.refreshProjectTreeView', () => {
-      projectTreeProvider.updateData();
+      projectTreeProvider.refresh(); // Changed from updateData() to refresh()
     }),
 
-    // Add command to create new project
     vscode.commands.registerCommand('backtestManager.createNewProject', async () => {
       const projectName = await vscode.window.showInputBox({
         placeHolder: 'Enter project name',
         prompt: 'Create New Project',
         validateInput: async (value) => {
-          if (!value) {
-            return 'Project name cannot be empty.';
+          if (!value) return 'Project name cannot be empty.';
+          if (value.includes('/') || value.includes('\\')) return 'Project name cannot contain path separators.';
+          try {
+            const project = await projectService.getProjectByName(value); // Use service
+            if (project) return 'Project name already exists.';
+          } catch (e: any) {
+            // For validation, perhaps a softer check or ensure service handles this gracefully.
+            console.error("Validation error checking project name:", e.message);
+            return "Error validating project name."; 
           }
-
-          if (value.includes('/') || value.includes('\\')) {
-            return 'Project name cannot contain path separators.';
-          }
-
-          const project = await Database.getInstance().getProjectByName(value);
-          if (project) {
-            return 'Project name already exists.';
-          }
-
           return null;
         }
       });
       
-      const engine = await vscode.window.showQuickPick([
-        { label: '🚀 Backtrader', value: 'backtrader', description: 'Full featured event-driven backtesting engine.' },
-        { label: '⚡ VectorBT', value: 'vectorbt', description: 'Ultra rapid vectorized backtesting engine.' }
-      ], {
-        placeHolder: 'Select engine',
-      });
+      const engineSelection = await vscode.window.showQuickPick([
+        { label: '🚀 Backtrader', value: 'backtrader' as Engine, description: 'Full featured event-driven backtesting engine.' },
+        { label: '⚡ VectorBT', value: 'vectorbt' as Engine, description: 'Ultra rapid vectorized backtesting engine.' }
+      ], { placeHolder: 'Select engine' });
 
-      if (projectName && engine) {
-        await projectTreeProvider.createNewProject(projectName, engine.value as Engine);
+      if (projectName && engineSelection) {
+        try {
+          const projectInfo = await projectService.createProject(projectName, engineSelection.value, workspacePath);
+          projectTreeProvider.refresh(); // Changed from updateData() to refresh()
+          const document = await vscode.workspace.openTextDocument(vscode.Uri.file(path.join(projectInfo.path, projectInfo.entryFile)));
+          await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
+        } catch (e: any) {
+          vscode.window.showErrorMessage(`Failed to create project: ${e.message}`);
+        }
       }
     }),
 
-    // Add command to run backtest
     vscode.commands.registerCommand('backtestManager.runBacktest', async () => {
       const activeEditor = vscode.window.activeTextEditor;
       if (!activeEditor) {
         vscode.window.showErrorMessage('No active editor found.');
         return;
       }
-
       const filePath = activeEditor.document.uri.fsPath;
-      
-      // Check if the current file is the entryFile of a project
-      const projects = await projectTreeProvider.getProjects();
-      const project = projects.find(p => path.join(p.path, p.entryFile) === filePath);
-      
-      if (!project) {
-        vscode.window.showErrorMessage('This file is not the entryFile of a backtest project.');
-        return;
+      try {
+        const projects = await projectService.getProjects(); // Use service
+        const project = projects.find(p => path.join(p.path, p.entryFile) === filePath);
+        if (!project) {
+          vscode.window.showErrorMessage('This file is not the entryFile of a known backtest project.');
+          return;
+        }
+        await backtestSettingView.openBacktestSetting(project.name);
+      } catch (e: any) {
+        vscode.window.showErrorMessage(`Error preparing to run backtest: ${e.message}`);
       }
-
-      // Open Backtest Settings panel
-      await backtestSettingView.openBacktestSetting(project.name);
     }),
 
-    // Run backtest from TreeView context menu
     vscode.commands.registerCommand('backtestManager.runBacktestFromTree', async (item: ProjectTreeItem) => {
       if (item.projectInfo) {
-        backtestSettingView.openBacktestSetting(item.projectInfo.name);
-        projectTreeProvider.openEntryFile(item.projectInfo);
+        try {
+          await backtestSettingView.openBacktestSetting(item.projectInfo.name);
+          // projectTreeProvider.openEntryFile(item.projectInfo); // This is still fine as it's a UI concern
+          // If openEntryFile is complex, it could also be a command. For now, keep as is.
+          await projectTreeProvider.openEntryFile(item.projectInfo);
+        } catch (e: any) {
+           vscode.window.showErrorMessage(`Error opening backtest settings: ${e.message}`);
+        }
       }
     }),
 
-    // Add command to show backtest result
     vscode.commands.registerCommand('backtestManager.showBacktestResult', (backtest: Backtest) => {
+      // BacktestResultView does not have external service dependencies in its constructor
       const resultView = new BacktestResultView(context.extensionUri);
       resultView.showResult(backtest);
     }),
 
     vscode.commands.registerCommand('backtestManager.showPriceChart', (item: ProjectTreeItem) => {
-      if (item.backtestResult) {
-        const resultView = new PriceChartView(context.extensionUri);
-        resultView.showPriceChart(item.backtestResult);
+      if (item.backtestResult && item.projectInfo?.path && item.backtestResult.config?.datasetPaths?.[0]) {
+        const chartView = new PriceChartView(context.extensionUri, datasetService);
+        chartView.showPriceChart(item.backtestResult);
+      } else if (item.projectInfo && !item.backtestResult) { // Assuming a project item could be right-clicked to show a chart of its primary dataset
+         vscode.window.showWarningMessage("This command is for backtest results. Use 'Show Dataset Chart' for raw datasets.");
       }
     }),
 
-    // Add command to delete backtest result
-    vscode.commands.registerCommand('backtestManager.deleteBacktestResult', async (item) => {
+    vscode.commands.registerCommand('backtestManager.deleteBacktestResult', async (item: ProjectTreeItem) => {
       if (item.backtestResult && item.projectInfo && item.projectInfo._id) {
-        const result = await vscode.window.showWarningMessage('Are you sure you want to delete this backtest result?', { modal: true }, 'Delete');
-        if (result === 'Delete') {
-          await projectTreeProvider.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
+        const confirmation = await vscode.window.showWarningMessage('Are you sure you want to delete this backtest result?', { modal: true }, 'Delete');
+        if (confirmation === 'Delete') {
+          try {
+            await projectService.deleteBacktestResult(item.projectInfo._id, item.backtestResult.id);
+            projectTreeProvider.refresh(); // Changed from updateData() to refresh()
+          } catch (e: any) {
+            vscode.window.showErrorMessage(`Failed to delete backtest result: ${e.message}`);
+          }
         }
       }
     }),
 
     vscode.commands.registerCommand('backtestManager.renameProject', async (item: ProjectTreeItem) => {
-      const projectName = await vscode.window.showInputBox({
+      const newProjectName = await vscode.window.showInputBox({
         placeHolder: 'Enter new project name',
         prompt: 'Rename Project',
+        value: item.projectInfo?.name, // Pre-fill with current name
         validateInput: (value) => {
-          if (!value) {
-            return 'Project name cannot be empty';
-          }
-          if (value.includes('/') || value.includes('\\')) {
-            return 'Project name cannot contain path separators';
-          }
+          if (!value) return 'Project name cannot be empty';
+          if (value.includes('/') || value.includes('\\')) return 'Project name cannot contain path separators';
           return null;
         }
       });
 
-      if (!projectName) {
-        vscode.window.showErrorMessage('Project name cannot be empty');
-        return;
-      }
-
-      if (item.projectInfo && item.projectInfo._id) {
-        await projectTreeProvider.renameProject(item.projectInfo._id, projectName);
-      }
-    }),
-
-    // Add command to delete project
-    vscode.commands.registerCommand('backtestManager.deleteProject', async (item) => {
-      if (item.projectInfo && item.projectInfo._id) {
-        const result = await vscode.window.showWarningMessage('Are you sure you want to delete this project? (Project folder will remain)', { modal: true }, 'Delete');
-        if (result === 'Delete') {
-          await projectTreeProvider.deleteProject(item.projectInfo._id);
+      if (newProjectName && item.projectInfo && item.projectInfo._id) {
+        try {
+          await projectService.updateProject(item.projectInfo._id, { name: newProjectName });
+          projectTreeProvider.refresh(); // Changed from updateData() to refresh()
+        } catch (e: any) {
+          vscode.window.showErrorMessage(`Failed to rename project: ${e.message}`);
         }
       }
     }),
 
-    // Dataset management commands
+    vscode.commands.registerCommand('backtestManager.deleteProject', async (item: ProjectTreeItem) => {
+      if (item.projectInfo && item.projectInfo._id) {
+        const confirmation = await vscode.window.showWarningMessage(
+          `Are you sure you want to delete the project "${item.projectInfo.name}"? This action only removes it from the manager, the folder remains.`, 
+          { modal: true }, 
+          'Delete'
+        );
+        if (confirmation === 'Delete') {
+          try {
+            await projectService.deleteProject(item.projectInfo._id);
+            projectTreeProvider.refresh(); // Changed from updateData() to refresh()
+          } catch (e: any) {
+            vscode.window.showErrorMessage(`Failed to delete project: ${e.message}`);
+          }
+        }
+      }
+    }),
+
     vscode.commands.registerCommand('backtestManager.refreshDatasetView', () => {
-      datasetTreeProvider.updateData();
+      datasetTreeProvider.refresh(); // This method should call loadDatasets which uses datasetService
     }),
 
     vscode.commands.registerCommand('backtestManager.showDatasetChart', async (item: DatasetTreeItem) => {
-      if (item.dataset) {
-        const resultView = new PriceChartView(context.extensionUri);
-        resultView.showDatasetOnlyPriceChart(item.dataset.path);    
+      if (item.datasetInfo && item.datasetInfo.path) { // Updated to datasetInfo
+        const chartView = new PriceChartView(context.extensionUri, datasetService);
+        chartView.showDatasetOnlyPriceChart(item.datasetInfo.path);    
       }
     }),
 
     vscode.commands.registerCommand('backtestManager.deleteDataset', async (item: DatasetTreeItem) => {
-      if (item.dataset) {
-        await datasetTreeProvider.deleteDataset(item.dataset);
+      // datasetTreeProvider.deleteDataset already handles confirmation and service call
+      if (item.datasetInfo) { // Check if it's a dataset item
+         await datasetTreeProvider.deleteDataset(item); 
+      } else {
+         vscode.window.showWarningMessage("Please select a dataset file to delete.");
       }
     }),
 
@@ -227,27 +255,35 @@ export function activate(context: vscode.ExtensionContext) {
       try {
         const document = await vscode.workspace.openTextDocument(dataset.path);
         await vscode.window.showTextDocument(document);
-      } catch (error) {
-        vscode.window.showErrorMessage(`Cannot open file: ${error}`);
+      } catch (error: any) {
+        vscode.window.showErrorMessage(`Cannot open file: ${error.message || error}`);
       }
     }),
 
-    // Add command to show dataset downloader webview for specific asset type
     vscode.commands.registerCommand('backtestManager.showDatasetDownloader', (item: DatasetTreeItem) => {
       if (item.assetType) {
-        const downloader = new DatasetDownloaderView(context.extensionUri, item.assetType, workspacePath);
-        downloader.show();
+        const downloaderView = new DatasetDownloaderView(context.extensionUri, item.assetType, datasetService);
+        downloaderView.show();
       }
+    }),
+    
+    vscode.commands.registerCommand('backtestManager.showBacktestSettings', () => {
+      backtestSettingView.show(); 
     }),
 
     vscode.commands.registerCommand('backtestManager.feedback', () => {
       vscode.env.openExternal(vscode.Uri.parse('https://forms.gle/pRwpMMrS66sBmHdE9'));
     })
-
   );
 }
 
-// This method is called when your extension is deactivated
 export function deactivate() {
-  Database.getInstance().saveDatabase();
+  const workspaceFolders = vscode.workspace.workspaceFolders;
+  if (workspaceFolders && workspaceFolders.length > 0) {
+    const workspacePath = workspaceFolders[0].uri.fsPath;
+    Database.getInstance(workspacePath).saveDatabase(); // Ensure path is passed if required by getInstance for saving
+  } else {
+    // Handle case where there's no workspace, maybe database doesn't need saving or was never initialized.
+    console.warn("No workspace folder found during deactivation. Database might not be saved if path-dependent.");
+  }
 }

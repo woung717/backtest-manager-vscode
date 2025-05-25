@@ -1,41 +1,31 @@
 import * as vscode from 'vscode';
 import { Backtest, ChartData, OHLCV } from './types';
+import { IDatasetService } from './services/datasetService'; // Added
 
 export class PriceChartView {
   private panel: vscode.WebviewPanel | undefined;
   private readonly extensionUri: vscode.Uri;
+  private datasetService: IDatasetService; // Added
 
-  constructor(extensionUri: vscode.Uri) {
+  constructor(extensionUri: vscode.Uri, datasetService: IDatasetService) { // Modified
     this.extensionUri = extensionUri;
+    this.datasetService = datasetService; // Added
   }
 
-  private async loadDataset(datasetPath: string) {
+  private async loadDataset(datasetPath: string): Promise<OHLCV[] | undefined> { // Modified
     try {
-      const fileContent = await vscode.workspace.fs.readFile(vscode.Uri.file(datasetPath));
-      const csvContent = Buffer.from(fileContent).toString('utf-8');
-      const lines = csvContent.split('\n');
-      
-      const data = lines.slice(1).map(line => {
-        const [datetime, open, high, low, close, volume] = line.split(',');
-        return {
-          datetime: datetime,
-          open: parseFloat(open),
-          high: parseFloat(high),
-          low: parseFloat(low),
-          close: parseFloat(close),
-          volume: parseFloat(volume)
-        } as OHLCV;
-      }); 
-  
-      return data;
-    } catch (error) {
-      vscode.window.showErrorMessage(`Failed to load dataset: ${error}`);
+      return await this.datasetService.getDatasetContent(datasetPath);
+    } catch (error: any) {
+      vscode.window.showErrorMessage(error.message || `Failed to load dataset: ${datasetPath}`);
       return undefined;
     }
   }
 
   public async showDatasetOnlyPriceChart(datasetPath: string) {
     const dataset = await this.loadDataset(datasetPath);
+    if (!dataset) { // Check if dataset loading failed
+        return; 
+    }
 
     this.panel = vscode.window.createWebviewPanel(
       'priceChartView',
@@ -58,7 +48,7 @@ export class PriceChartView {
       {
         backtestId: undefined,
         datasetPath: datasetPath,
-        ohlcv: dataset!, 
+        ohlcv: dataset, // dataset is already OHLCV[] | undefined, no need for '!'
         trades: []
       }
     );
@@ -72,6 +62,9 @@ export class PriceChartView {
 
     const datasetPath = backtest?.config?.datasetPaths[0];
     const dataset = await this.loadDataset(datasetPath);
+    if (!dataset) { // Check if dataset loading failed
+        return;
+    }
     
     this.panel = vscode.window.createWebviewPanel(
       'priceChartView',

@@ -55,7 +55,8 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
       
       // Request exchange list from backend
       VSCodeAPI.postMessage({
-        type: 'getAvailableExchanges'
+        type: 'getAvailableExchanges',
+        assetType: assetType
       });
       
       // Set up event listener
@@ -143,6 +144,26 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
     }
   };
 
+  // Message handling hook
+  useEffect(() => {
+    const handleMessage = (event: MessageEvent) => {
+      const message = event.data;
+      if (message.type === 'downloadProgress') {
+        // Handle download progress
+        console.log('Download progress:', message.data);
+      } else if (message.type === 'downloadComplete') {
+        setIsSubmitting(false);
+        // Add any success handling here
+      } else if (message.type === 'downloadError') {
+        setIsSubmitting(false);
+        // Add error handling here
+      }
+    };
+
+    window.addEventListener('message', handleMessage);
+    return () => window.removeEventListener('message', handleMessage);
+  }, []);
+
   // Form submit handler
   const handleSubmit = () => {
     setIsSubmitting(true);
@@ -155,14 +176,10 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
         exchange,
         timeframe,
         startDate,
-        endDate
+        endDate,
+        assetType
       },
     });
-    
-    // Release submitting state after 5 seconds (should ideally receive completion message from backend)
-    setTimeout(() => {
-      setIsSubmitting(false);
-    }, 5000);
   };
 
   // Symbol search input change handler
@@ -357,10 +374,10 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
         {/* Download button */}
         <button
           onClick={handleSubmit}
-          disabled={isSubmitting || isLoading || isLoadingExchanges || !exchange || !symbol || !timeframe || !startDate || !endDate}
+          disabled={ isLoading || isLoadingExchanges || !exchange || !symbol || !timeframe || !startDate || !endDate}
           className="mt-4 bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] py-2 px-4 rounded hover:bg-[var(--vscode-button-hoverBackground)] disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium"
         >
-          {isSubmitting ? 'Downloading...' : 'Download Data'}
+          Download Data
         </button>
         
         <p className="text-xs text-[var(--vscode-descriptionForeground)] mt-2">
@@ -372,4 +389,4 @@ const DatasetDownloaderView: React.FC<DatasetDownloaderProps> = ({ assetType = '
   );
 };
 
-export default DatasetDownloaderView; 
+export default DatasetDownloaderView;

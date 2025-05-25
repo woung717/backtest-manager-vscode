@@ -45,7 +45,7 @@
       },
       {
         "command": "backtestManager.deleteBacktestResult",
-        "title": "Delete Backtest Result"
+        "title": "Delete"
       },
       {
         "command": "backtestManager.renameProject",

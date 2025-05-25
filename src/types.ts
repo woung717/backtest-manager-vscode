@@ -4,7 +4,6 @@ export interface ProjectInfo {
   path: string;
   entryFile: string;
   engine: Engine;
-  strategy?: string;
   description?: string;
   created?: Date;
   updated?: Date;
@@ -55,10 +54,17 @@ export interface Backtest {
 
 export interface Performance {
   totalReturn: number;
+  annualizedReturn: number;
   sharpeRatio: number;
+  sortinoRatio: number;
   maxDrawdown: number;
   winRate: number;
+  profitFactor: number;
   trades: number;
+  calmarRatio: number;
+  avgWinLossRatio: number;
+  skewness: number;
+  kurtosis: number;
 }
 
 export interface Equity {
@@ -106,4 +112,10 @@ export interface ChartData {
   trades: TradeInfo[];
 }
 
-
+export interface ExchangeInfo {
+  id: string;
+  name: string;
+  symbols: string[];
+  timeframes: string[];
+  has: any;
+};

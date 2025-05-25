@@ -121,18 +121,42 @@ export class VectorBTRunner {
     // Calculate trade-related metrics
     const tradeCount = Object.keys(this.currentBacktest.trades).length;
     if (tradeCount > 0) {
-      const profitableTrades = Object.values(this.currentBacktest.trades)
-        .filter(trade => trade.exits.length > 0 && trade.exits[trade.exits.length - 1].pnlcomm > 0)
-        .length;
+      let totalWins = 0;
+      let totalLosses = 0;
+      let winCount = 0;
+      let lossCount = 0;
+
+      Object.values(this.currentBacktest.trades).forEach(trade => {
+        if (trade.exits.length > 0) {
+          const lastExit = trade.exits[trade.exits.length - 1];
+          if (lastExit.pnlcomm > 0) {
+            totalWins += lastExit.pnlcomm;
+            winCount++;
+          } else {
+            totalLosses += Math.abs(lastExit.pnlcomm);
+            lossCount++;
+          }
+        }
+      });
+
       this.currentBacktest.performance.trades = tradeCount;
-      this.currentBacktest.performance.winRate = profitableTrades / tradeCount;
+      this.currentBacktest.performance.winRate = winCount / tradeCount;
+      
+      // Calculate Profit Factor
+      this.currentBacktest.performance.profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? Infinity : 0;
+      
+      // Calculate Average Win/Loss Ratio
+      const avgWin = winCount > 0 ? totalWins / winCount : 0;
+      const avgLoss = lossCount > 0 ? totalLosses / lossCount : 0;
+      this.currentBacktest.performance.avgWinLossRatio = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? Infinity : 0;
     }
 
     // Calculate equity-related metrics
     if (this.currentBacktest.equity.length > 0) {
       const initialValue = this.currentBacktest.equity[0].value;
       const finalValue = this.currentBacktest.equity[this.currentBacktest.equity.length - 1].value;
-      this.currentBacktest.performance.totalReturn = (finalValue - initialValue) / initialValue;
+      const totalReturn = (finalValue - initialValue) / initialValue;
+      this.currentBacktest.performance.totalReturn = totalReturn;
       
       // Calculate maximum drawdown
       let maxDrawdown = 0;
@@ -157,6 +181,12 @@ export class VectorBTRunner {
       
       this.currentBacktest.performance.maxDrawdown = maxDrawdown;
 
+      // Calculate Calmar Ratio (annualized return / maximum drawdown)
+      const timePeriodInYears = this.currentBacktest.equity.length / 252; // Assuming 252 trading days per year
+      const annualizedReturn = Math.pow(1 + totalReturn, 1 / timePeriodInYears) - 1;
+      this.currentBacktest.performance.annualizedReturn = annualizedReturn;
+      this.currentBacktest.performance.calmarRatio = maxDrawdown > 0 ? annualizedReturn / maxDrawdown : 0;
+
       // Calculate Sharpe ratio
       // Assume 2% risk-free rate
       const riskFreeRate = 0.02;
@@ -180,6 +210,22 @@ export class VectorBTRunner {
       }, 0) / dailyReturns.length;
       
       const stdDev = Math.sqrt(variance);
+
+      // Calculate skewness
+      const thirdMoment = dailyReturns.reduce((sum, return_) => {
+        const diff = return_ - avgReturn;
+        return sum + (diff * diff * diff);
+      }, 0) / dailyReturns.length;
+      const skewness = thirdMoment / Math.pow(stdDev, 3);
+      this.currentBacktest.performance.skewness = isNaN(skewness) ? 0 : skewness;
+
+      // Calculate kurtosis
+      const fourthMoment = dailyReturns.reduce((sum, return_) => {
+        const diff = return_ - avgReturn;
+        return sum + (diff * diff * diff * diff);
+      }, 0) / dailyReturns.length;
+      const kurtosis = (fourthMoment / Math.pow(stdDev, 4)) - 3; // -3 to get excess kurtosis (compared to normal distribution)
+      this.currentBacktest.performance.kurtosis = isNaN(kurtosis) ? 0 : kurtosis;
       
       // Calculate annualized Sharpe ratio (assume 252 trading days)
       const annualizedAvgReturn = avgReturn * 252;
@@ -188,6 +234,20 @@ export class VectorBTRunner {
       
       // Prevent NaN
       this.currentBacktest.performance.sharpeRatio = isNaN(sharpeRatio) ? 0 : sharpeRatio;
+
+      // Calculate Sortino Ratio using only negative returns
+      const negativeReturns = dailyReturns.filter(r => r < 0);
+      const negativeReturnVariance = negativeReturns.reduce((sum, return_) => {
+        const diff = return_ - 0; // Compare to 0 instead of average return
+        return sum + (diff * diff);
+      }, 0) / (negativeReturns.length || 1); // Avoid division by zero
+      
+      const negativeStdDev = Math.sqrt(negativeReturnVariance);
+      const annualizedNegativeStdDev = negativeStdDev * Math.sqrt(252);
+      const sortinoRatio = (annualizedAvgReturn - riskFreeRate) / annualizedNegativeStdDev;
+      
+      // Prevent NaN
+      this.currentBacktest.performance.sortinoRatio = isNaN(sortinoRatio) ? 0 : sortinoRatio;
     }
   }
 
@@ -245,7 +305,12 @@ export class VectorBTRunner {
           maxDrawdown: 0,
           winRate: 0,
           profitFactor: 0,
-          trades: 0
+          trades: 0,
+          calmarRatio: 0,
+          avgWinLossRatio: 0,
+          sortinoRatio: 0,
+          skewness: 0,
+          kurtosis: 0
         },
         equity: [],
         trades: {}
@@ -344,4 +409,4 @@ export class VectorBTRunner {
       throw error;
     }
   }
-} 
+}
