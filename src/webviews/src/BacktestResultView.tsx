@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Backtest } from '../../types';
 
 // Lightweight Charts type definition
@@ -15,6 +15,7 @@ interface EquityData {
 
 const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => {
   const equityChartRef = useRef<HTMLDivElement>(null);
+  const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
   
   useEffect(() => {
     if (!backtest || !equityChartRef.current) return;
@@ -232,33 +233,69 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
           </div>
         </div>
 
+        {/* Basic Metrics */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Total Return</h3>
-            <div className="text-base font-bold">{(backtest.performance.totalReturn * 100).toFixed(2)}%</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Total Return</div>
+            <div className="text-lg font-semibold">{(backtest.performance.totalReturn * 100).toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Sharpe Ratio</h3>
-            <div className="text-base font-bold">{backtest.performance.sharpeRatio.toFixed(2)}</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Win Rate</div>
+            <div className="text-lg font-semibold">{(backtest.performance.winRate * 100).toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Max Drawdown</h3>
-            <div className="text-base font-bold">{(backtest.performance.maxDrawdown * 100).toFixed(2)}%</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Max Drawdown</div>
+            <div className="text-lg font-semibold">{(backtest.performance.maxDrawdown * 100).toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Win Rate</h3>
-            <div className="text-base font-bold">{(backtest.performance.winRate * 100).toFixed(2)}%</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Number of Trades</div>
+            <div className="text-lg font-semibold">{backtest.performance.trades}</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Total Trades</h3>
-            <div className="text-base font-bold">{backtest.performance.trades}</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Win/Loss Ratio</div>
+            <div className="text-lg font-semibold">{backtest.performance.avgWinLossRatio.toFixed(2)}</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
-            <h3 className="text-xs text-[var(--vscode-descriptionForeground)] mb-1">Winning Trades</h3>
-            <div className="text-base font-bold">{simplifiedTrades.filter(t => t.isOverallProfit).length} / {simplifiedTrades.length}</div>
+            <div className="text-xs text-[var(--vscode-descriptionForeground)]">Sharpe Ratio</div>
+            <div className="text-lg font-semibold">{backtest.performance.sharpeRatio.toFixed(2)}</div>
           </div>
         </div>
 
+        {/* Advanced Metrics Toggle */}
+        <div className="flex items-center">
+          <button 
+            onClick={() => setShowAdvancedMetrics(!showAdvancedMetrics)}
+            className="flex items-center text-[var(--vscode-button-foreground)] hover:text-[var(--vscode-button-hoverBackground)] transition-colors"
+          >
+            <span className={`transform transition-transform ${showAdvancedMetrics ? 'rotate-90' : ''}`}>
+              ▶
+            </span>
+            <span className="ml-2 text-sm font-semibold">Advanced Metrics</span>
+          </button>
+        </div>
+
+        {/* Advanced Metrics */}
+        {showAdvancedMetrics && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+            <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
+              <div className="text-xs text-[var(--vscode-descriptionForeground)]">Sortino Ratio</div>
+              <div className="text-lg font-semibold">{backtest.performance.sortinoRatio.toFixed(2)}</div>
+            </div>
+            <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
+              <div className="text-xs text-[var(--vscode-descriptionForeground)]">Calmar Ratio</div>
+              <div className="text-lg font-semibold">{backtest.performance.calmarRatio.toFixed(2)}</div>
+            </div>
+            <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
+              <div className="text-xs text-[var(--vscode-descriptionForeground)]">Skewness</div>
+              <div className="text-lg font-semibold">{backtest.performance.skewness.toFixed(2)}</div>
+            </div>
+            <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
+              <div className="text-xs text-[var(--vscode-descriptionForeground)]">Kurtosis</div>
+              <div className="text-lg font-semibold">{backtest.performance.kurtosis.toFixed(2)}</div>
+            </div>
+          </div>
+        )}
+        
         <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] rounded-lg overflow-hidden">
           <div className="p-2 border-b border-[var(--vscode-panel-border)] ">
             <h3 className="text-base font-bold">Equity Curve</h3>
@@ -352,4 +389,4 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
   );
 };
 
-export default BacktestResultView; 
+export default BacktestResultView;

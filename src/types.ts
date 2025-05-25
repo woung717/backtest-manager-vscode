@@ -54,10 +54,17 @@ export interface Backtest {
 
 export interface Performance {
   totalReturn: number;
+  annualizedReturn: number;
   sharpeRatio: number;
+  sortinoRatio: number;
   maxDrawdown: number;
   winRate: number;
+  profitFactor: number;
   trades: number;
+  calmarRatio: number;
+  avgWinLossRatio: number;
+  skewness: number;
+  kurtosis: number;
 }
 
 export interface Equity {

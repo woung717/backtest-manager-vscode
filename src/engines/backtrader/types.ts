@@ -75,15 +75,19 @@ export interface BacktestResult {
   error?: string;
   plotPath?: string;
   date: string;
-  strategy: string;
-  performance: {
+  strategy: string;    performance: {
     totalReturn: number;
     annualizedReturn: number;
     sharpeRatio: number;
+    sortinoRatio: number;
     maxDrawdown: number;
     winRate: number;
     profitFactor: number;
     trades: number;
+    calmarRatio: number;
+    avgWinLossRatio: number;
+    skewness: number;
+    kurtosis: number;
   };
   equity: Array<Equity>;
   trades: Record<string, TradeInfo>;
