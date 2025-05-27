@@ -14,29 +14,44 @@ def backtest_run():
     if portfolio_func == 'from_signals':
         kwargs = {
             <% if (config.settings.from_signals) { %>
-            <% if (config.settings.from_signals.size != null) { %>'size': <%= config.settings.from_signals.size %>,<% } %>
-            <% if (config.settings.from_signals.size_type != null) { %>'size_type': '<%= config.settings.from_signals.size_type %>',<% } %>
-            <% if (config.settings.from_signals.fees != null) { %>'fees': <%= config.settings.from_signals.fees %>,<% } %>
-            <% if (config.settings.from_signals.fixed_fees != null) { %>'fixed_fees': <%= config.settings.from_signals.fixed_fees %>,<% } %>
-            <% if (config.settings.from_signals.slippage != null) { %>'slippage': <%= config.settings.from_signals.slippage %>,<% } %>
-            <% if (config.settings.from_signals.min_size != null) { %>'min_size': <%= config.settings.from_signals.min_size %>,<% } %>
-            <% if (config.settings.from_signals.max_size != null) { %>'max_size': <%= config.settings.from_signals.max_size %>,<% } %>
-            <% if (config.settings.from_signals.size_granularity != null) { %>'size_granularity': <%= config.settings.from_signals.size_granularity %>,<% } %>
-            <% if (config.settings.from_signals.reject_prob != null) { %>'reject_prob': <%= config.settings.from_signals.reject_prob %>,<% } %>
-            <% if (config.settings.from_signals.lock_cash != null) { %>'lock_cash': <%= config.settings.from_signals.lock_cash ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.allow_partial != null) { %>'allow_partial': <%= config.settings.from_signals.allow_partial ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.raise_reject != null) { %>'raise_reject': <%= config.settings.from_signals.raise_reject ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.log != null) { %>'log': <%= config.settings.from_signals.log ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.accumulate != null) { %>'accumulate': <%= config.settings.from_signals.accumulate ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.direction != null) { %>'direction': '<%= config.settings.from_signals.direction %>',<% } %>
-            <% if (config.settings.from_signals.sl_stop != null) { %>'sl_stop': <%= config.settings.from_signals.sl_stop %>,<% } %>
-            <% if (config.settings.from_signals.sl_trail != null) { %>'sl_trail': <%= config.settings.from_signals.sl_trail ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.tp_stop != null) { %>'tp_stop': <%= config.settings.from_signals.tp_stop %>,<% } %>
-            <% if (config.settings.from_signals.use_stops != null) { %>'use_stops': <%= config.settings.from_signals.use_stops ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.init_cash != null) { %>'init_cash': <%= config.settings.from_signals.init_cash %>,<% } %>
-            <% if (config.settings.from_signals.cash_sharing != null) { %>'cash_sharing': <%= config.settings.from_signals.cash_sharing ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.ffill_val_price != null) { %>'ffill_val_price': <%= config.settings.from_signals.ffill_val_price ? 'True' : 'False' %>,<% } %>
-            <% if (config.settings.from_signals.update_value != null) { %>'update_value': <%= config.settings.from_signals.update_value ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.size !== undefined) { %>'size': <%= config.settings.from_signals.size %>,<% } %>
+            <% if (config.settings.from_signals.size_type !== undefined) { %>'size_type': '<%= config.settings.from_signals.size_type %>',<% } %>
+            <% if (config.settings.from_signals.fees !== undefined) { %>'fees': <%= config.settings.from_signals.fees %>,<% } %>
+            <% if (config.settings.from_signals.fixed_fees !== undefined) { %>'fixed_fees': <%= config.settings.from_signals.fixed_fees %>,<% } %>
+            <% if (config.settings.from_signals.slippage !== undefined) { %>'slippage': <%= config.settings.from_signals.slippage %>,<% } %>
+            <% if (config.settings.from_signals.min_size !== undefined) { %>'min_size': <%= config.settings.from_signals.min_size %>,<% } %>
+            <% if (config.settings.from_signals.max_size !== undefined) { %>'max_size': <%= config.settings.from_signals.max_size %>,<% } %>
+            <% if (config.settings.from_signals.size_granularity !== undefined) { %>'size_granularity': <%= config.settings.from_signals.size_granularity %>,<% } %>
+            <% if (config.settings.from_signals.reject_prob !== undefined) { %>'reject_prob': <%= config.settings.from_signals.reject_prob %>,<% } %>
+            <% if (config.settings.from_signals.lock_cash !== undefined) { %>'lock_cash': <%= config.settings.from_signals.lock_cash ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.allow_partial !== undefined) { %>'allow_partial': <%= config.settings.from_signals.allow_partial ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.raise_reject !== undefined) { %>'raise_reject': <%= config.settings.from_signals.raise_reject ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.log !== undefined) { %>'log': <%= config.settings.from_signals.log ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.accumulate !== undefined) { %>'accumulate': <%= config.settings.from_signals.accumulate ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.direction !== undefined) { %>'direction': '<%= config.settings.from_signals.direction %>',<% } %>
+            <% if (config.settings.from_signals.sl_stop !== undefined) { %>'sl_stop': <%= config.settings.from_signals.sl_stop %>,<% } %>
+            <% if (config.settings.from_signals.sl_trail !== undefined) { %>'sl_trail': <%= config.settings.from_signals.sl_trail ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.tp_stop !== undefined) { %>'tp_stop': <%= config.settings.from_signals.tp_stop %>,<% } %>
+            <% if (config.settings.from_signals.use_stops !== undefined) { %>'use_stops': <%= config.settings.from_signals.use_stops ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.init_cash !== undefined) { %>'init_cash': <%= config.settings.from_signals.init_cash %>,<% } %>
+            <% if (config.settings.from_signals.cash_sharing !== undefined) { %>'cash_sharing': <%= config.settings.from_signals.cash_sharing ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.ffill_val_price !== undefined) { %>'ffill_val_price': <%= config.settings.from_signals.ffill_val_price ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.update_value !== undefined) { %>'update_value': <%= config.settings.from_signals.update_value ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.upon_long_conflict !== undefined) { %>'upon_long_conflict': '<%= config.settings.from_signals.upon_long_conflict %>',<% } %>
+            <% if (config.settings.from_signals.upon_short_conflict !== undefined) { %>'upon_short_conflict': '<%= config.settings.from_signals.upon_short_conflict %>',<% } %>
+            <% if (config.settings.from_signals.upon_dir_conflict !== undefined) { %>'upon_dir_conflict': '<%= config.settings.from_signals.upon_dir_conflict %>',<% } %>
+            <% if (config.settings.from_signals.upon_opposite_entry !== undefined) { %>'upon_opposite_entry': '<%= config.settings.from_signals.upon_opposite_entry %>',<% } %>
+            <% if (config.settings.from_signals.stop_entry_price !== undefined) { %>'stop_entry_price': '<%= config.settings.from_signals.stop_entry_price %>',<% } %>
+            <% if (config.settings.from_signals.stop_exit_price !== undefined) { %>'stop_exit_price': '<%= config.settings.from_signals.stop_exit_price %>',<% } %>
+            <% if (config.settings.from_signals.upon_stop_exit !== undefined) { %>'upon_stop_exit': '<%= config.settings.from_signals.upon_stop_exit %>',<% } %>
+            <% if (config.settings.from_signals.upon_stop_update !== undefined) { %>'upon_stop_update': '<%= config.settings.from_signals.upon_stop_update %>',<% } %>
+            <% if (config.settings.from_signals.stop_exit_price != null) { %>'stop_exit_price': '<%= config.settings.from_signals.stop_exit_price %>',<% } %>
+            <% if (config.settings.from_signals.upon_stop_exit != null) { %>'upon_stop_exit': '<%= config.settings.from_signals.upon_stop_exit %>',<% } %>
+            <% if (config.settings.from_signals.upon_stop_update != null) { %>'upon_stop_update': '<%= config.settings.from_signals.upon_stop_update %>',<% } %>
+            <% if (config.settings.from_signals.attach_call_seq !== undefined) { %>'attach_call_seq': <%= config.settings.from_signals.attach_call_seq ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_signals.seed !== undefined) { %>'seed': <%= config.settings.from_signals.seed %>,<% } %>
+            <% if (config.settings.from_signals.max_logs !== undefined) { %>'max_logs': <%= config.settings.from_signals.max_logs %>,<% } %>
+            <% if (config.settings.from_signals.max_orders !== undefined) { %>'max_orders': <%= config.settings.from_signals.max_orders %>,<% } %>
             <% } %>
         }
 
@@ -84,6 +99,11 @@ def backtest_run():
             <% if (config.settings.from_orders.cash_sharing != null) { %>'cash_sharing': <%= config.settings.from_orders.cash_sharing ? 'True' : 'False' %>,<% } %>
             <% if (config.settings.from_orders.ffill_val_price != null) { %>'ffill_val_price': <%= config.settings.from_orders.ffill_val_price ? 'True' : 'False' %>,<% } %>
             <% if (config.settings.from_orders.update_value != null) { %>'update_value': <%= config.settings.from_orders.update_value ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_orders.seed != null) { %>'seed': <%= config.settings.from_orders.seed %>,<% } %>
+            <% if (config.settings.from_orders.max_orders != null) { %>'max_orders': <%= config.settings.from_orders.max_orders %>,<% } %>
+            <% if (config.settings.from_orders.max_logs != null) { %>'max_logs': <%= config.settings.from_orders.max_logs %>,<% } %>
+            <% if (config.settings.from_orders.price != null) { %>'price': '<%= config.settings.from_orders.price %>',<% } %>
+            <% if (config.settings.from_orders.val_price != null) { %>'val_price': '<%= config.settings.from_orders.val_price %>',<% } %>
             <% } %>
         }
 
@@ -121,6 +141,9 @@ def backtest_run():
             <% if (config.settings.from_order_func.fill_pos_record != null) { %>'fill_pos_record': <%= config.settings.from_order_func.fill_pos_record ? 'True' : 'False' %>,<% } %>
             <% if (config.settings.from_order_func.row_wise != null) { %>'row_wise': <%= config.settings.from_order_func.row_wise ? 'True' : 'False' %>,<% } %>
             <% if (config.settings.from_order_func.use_numba != null) { %>'use_numba': <%= config.settings.from_order_func.use_numba ? 'True' : 'False' %>,<% } %>
+            <% if (config.settings.from_order_func.seed != null) { %>'seed': <%= config.settings.from_order_func.seed %>,<% } %>
+            <% if (config.settings.from_order_func.max_orders != null) { %>'max_orders': <%= config.settings.from_order_func.max_orders %>,<% } %>
+            <% if (config.settings.from_order_func.max_logs != null) { %>'max_logs': <%= config.settings.from_order_func.max_logs %>,<% } %>
             <% } %>
         }
 

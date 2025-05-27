@@ -1,14 +1,16 @@
 import React, { useState } from 'react';
+import { DatasetInfo, ProjectInfo } from '../../../types';
 import VSCodeAPI from '../../lib/VSCodeAPI';
-import { ProjectInfo, DatasetInfo } from '../../../types';
+import DatasetSelector from './components/DatasetSelector';
+import EnvironmentVariables from './components/EnvironmentVariables';
 
-type BacktradrSettingViewProps = {
+type BacktraderSettingViewProps = {
   currentProject?: ProjectInfo;
   datasets?: DatasetInfo[];
   lastConfig?: any;
 };
 
-const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentProject, datasets = [], lastConfig }) => {
+const BacktraderSettingView: React.FC<BacktraderSettingViewProps> = ({ currentProject, datasets = [], lastConfig }) => {
   const [cerebroSettings, setCerebroSettings] = useState({
     preload: true,
     runonce: true,
@@ -64,10 +66,10 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
     value: string;
   }[]>([]);
   
-  // Initialize settings based on last configuration
+  // Initialize based on last configuration
   React.useEffect(() => {
     if (lastConfig) {
-      // Cerebro settings
+      // Cerebro
       if (lastConfig.preload !== undefined) setCerebroSettings(prev => ({ ...prev, preload: lastConfig.preload }));
       if (lastConfig.runonce !== undefined) setCerebroSettings(prev => ({ ...prev, runonce: lastConfig.runonce }));
       if (lastConfig.live !== undefined) setCerebroSettings(prev => ({ ...prev, live: lastConfig.live }));
@@ -78,42 +80,28 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
       if (lastConfig.exactbars !== undefined) setCerebroSettings(prev => ({ ...prev, exactbars: lastConfig.exactbars }));
       if (lastConfig.plotEnabled !== undefined) setCerebroSettings(prev => ({ ...prev, plotEnabled: lastConfig.plotEnabled }));
       
-      // Broker settings
+      // Broker
       if (lastConfig.broker) {
-        const broker = lastConfig.broker;
-        if (broker.initialCapital !== undefined) setBrokerSettings(prev => ({ ...prev, initialCapital: broker.initialCapital }));
-        if (broker.checkSubmit !== undefined) setBrokerSettings(prev => ({ ...prev, checkSubmit: broker.checkSubmit }));
-        if (broker.eosbar !== undefined) setBrokerSettings(prev => ({ ...prev, eosbar: broker.eosbar }));
-        if (broker.coc !== undefined) setBrokerSettings(prev => ({ ...prev, coc: broker.coc }));
-        if (broker.coo !== undefined) setBrokerSettings(prev => ({ ...prev, coo: broker.coo }));
-        if (broker.int2pnl !== undefined) setBrokerSettings(prev => ({ ...prev, int2pnl: broker.int2pnl }));
-        if (broker.shortcash !== undefined) setBrokerSettings(prev => ({ ...prev, shortcash: broker.shortcash }));
-        if (broker.fundstartval !== undefined) setBrokerSettings(prev => ({ ...prev, fundstartval: broker.fundstartval }));
-        if (broker.fundmode !== undefined) setBrokerSettings(prev => ({ ...prev, fundmode: broker.fundmode }));
+        const { commissionScheme, slippage, ...brokerConfig } = lastConfig.broker;
+        setBrokerSettings(prev => ({
+          ...prev,
+          ...brokerConfig
+        }));
         
-        // Commission settings
-        if (broker.commissionScheme) {
-          const commission = broker.commissionScheme;
-          if (commission.commission !== undefined) setCommissionSettings(prev => ({ ...prev, commission: commission.commission }));
-          if (commission.margin !== undefined) setCommissionSettings(prev => ({ ...prev, margin: commission.margin }));
-          if (commission.mult !== undefined) setCommissionSettings(prev => ({ ...prev, mult: commission.mult }));
-          if (commission.percabs !== undefined) setCommissionSettings(prev => ({ ...prev, percabs: commission.percabs }));
-          if (commission.stocklike !== undefined) setCommissionSettings(prev => ({ ...prev, stocklike: commission.stocklike }));
-          if (commission.interest !== undefined) setCommissionSettings(prev => ({ ...prev, interest: commission.interest }));
-          if (commission.interestLong !== undefined) setCommissionSettings(prev => ({ ...prev, interestLong: commission.interestLong }));
-          if (commission.leverage !== undefined) setCommissionSettings(prev => ({ ...prev, leverage: commission.leverage }));
-          if (commission.automargin !== undefined) setCommissionSettings(prev => ({ ...prev, automargin: commission.automargin }));
+        // Commission
+        if (commissionScheme) {
+          setCommissionSettings(prev => ({
+            ...prev,
+            ...commissionScheme
+          }));
         }
         
-        // Slippage settings
-        if (broker.slippage) {
-          const slippage = broker.slippage;
-          if (slippage.slippagePerc !== undefined) setSlippageSettings(prev => ({ ...prev, slippagePerc: slippage.slippagePerc }));
-          if (slippage.slippageFixed !== undefined) setSlippageSettings(prev => ({ ...prev, slippageFixed: slippage.slippageFixed }));
-          if (slippage.slippageOpen !== undefined) setSlippageSettings(prev => ({ ...prev, slippageOpen: slippage.slippageOpen }));
-          if (slippage.slippageLimit !== undefined) setSlippageSettings(prev => ({ ...prev, slippageLimit: slippage.slippageLimit }));
-          if (slippage.slippageMatch !== undefined) setSlippageSettings(prev => ({ ...prev, slippageMatch: slippage.slippageMatch }));
-          if (slippage.slippageOut !== undefined) setSlippageSettings(prev => ({ ...prev, slippageOut: slippage.slippageOut }));
+        // Slippage
+        if (slippage) {
+          setSlippageSettings(prev => ({
+            ...prev,
+            ...slippage
+          }));
         }
       }
       
@@ -122,7 +110,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
         setSelectedDataset(lastConfig.env.DATASET_PATH);
       }
       
-      // Environment variable settings
+      // Environment variable
       if (lastConfig.env) {
         const envVars: { id: string; key: string; value: string }[] = [];
         Object.entries(lastConfig.env).forEach(([key, value]) => {
@@ -213,61 +201,19 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
         )}
       </div>
 
-      {/* Dataset Selection Section */}
-      <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-        <div className="mb-1">
-          <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-            Select Dataset
-          </label>
-        </div>
-        <div className="text-sm text-[var(--vscode-descriptionForeground)] mb-2">
-          Select the dataset to use for backtesting.
-        </div>
-        
-        {datasets.length === 0 ? (
-          <div className="text-sm text-[var(--vscode-errorForeground)] mb-2">
-            No datasets available. Upload datasets in the Dataset Manager.
-          </div>
-        ) : (
-          <div className="space-y-2">
-            <select
-              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] rounded p-1"
-              value={selectedDataset || ''}
-              onChange={(e) => setSelectedDataset(e.target.value)}
-            >
-              <option value="">-- Select Dataset --</option>
-              {Object.entries(groupedDatasets).map(([assetType, datasets]) => (
-                <optgroup key={assetType} label={assetType}>
-                  {datasets.map(dataset => (
-                    <option 
-                      key={dataset.path} 
-                      value={dataset.path}
-                    >
-                      {dataset.exchange} - {dataset.symbol} - {dataset.timeframe} ({dataset.name})
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-            
-            <button
-              className="text-sm text-[var(--vscode-button-foreground)] bg-[var(--vscode-button-background)] rounded px-2 py-1 hover:bg-[var(--vscode-button-hoverBackground)]"
-              onClick={() => {
-                VSCodeAPI.postMessage({ type: 'refresh' });
-              }}
-            >
-              Reload Datasets
-            </button>
-          </div>
-        )}
-      </div>
+      <DatasetSelector
+        currentProject={currentProject}
+        datasets={datasets}
+        selectedDataset={selectedDataset}
+        setSelectedDataset={setSelectedDataset}
+      />
 
       <div className="space-y-3">
-        {/* Cerebro Settings */}
+        {/* Cerebro */}
         <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
           <div className="mb-1">
             <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Cerebro Settings
+              Cerebro
             </label>
           </div>
           <div className="grid grid-cols-2 gap-2">
@@ -321,7 +267,7 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
           {/* Additional items collapse/expand */}
           <div className="mt-2">
             <details className="text-sm">
-              <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced Settings</summary>
+              <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced</summary>
               <div className="mt-2 pl-2">
                 <div className="grid grid-cols-2 gap-2">
                   <label className="flex items-center space-x-2 text-sm cursor-pointer" title="Use old style buy/sell plotting">
@@ -384,11 +330,11 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
           </div>
         </div>
 
-        {/* Broker Settings */}
+        {/* Broker */}
         <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
           <div className="mb-1">
             <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Broker Settings
+              Broker
             </label>
           </div>
           <div className="space-y-2">
@@ -427,10 +373,10 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
               </label>
             </div>
             
-            {/* Broker advanced settings */}
+            {/* Broker advanced */}
             <div className="mt-2">
               <details className="text-sm">
-                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced Settings</summary>
+                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced</summary>
                 <div className="mt-2 pl-2 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <label className="flex items-center space-x-2 text-sm cursor-pointer" title="Consider a bar with same time as session end to be end of session">
@@ -499,11 +445,11 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
           </div>
         </div>
 
-        {/* Commission Settings */}
+        {/* Commission */}
         <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
           <div className="mb-1">
             <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Commission Settings
+              Commission
             </label>
           </div>
           <div className="space-y-2">
@@ -523,10 +469,10 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
               </div>
             </div>
             
-            {/* Commission advanced settings */}
+            {/* Commission advanced */}
             <div className="mt-2">
               <details className="text-sm">
-                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced Settings</summary>
+                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced</summary>
                 <div className="mt-2 pl-2 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <div className="space-y-1">
@@ -625,11 +571,11 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
           </div>
         </div>
 
-        {/* Slippage Settings */}
+        {/* Slippage */}
         <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
           <div className="mb-1">
             <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Slippage Settings
+              Slippage
             </label>
           </div>
           <div className="space-y-2">
@@ -660,10 +606,10 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
               </div>
             </div>
             
-            {/* Slippage advanced settings */}
+            {/* Slippage advanced */}
             <div className="mt-2">
               <details className="text-sm">
-                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced Settings</summary>
+                <summary className="cursor-pointer hover:text-[var(--vscode-textLink-foreground)]">Advanced</summary>
                 <div className="mt-2 pl-2 space-y-2">
                   <div className="grid grid-cols-2 gap-2">
                     <label className="flex items-center space-x-2 text-sm cursor-pointer" title="Apply slippage to opening price orders">
@@ -710,55 +656,12 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
         </div>
 
         {/* Environment variables setup */}
-        <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-          <div className="mb-3 flex justify-between items-center">
-            <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-              Environment Variables
-            </label>
-            <button
-              onClick={addEnvVariable}
-              className="bg-[var(--vscode-button-background)] text-[var(--vscode-button-foreground)] py-1 px-2 text-xs rounded hover:bg-[var(--vscode-button-hoverBackground)]"
-            >
-              +
-            </button>
-          </div>
-          <div className="space-y-2">
-            {envVariables.length === 0 && (
-              <div className="text-sm text-[var(--vscode-descriptionForeground)] italic">
-                No environment variables set. Click the '+' button to add a variable.
-              </div>
-            )}
-            {envVariables.map((env) => (
-              <div key={env.id} className="flex items-center space-x-2">
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Variable Name"
-                    value={env.key}
-                    onChange={(e) => updateEnvVariable(env.id, 'key', e.target.value)}
-                    className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                  />
-                </div>
-                <div className="flex-1">
-                  <input
-                    type="text"
-                    placeholder="Value"
-                    value={env.value}
-                    onChange={(e) => updateEnvVariable(env.id, 'value', e.target.value)}
-                    className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-                  />
-                </div>
-                <button
-                  onClick={() => removeEnvVariable(env.id)}
-                  className="bg-[var(--vscode-editorError-foreground)] text-[var(--vscode-button-foreground)] py-1 px-2 text-xs rounded hover:bg-[var(--vscode-button-hoverBackground)]"
-                  title="Delete"
-                >
-                  X
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
+        <EnvironmentVariables
+          envVariables={envVariables}
+          addEnvVariable={addEnvVariable}
+          removeEnvVariable={removeEnvVariable}
+          updateEnvVariable={updateEnvVariable}
+        />
 
         <button
           onClick={handleRunBacktest}
@@ -772,4 +675,4 @@ const BacktraderSettingView: React.FC<BacktradrSettingViewProps> = ({ currentPro
   );
 };
 
-export default BacktraderSettingView; 
+export default BacktraderSettingView;
