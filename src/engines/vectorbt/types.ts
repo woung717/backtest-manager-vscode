@@ -27,6 +27,7 @@ export interface VectorBTFromSignalsSettings {
   use_stops?: boolean;
   init_cash?: number;
   cash_sharing?: boolean;
+  call_seq?: string | 'default' | 'reversed' | 'random' | 'auto';
   ffill_val_price?: boolean;
   update_value?: boolean;
   upon_long_conflict?: 'ignore' | 'entry' | 'exit' | 'adjacent' | 'opposite';
@@ -55,6 +56,8 @@ export interface VectorBTFromOrderFuncSettings {
   seed?: number;
   max_orders?: number;
   max_logs?: number;
+  call_seq?: string | 'default' | 'reversed' | 'random' | 'auto';
+  attach_call_seq?: boolean;
 }
 
 // from_orders() settings
@@ -62,6 +65,8 @@ export interface VectorBTFromOrdersSettings {
   size?: number;
   size_type?: 'Amount' | 'Value' | 'Percent';
   direction?: 'both' | 'longonly' | 'shortonly';
+  call_seq?: string | 'default' | 'reversed' | 'random' | 'auto';
+  attach_call_seq?: boolean;
   fees?: number;
   fixed_fees?: number;
   slippage?: number;
@@ -80,8 +85,6 @@ export interface VectorBTFromOrdersSettings {
   seed?: number;
   max_orders?: number;
   max_logs?: number;
-  price?: 'close' | 'open' | 'high' | 'low';
-  val_price?: 'close' | 'open' | 'high' | 'low';
 }
 
 // VectorBT function type

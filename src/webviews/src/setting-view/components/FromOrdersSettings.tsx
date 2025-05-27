@@ -38,6 +38,23 @@ export const FromOrdersSettings: React.FC<FromOrdersSettingsProps> = ({
             />
           </div>
           <div className="space-y-1">
+            <label htmlFor="direction_orders" className="text-sm">Direction</label>
+            <select
+              id="direction_orders"
+              value={orderSettings.direction}
+              onChange={(e) =>
+                setOrderSettings(prev => ({ ...prev, direction: e.target.value as 'both' | 'longonly' | 'shortonly' }))
+              }
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            >
+              <option value="both">Both</option>
+              <option value="longonly">Long Only</option>
+              <option value="shortonly">Short Only</option>
+            </select>
+          </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="space-y-1">
             <label htmlFor="max_orders_orders" className="text-sm">Max Orders</label>
             <input
               type="number"
@@ -50,21 +67,21 @@ export const FromOrdersSettings: React.FC<FromOrdersSettingsProps> = ({
               className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
             />
           </div>
-        </div>
-        <div className="mt-2">
-          <label htmlFor="reject_prob_orders" className="text-sm">Reject Probability</label>
-          <input
-            type="number"
-            id="reject_prob_orders"
-            value={orderSettings.reject_prob}
-            min="0"
-            max="1"
-            step="0.01"
-            onChange={(e) =>
-              setOrderSettings(prev => ({ ...prev, reject_prob: e.target.value ? parseFloat(e.target.value) : undefined }))
-            }
-            className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-          />
+          <div className="space-y-1">
+            <label htmlFor="reject_prob_orders" className="text-sm">Reject Probability</label>
+            <input
+              type="number"
+              id="reject_prob_orders"
+              value={orderSettings.reject_prob}
+              min="0"
+              max="1"
+              step="0.01"
+              onChange={(e) =>
+                setOrderSettings(prev => ({ ...prev, reject_prob: e.target.value ? parseFloat(e.target.value) : undefined }))
+              }
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            />
+          </div>
         </div>
         <div className="grid grid-cols-3 gap-2 mt-2">
           <div className="space-y-1">
@@ -247,22 +264,6 @@ export const FromOrdersSettings: React.FC<FromOrdersSettingsProps> = ({
             Price
           </label>
         </div>
-        <div className="space-y-1">
-          <label htmlFor="price_orders" className="text-sm">Price Type</label>
-          <select
-            id="price_orders"
-            value={orderSettings.price}
-            onChange={(e) =>
-              setOrderSettings(prev => ({ ...prev, price: e.target.value as 'open' | 'high' | 'low' | 'close' }))
-            }
-            className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
-          >
-            <option value="open">Open</option>
-            <option value="high">High</option>
-            <option value="low">Low</option>
-            <option value="close">Close</option>
-          </select>
-        </div>
         <div className="space-y-1 mt-2">
           <label className="text-sm flex items-center">
             <input
@@ -352,6 +353,33 @@ export const FromOrdersSettings: React.FC<FromOrdersSettingsProps> = ({
               }
               className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
             />
+          </div>
+        </div>
+        <div className="space-y-2 mt-2">
+          <div className="space-y-1">
+            <label htmlFor="call_seq_orders" className="text-sm">Call Sequence</label>
+            <select
+              id="call_seq_orders"
+              value={orderSettings.call_seq}
+              onChange={(e) => setOrderSettings(prev => ({ ...prev, call_seq: e.target.value || undefined }))}
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            >
+              <option value="default">Default</option>
+              <option value="reversed">Reversed</option>
+              <option value="random">Random</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm flex items-center">
+              <input
+                type="checkbox"
+                checked={orderSettings.attach_call_seq}
+                onChange={e => setOrderSettings(prev => ({ ...prev, attach_call_seq: e.target.checked }))}
+                className="mr-2"
+              />
+              Attach Call Sequence
+            </label>
           </div>
         </div>
       </div>

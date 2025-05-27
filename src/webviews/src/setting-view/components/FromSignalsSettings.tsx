@@ -474,6 +474,23 @@ export const FromSignalsSettings: React.FC<FromSignalsSettingsProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-2 mt-2">
           <div className="space-y-1">
+            <label htmlFor="call_seq_signal" className="text-sm">Call Sequence Type</label>
+            <select
+              id="call_seq_signal"
+              value={signalSettings.call_seq ?? ''}
+              onChange={(e) => setSignalSettings(prev => ({ ...prev, call_seq: e.target.value ? e.target.value : undefined }))}
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            >
+              <option value="default">Default</option>
+              <option value="reversed">Reversed</option>
+              <option value="random">Random</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+          
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-2">
+          <div className="space-y-1">
             <label className="text-sm flex items-center">
               <input
                 type="checkbox"

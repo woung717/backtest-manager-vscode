@@ -37,7 +37,7 @@
       {
         "command": "backtestManager.runBacktestFromTree",
         "title": "Run Backtest",
-        "icon": "$(play)"
+        "icon": "$(dashboard)"
       },
       {
         "command": "backtestManager.showPriceChart",

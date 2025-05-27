@@ -37,21 +37,6 @@ export const FromOrderFuncSettings: React.FC<FromOrderFuncSettingsProps> = ({
             />
           </div>
           <div className="space-y-1">
-            <label className="text-sm flex items-center">
-              <input
-                type="checkbox"
-                checked={orderFuncSettings.flexible}
-                onChange={(e) =>
-                  setOrderFuncSettings(prev => ({ ...prev, flexible: e.target.checked }))
-                }
-                className="mr-2"
-              />
-              Flexible Order Function
-            </label>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 gap-2 mt-2">
-          <div className="space-y-1">
             <label htmlFor="max_orders_order_func" className="text-sm">Max Orders</label>
             <input
               type="number"
@@ -65,40 +50,18 @@ export const FromOrderFuncSettings: React.FC<FromOrderFuncSettingsProps> = ({
             />
           </div>
         </div>
-      </div>
-
-      {/* Performance */}
-      <div className="space-y-1 pb-4 border-b border-[var(--vscode-input-border)]">
-        <div className="mb-1">
-          <label className="text-sm font-bold text-[var(--vscode-input-foreground)]">
-            Performance
-          </label>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="grid grid-cols-1 gap-2 mt-2">
           <div className="space-y-1">
             <label className="text-sm flex items-center">
               <input
                 type="checkbox"
-                checked={orderFuncSettings.row_wise}
+                checked={orderFuncSettings.flexible}
                 onChange={(e) =>
-                  setOrderFuncSettings(prev => ({ ...prev, row_wise: e.target.checked }))
+                  setOrderFuncSettings(prev => ({ ...prev, flexible: e.target.checked }))
                 }
                 className="mr-2"
               />
-              Row-wise Processing
-            </label>
-          </div>
-          <div className="space-y-1">
-            <label className="text-sm flex items-center">
-              <input
-                type="checkbox"
-                checked={orderFuncSettings.use_numba}
-                onChange={(e) =>
-                  setOrderFuncSettings(prev => ({ ...prev, use_numba: e.target.checked }))
-                }
-                className="mr-2"
-              />
-              Use Numba
+              Flexible Order Function
             </label>
           </div>
         </div>
@@ -176,6 +139,18 @@ export const FromOrderFuncSettings: React.FC<FromOrderFuncSettingsProps> = ({
         </div>
         <div className="grid grid-cols-2 gap-2">
           <div className="space-y-1">
+            <label htmlFor="segment_mask_order_func" className="text-sm">Segment Mask</label>
+            <input
+              type="number"
+              id="segment_mask_order_func"
+              value={orderFuncSettings.segment_mask}
+              onChange={(e) =>
+                setOrderFuncSettings(prev => ({ ...prev, segment_mask: e.target.value ? parseInt(e.target.value) : undefined }))
+              }
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            />
+          </div>
+          <div className="space-y-1">
             <label className="text-sm flex items-center">
               <input
                 type="checkbox"
@@ -188,6 +163,8 @@ export const FromOrderFuncSettings: React.FC<FromOrderFuncSettingsProps> = ({
               Call Pre-Segment
             </label>
           </div>
+        </div>
+        <div className="grid grid-cols-2 gap-2 mt-2">
           <div className="space-y-1">
             <label className="text-sm flex items-center">
               <input
@@ -236,6 +213,61 @@ export const FromOrderFuncSettings: React.FC<FromOrderFuncSettingsProps> = ({
               }
               className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
             />
+          </div>
+        </div>
+        <div className="space-y-2 mt-2">
+          <div className="space-y-1">
+            <label htmlFor="call_seq_order_func" className="text-sm">Call Sequence</label>
+            <select
+              id="call_seq_order_func"
+              value={orderFuncSettings.call_seq}
+              onChange={(e) => setOrderFuncSettings(prev => ({ ...prev, call_seq: e.target.value || undefined }))}
+              className="w-full bg-[var(--vscode-input-background)] text-[var(--vscode-input-foreground)] border border-[var(--vscode-input-border)] p-1 text-sm rounded"
+            >
+              <option value="default">Default</option>
+              <option value="reversed">Reversed</option>
+              <option value="random">Random</option>
+              <option value="auto">Auto</option>
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-sm flex items-center">
+              <input
+                type="checkbox"
+                checked={orderFuncSettings.attach_call_seq}
+                onChange={e => setOrderFuncSettings(prev => ({ ...prev, attach_call_seq: e.target.checked }))}
+                className="mr-2"
+              />
+              Attach Call Sequence
+            </label>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="space-y-1">
+              <label className="text-sm flex items-center">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.row_wise}
+                  onChange={(e) =>
+                    setOrderFuncSettings(prev => ({ ...prev, row_wise: e.target.checked }))
+                  }
+                  className="mr-2"
+                />
+                Row-wise Processing
+              </label>
+            </div>
+            <div className="space-y-1">
+              <label className="text-sm flex items-center">
+                <input
+                  type="checkbox"
+                  checked={orderFuncSettings.use_numba}
+                  onChange={(e) =>
+                    setOrderFuncSettings(prev => ({ ...prev, use_numba: e.target.checked }))
+                  }
+                  className="mr-2"
+                />
+                Use Numba
+              </label>
+            </div>
           </div>
         </div>
       </div>
