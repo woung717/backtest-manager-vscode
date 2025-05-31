@@ -1,12 +1,10 @@
-import { spawn } from 'child_process';
-import * as fs from 'fs';
 import * as path from 'path';
 import * as ejs from 'ejs';
-import * as vscode from 'vscode';
-import { BacktraderConfig, BacktestResult, BacktestRunner } from './types';
-import { ProjectInfo, TradeEnterData, TradeExitData } from '../../types';
+import * as fs from 'fs';
+import { BacktraderConfig } from './types';
+import { ProjectInfo, Backtest } from '../../types';
+import { BaseRunner } from '../common/BaseRunner';
 import { generateShortHash } from '../../util';
-import { VSCodeOutputLogger } from '../../vscodeOutputLogger';
 
 function splitUserCode(userCode: string): { userImports: string; userCode: string } {
   const importLines: string[] = [];
@@ -24,246 +22,15 @@ function splitUserCode(userCode: string): { userImports: string; userCode: strin
   };
 }
 
-export class BacktraderRunner implements BacktestRunner {
-  private config: BacktraderConfig;
-  private tempFilePath: string = '';
-  private readonly templatePath: string;
-  private currentProject?: ProjectInfo;
-  private currentBacktest?: BacktestResult;
-  private logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("Backtest Runner");
+export class BacktraderRunner extends BaseRunner<BacktraderConfig> {
+  protected readonly templatePath: string;
 
   constructor(project: ProjectInfo, config: BacktraderConfig) {
-    this.config = config;
-    this.currentProject = project;
+    super(project, config);
     this.templatePath = path.join(__dirname, '..', 'templates', 'backtrader.ejs');
   }
 
-  public loadConfig(): BacktraderConfig {
-    return this.config;
-  }
-
-  public setConfig(config: BacktraderConfig): void {
-    this.config = config;
-  }
-
-  public setProject(project: ProjectInfo): void {
-    this.currentProject = project;
-  }
-
-  private parseTradeData(line: string): any {
-    try {
-      const data = JSON.parse(line.substring(line.indexOf('{')));
-      if (data.ref) {
-        return data;
-      }
-      return null;
-    } catch (error) {
-      this.logger.log('Error parsing trade data: ' + error);
-      return null;
-    }
-  }
-
-  private parseEquityData(line: string): any {
-    try {
-      const data = JSON.parse(line.substring(line.indexOf('{')));
-      if (data.value && data.datetime) {
-        return data;
-      }
-      return null;
-    } catch (error) {
-      this.logger.log('Error parsing equity data: ' + error);
-      return null;
-    }
-  }
-
-  private async updateBacktestResult(data: any, type: 'trade' | 'equity'): Promise<void> {
-    if (!this.currentBacktest?.id) {
-      return;
-    }
-
-    try {
-      if (type === 'trade') {
-        if (!this.currentBacktest.trades) this.currentBacktest.trades = {};
-
-        if (data.ref && !data.pnl) {  // Entry
-          const enterData: TradeEnterData = {
-            ref: data.ref,
-            datetime: data.datetime,
-            price: data.price,
-            size: data.size,
-            value: data.value,
-            commission: data.commission,
-            side: data.side
-          };
-
-          this.currentBacktest.trades[data.ref] = {
-            enter: enterData,
-            exits: []
-          };
-        } else if (data.ref && data.pnl) {  // Exit
-          if (this.currentBacktest.trades[data.ref]) {
-            const exitData: TradeExitData = {
-              ref: data.ref,
-              datetime: data.datetime,
-              price: data.price,
-              pnl: data.pnl,
-              pnlcomm: data.pnlcomm,
-              commission: data.commission,
-              hold_bars: data.hold_bars,
-              size: data.size
-            };
-            this.currentBacktest.trades[data.ref].exits.push(exitData);
-          }
-        }
-      } else if (type === 'equity') {
-        if (!this.currentBacktest.equity) this.currentBacktest.equity = [];
-        this.currentBacktest.equity.push({
-          datetime: data.datetime,
-          value: data.value
-        });
-      }
-    } catch (error) {
-      this.logger.log('Error updating backtest result: ' + error);
-    }
-  }
-
-  private calculatePerformanceMetrics(): void {
-    if (!this.currentBacktest) return;
-
-    // Calculate trade-related metrics
-    const tradeCount = Object.keys(this.currentBacktest.trades).length;
-    if (tradeCount > 0) {
-      let totalWins = 0;
-      let totalLosses = 0;
-      let winCount = 0;
-      let lossCount = 0;
-
-      Object.values(this.currentBacktest.trades).forEach(trade => {
-        if (trade.exits.length > 0) {
-          const lastExit = trade.exits[trade.exits.length - 1];
-          if (lastExit.pnlcomm > 0) {
-            totalWins += lastExit.pnlcomm;
-            winCount++;
-          } else {
-            totalLosses += Math.abs(lastExit.pnlcomm);
-            lossCount++;
-          }
-        }
-      });
-
-      this.currentBacktest.performance.trades = tradeCount;
-      this.currentBacktest.performance.winRate = winCount / tradeCount;
-      
-      // Calculate Profit Factor
-      this.currentBacktest.performance.profitFactor = totalLosses > 0 ? totalWins / totalLosses : totalWins > 0 ? Infinity : 0;
-      
-      // Calculate Average Win/Loss Ratio
-      const avgWin = winCount > 0 ? totalWins / winCount : 0;
-      const avgLoss = lossCount > 0 ? totalLosses / lossCount : 0;
-      this.currentBacktest.performance.avgWinLossRatio = avgLoss > 0 ? avgWin / avgLoss : avgWin > 0 ? Infinity : 0;
-    }
-
-    // Calculate equity-related metrics
-    if (this.currentBacktest.equity.length > 0) {
-      const initialValue = this.currentBacktest.equity[0].value;
-      const finalValue = this.currentBacktest.equity[this.currentBacktest.equity.length - 1].value;
-      const totalReturn = (finalValue - initialValue) / initialValue;
-      this.currentBacktest.performance.totalReturn = totalReturn;
-      
-      // Calculate maximum drawdown
-      let maxDrawdown = 0;
-      let peak = initialValue;
-      
-      for (const equityPoint of this.currentBacktest.equity) {
-        const currentValue = equityPoint.value;
-        
-        // Find new peak
-        if (currentValue > peak) {
-          peak = currentValue;
-        }
-        
-        // Calculate current drawdown
-        const drawdown = (peak - currentValue) / peak;
-        
-        // Update maximum drawdown
-        if (drawdown > maxDrawdown) {
-          maxDrawdown = drawdown;
-        }
-      }
-      
-      this.currentBacktest.performance.maxDrawdown = maxDrawdown;
-
-      // Calculate Calmar Ratio (annualized return / maximum drawdown)
-      const timePeriodInYears = this.currentBacktest.equity.length / 252; // Assuming 252 trading days per year
-      const annualizedReturn = Math.pow(1 + totalReturn, 1 / timePeriodInYears) - 1;
-      this.currentBacktest.performance.annualizedReturn = annualizedReturn;
-      this.currentBacktest.performance.calmarRatio = maxDrawdown > 0 ? annualizedReturn / maxDrawdown : 0;
-
-      // Calculate Sharpe ratio
-      // Assume 2% risk-free rate
-      const riskFreeRate = 0.02;
-      
-      // Calculate daily returns
-      const dailyReturns: number[] = [];
-      for (let i = 1; i < this.currentBacktest.equity.length; i++) {
-        const prevValue = this.currentBacktest.equity[i-1].value;
-        const currentValue = this.currentBacktest.equity[i].value;
-        const dailyReturn = (currentValue - prevValue) / prevValue;
-        dailyReturns.push(dailyReturn);
-      }
-      
-      // Calculate average return
-      const avgReturn = dailyReturns.reduce((sum, return_) => sum + return_, 0) / dailyReturns.length;
-      
-      // Calculate standard deviation
-      const variance = dailyReturns.reduce((sum, return_) => {
-        const diff = return_ - avgReturn;
-        return sum + (diff * diff);
-      }, 0) / dailyReturns.length;
-      
-      const stdDev = Math.sqrt(variance);
-
-      // Calculate skewness
-      const thirdMoment = dailyReturns.reduce((sum, return_) => {
-        const diff = return_ - avgReturn;
-        return sum + (diff * diff * diff);
-      }, 0) / dailyReturns.length;
-      const skewness = thirdMoment / Math.pow(stdDev, 3);
-      this.currentBacktest.performance.skewness = isNaN(skewness) ? 0 : skewness;
-
-      // Calculate kurtosis
-      const fourthMoment = dailyReturns.reduce((sum, return_) => {
-        const diff = return_ - avgReturn;
-        return sum + (diff * diff * diff * diff);
-      }, 0) / dailyReturns.length;
-      const kurtosis = (fourthMoment / Math.pow(stdDev, 4)) - 3; // -3 to get excess kurtosis (compared to normal distribution)
-      this.currentBacktest.performance.kurtosis = isNaN(kurtosis) ? 0 : kurtosis;
-      
-      // Calculate annualized Sharpe ratio (assume 252 trading days)
-      const annualizedAvgReturn = avgReturn * 252;
-      const annualizedStdDev = stdDev * Math.sqrt(252);
-      const sharpeRatio = (annualizedAvgReturn - riskFreeRate) / annualizedStdDev;
-      
-      // Prevent NaN
-      this.currentBacktest.performance.sharpeRatio = isNaN(sharpeRatio) ? 0 : sharpeRatio;
-
-      // Calculate Sortino Ratio using only negative returns
-      const negativeReturns = dailyReturns.filter(r => r < 0);
-      const negativeReturnVariance = negativeReturns.reduce((sum, return_) => {
-        const diff = return_ - 0; // Compare to 0 instead of average return
-        return sum + (diff * diff);
-      }, 0) / (negativeReturns.length || 1); // Avoid division by zero
-      
-      const negativeStdDev = Math.sqrt(negativeReturnVariance);
-      const annualizedNegativeStdDev = negativeStdDev * Math.sqrt(252);
-      const sortinoRatio = (annualizedAvgReturn - riskFreeRate) / annualizedNegativeStdDev;
-      
-      // Prevent NaN
-      this.currentBacktest.performance.sortinoRatio = isNaN(sortinoRatio) ? 0 : sortinoRatio;
-    }
-  }
-
-  private async renderScript(pythonCode: string): Promise<string> {
+  protected async renderScript(pythonCode: string): Promise<string> {
     const template = await fs.promises.readFile(this.templatePath, 'utf8');
     const { userImports, userCode } = splitUserCode(pythonCode);
     return ejs.render(template, {
@@ -274,38 +41,10 @@ export class BacktraderRunner implements BacktestRunner {
     });
   }
 
-  private async createTempPythonFile(pythonCode: string): Promise<string> {
-    const workspaceFolder = vscode.workspace.workspaceFolders?.[0];
-    if (!workspaceFolder) {
-      throw new Error('Cannot find workspace folder.');
-    }
-    
-    const tempDirPath = path.join(workspaceFolder.uri.fsPath, '.temp');
-    const tempDirUri = vscode.Uri.file(tempDirPath);
-    
-    try {
-      // Check if .temp directory exists
-      await vscode.workspace.fs.stat(tempDirUri);
-    } catch (error) {
-      // Create directory if it doesn't exist
-      await vscode.workspace.fs.createDirectory(tempDirUri);
-    }
-    
-    this.tempFilePath = path.join(tempDirPath, `backtest_${Date.now()}.py`);
-    const tempFileUri = vscode.Uri.file(this.tempFilePath);
-    
-    const pythonScript = await this.renderScript(pythonCode);
-    const contentBuffer = Buffer.from(pythonScript, 'utf8');
-    
-    await vscode.workspace.fs.writeFile(tempFileUri, contentBuffer);
-    
-    return this.tempFilePath;
-  }
-
-  public async runBacktest(pythonCode: string): Promise<BacktestResult> {
+  public async runBacktest(pythonCode: string): Promise<Backtest> {
     try {
       // Show output channel
-      this.logger.revealPanel();  // true gives focus to the channel
+      this.logger.revealPanel();
       
       // Create new backtest result object
       this.currentBacktest = {
@@ -339,86 +78,6 @@ export class BacktraderRunner implements BacktestRunner {
       this.logger.log('========================================');
 
       return await this.run(pythonCode);
-    } catch (error) {
-      throw error;
-    }
-  }
-
-  private async run(pythonCode: string): Promise<BacktestResult> {
-    try {
-      const pythonFilePath = await this.createTempPythonFile(pythonCode);
-      
-      return new Promise<BacktestResult>((resolve, reject) => {
-        const pythonProcess = spawn(
-          this.config.pythonPath, 
-          [pythonFilePath],
-          {
-            cwd: this.currentProject?.path,
-            env: {
-              ...this.config.env
-            }
-          }
-        );
-
-        pythonProcess.stdout.on('data', async (data) => {
-          const lines = data.toString().split('\n');
-          for (const line of lines) {
-            if (line.startsWith('trade:')) {
-              const tradeData = this.parseTradeData(line);
-              if (tradeData) {
-                await this.updateBacktestResult(tradeData, 'trade');
-              }
-            } else if (line.startsWith('equity:')) {
-              const equityData = this.parseEquityData(line);
-              if (equityData) {
-                await this.updateBacktestResult(equityData, 'equity');
-              }
-            }
-          }
-          
-          if (this.config.logLevel === 'debug') {
-            this.logger.log(data.toString());
-          }
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-          const chunk = data.toString();
-          if (this.config.logLevel !== 'error') {
-            this.logger.log('Error: ' + chunk);
-          }
-        });
-
-        pythonProcess.on('close', async (code) => {
-          try {
-            if (this.tempFilePath) {
-              const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              await vscode.workspace.fs.delete(tempFileUri);
-            }
-          } catch (error) {
-            this.logger.log('Error deleting temporary file: ' + error);
-          }
-
-          if (code === 0 && this.currentBacktest) {
-            // Calculate performance metrics
-            this.calculatePerformanceMetrics();
-            resolve(this.currentBacktest);
-          } else {
-            reject(new Error(`Python process exited with code ${code}.`));
-          }
-        });
-
-        pythonProcess.on('error', async (error) => {
-          try {
-            if (this.tempFilePath) {
-              const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              await vscode.workspace.fs.delete(tempFileUri);
-            }
-          } catch (deleteError) {
-            console.error('Error deleting temporary file:', deleteError);
-          }
-          reject(error);
-        });
-      });
     } catch (error) {
       throw error;
     }
