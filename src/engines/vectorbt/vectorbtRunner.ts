@@ -3,7 +3,7 @@ import * as ejs from 'ejs';
 import * as fs from 'fs';
 import { VectorBTConfig } from './types';
 import { ProjectInfo, Backtest } from '../../types';
-import { BaseRunner } from '../common/BaseRunner';
+import { BaseRunner } from '../common/baseRunner';
 import { generateShortHash } from '../../util';
 
 export class VectorBTRunner extends BaseRunner<VectorBTConfig> {
@@ -54,9 +54,8 @@ export class VectorBTRunner extends BaseRunner<VectorBTConfig> {
       // Output backtest start message
       this.logger.log('========================================');
       this.logger.log('[+] Backtest started...');
-      this.logger.log(`[+] Strategy: ${this.config.strategy}`);
       this.logger.log(`[+] Project path: ${this.currentProject?.path}`);
-      this.logger.log(`[+] Backtest engine: vectorbt`);
+      this.logger.log(`[+] Backtest engine: ${this.currentProject?.engine}`);
       this.logger.log('========================================');
 
       return await this.run(pythonCode);

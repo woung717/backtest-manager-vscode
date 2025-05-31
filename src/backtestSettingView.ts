@@ -78,9 +78,8 @@ export class BacktestSettingView {
             // Check engine library
             const pythonPath = await this.pythonEnvService.getPythonPath();
             if (pythonPath) {
-                const engineLib = project.engine === 'backtrader' ? 'backtrader' : 
-                                  project.engine === 'vectorbt' ? 'vectorbt' : undefined;
-                if (engineLib) {
+                const engineLib = project.engine;
+                if (engineLib && engineLib !== 'custom') {
                     const isInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, engineLib);
                     if (!isInstalled) {
                         vscode.window.showErrorMessage(`${engineLib} library is not installed. Please install it (e.g., 'pip install ${engineLib}')`);
@@ -170,9 +169,6 @@ export class BacktestSettingView {
 
         this._panel.webview.html = this.getHtmlContent(this._panel.webview);
         
-        // Refactored data loading logic for show()
-        // If _currentProject is set, fetch its details and datasets.
-        // Otherwise, _updateWebview will be called with undefined/empty data initially.
         if (this._currentProject && this._currentProject._id) {
             this.projectService.getProject(this._currentProject._id).then(projectDetails => {
                 const datasetRootPath = path.join(this._workspacePath, 'dataset');

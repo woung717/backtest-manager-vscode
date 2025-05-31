@@ -4,12 +4,19 @@ import * as vscode from 'vscode';
 import { Backtest, ProjectInfo, TradeEnterData, TradeExitData, TradeInfo } from '../../types';
 import { VSCodeOutputLogger } from '../../vscodeOutputLogger';
 
+enum DataType {
+  TRADE,
+  EQUITY
+}
+
 export abstract class BaseRunner<T> {
   protected config: T;
   protected tempFilePath: string = '';
   protected currentProject?: ProjectInfo;
   protected currentBacktest?: Backtest;
   protected logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("Backtest Runner");
+  protected debugMode = vscode.workspace.getConfiguration('backtestManager').get('verboseBacktestEngine') as boolean;
+  protected preserveTempFiles = vscode.workspace.getConfiguration('backtestManager').get('preserveBacktestScriptFile') as boolean;
   protected abstract readonly templatePath: string;
 
   constructor(project: ProjectInfo, config: T) {
@@ -55,13 +62,13 @@ export abstract class BaseRunner<T> {
     }
   }
 
-  protected async updateBacktestResult(data: any, type: 'trade' | 'equity'): Promise<void> {
+  protected async updateBacktestResult(data: any, type: DataType): Promise<void> {
     if (!this.currentBacktest?.id) {
       return;
     }
 
     try {
-      if (type === 'trade') {
+      if (type === DataType.TRADE) {
         if (!this.currentBacktest.trades) this.currentBacktest.trades = {};
 
         if (data.ref && !data.pnl) {
@@ -94,13 +101,16 @@ export abstract class BaseRunner<T> {
             this.currentBacktest.trades[data.ref].exits.push(exitData);
           }
         }
-      } else if (type === 'equity') {
+      } else if (type === DataType.EQUITY) {
         if (!this.currentBacktest.equity) this.currentBacktest.equity = [];
         
-        const lastEquity = this.currentBacktest.equity.pop();
-        if (lastEquity !== undefined && 
-            Number.parseFloat(lastEquity.value.toString()).toFixed(4) === Number.parseFloat(data.value.toString()).toFixed(4)) {
-          return;
+        // Check if the equity value is already present to avoid duplicates
+        if (this.currentBacktest.equity.length > 0) {
+          const lastEquity = this.currentBacktest.equity[this.currentBacktest.equity.length - 1];
+          if (Number.parseFloat(lastEquity.value.toString()).toFixed(8) === 
+              Number.parseFloat(data.value.toString()).toFixed(8)) {
+            return;
+          }
         }
         
         this.currentBacktest.equity.push({
@@ -250,45 +260,44 @@ export abstract class BaseRunner<T> {
           [pythonFilePath],
           {
             cwd: this.currentProject?.path,
-            env: {
-              ...(this.config as any).env
-            }
+            env: (this.config as any).env 
           }
         );
 
         pythonProcess.stdout.on('data', async (data) => {
           const lines = data.toString().split('\n');
           for (const line of lines) {
-            if (line.startsWith('trade:')) {
+            if (line.startsWith('t:')) {
               const tradeData = this.parseTradeData(line);
               if (tradeData) {
-                await this.updateBacktestResult(tradeData, 'trade');
+                await this.updateBacktestResult(tradeData, DataType.TRADE);
               }
-            } else if (line.startsWith('equity:')) {
+            } else if (line.startsWith('e:')) {
               const equityData = this.parseEquityData(line);
               if (equityData) {
-                await this.updateBacktestResult(equityData, 'equity');
+                await this.updateBacktestResult(equityData, DataType.EQUITY);
               }
             }
           }
           
-          if ((this.config as any).logLevel === 'debug') {
+          if (this.debugMode) {
             this.logger.log(data.toString());
           }
         });
 
         pythonProcess.stderr.on('data', (data) => {
           const chunk = data.toString();
-          if ((this.config as any).logLevel !== 'error') {
+
+          if (this.debugMode) {
             this.logger.log('Error: ' + chunk);
           }
         });
 
         pythonProcess.on('close', async (code) => {
           try {
-            if (this.tempFilePath) {
+            if (this.tempFilePath && this.preserveTempFiles === false) {
               const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              await vscode.workspace.fs.delete(tempFileUri);
+              vscode.workspace.fs.delete(tempFileUri);
             }
           } catch (error) {
             this.logger.log('Error deleting temporary file: ' + error);
@@ -304,9 +313,9 @@ export abstract class BaseRunner<T> {
 
         pythonProcess.on('error', async (error) => {
           try {
-            if (this.tempFilePath) {
+            if (this.tempFilePath && this.preserveTempFiles === false) {
               const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              await vscode.workspace.fs.delete(tempFileUri);
+              vscode.workspace.fs.delete(tempFileUri);
             }
           } catch (deleteError) {
             console.error('Error deleting temporary file:', deleteError);

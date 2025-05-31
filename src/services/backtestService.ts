@@ -1,32 +1,25 @@
 // src/services/backtestService.ts
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import { 
-    ProjectInfo, 
-    Engine // Assuming Engine type is in global types
-} from '../types';
-import { 
-    BacktraderConfig, 
-    BacktestResult as EngineBacktestResult // Renaming to avoid conflict if BacktestResult is also in global types
-} from '../engines/backtrader/types'; // Specific to backtrader
-import { VectorBTConfig } from '../engines/vectorbt/types'; // Specific to vectorbt
+import { BacktraderConfig } from '../engines/backtrader/types'; 
+import { BacktestResult as EngineBacktestResult } from '../engines/common/types'; 
+import { VectorBTConfig } from '../engines/vectorbt/types'; 
 import { IPythonEnvironmentService } from './pythonEnvironmentService';
-import { IProjectService } from './projectService'; // To fetch project details
+import { IProjectService } from './projectService'; 
 import { BacktraderRunner } from '../engines/backtrader/backtraderRunner';
 import { VectorBTRunner } from '../engines/vectorbt/vectorbtRunner';
-import * as vscode from 'vscode';
+import { CustomEngineConfig } from '../engines/custom/types';
+import { CustomEngineRunner } from '../engines/custom/customEngineRunner';
 
-// Define a union type for possible config types if not already globally defined
 export type BacktestRunConfig = BacktraderConfig | VectorBTConfig;
 
 export interface IBacktestService {
   runBacktest(
     projectId: string, 
-    backtestConfig: BacktestRunConfig, // Use the union type
+    backtestConfig: BacktestRunConfig,
     progressCallback?: (progress: number, message?: string) => void
-  ): Promise<EngineBacktestResult>; // Runner returns EngineBacktestResult
+  ): Promise<EngineBacktestResult>; 
   getProjectStrategyClass(strategyCode: string): Promise<string | undefined>;
-  // validateConfig(config: BacktestRunConfig): Promise<ValidationResult>;
 }
 
 export class BacktestService implements IBacktestService {
@@ -46,40 +39,6 @@ export class BacktestService implements IBacktestService {
     }
   }
 
-  // async validateConfig(config: BacktestRunConfig): Promise<ValidationResult> {
-  //   console.log('BacktestService.validateConfig called with config:', config);
-  //   const errors: string[] = [];
-  //   let isValid = true;
-
-  //   if (!config || typeof config !== 'object') {
-  //     errors.push('Config is missing or not an object.');
-  //     isValid = false;
-  //   } else {
-  //       // Common validation for BacktraderConfig and VectorBTConfig structure
-  //       if ('broker' in config && typeof (config as BacktraderConfig).broker !== 'object') {
-  //           errors.push('Broker configuration is missing or not an object for Backtrader.');
-  //           isValid = false;
-  //       } else if ('broker' in config && (typeof (config as BacktraderConfig).broker.initialCapital !== 'number' || (config as BacktraderConfig).broker.initialCapital <= 0)) {
-  //           errors.push('Initial capital in broker configuration must be a positive number for Backtrader.');
-  //           isValid = false;
-  //       }
-
-  //       // VectorBT specific validation (example, adjust as needed)
-  //       if ('functionType' in config && !(config as VectorBTConfig).settings[(config as VectorBTConfig).functionType]) {
-  //           errors.push(`Settings for functionType "${(config as VectorBTConfig).functionType}" are missing for VectorBT.`);
-  //           isValid = false;
-  //       }
-        
-  //       if (config.env !== undefined && typeof config.env !== 'object') {
-  //           errors.push('Environment configuration (env) must be an object if provided.');
-  //           isValid = false;
-  //       }
-  //       // Add more specific checks for BacktraderConfig or VectorBTConfig fields as needed
-  //   }
-    
-  //   return Promise.resolve({ isValid, errors });
-  // }
-
   async runBacktest(
     projectId: string,
     backtestConfig: BacktestRunConfig,
@@ -93,6 +52,7 @@ export class BacktestService implements IBacktestService {
     }
 
     if (progressCallback) progressCallback(10, 'Fetching Python path...');
+    
     const pythonPath = await this.pythonEnvService.getPythonPath();
     if (!pythonPath) {
       throw new Error('Python path not found. Please ensure the Python extension is configured correctly.');
@@ -103,7 +63,6 @@ export class BacktestService implements IBacktestService {
     const strategyCode = await this.readStrategyCode(strategyFilePath);
 
     let engineRunner;
-    let fullConfig; // This will hold the specific config type (BacktraderConfig or VectorBTConfig)
 
     if (progressCallback) progressCallback(30, `Initializing ${project.engine} engine...`);
 
@@ -112,8 +71,6 @@ export class BacktestService implements IBacktestService {
       if (progressCallback) progressCallback(35, `Checking if ${libName} library is installed...`);
       const isLibInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, libName);
       if (!isLibInstalled) {
-        // Consider attempting to install: await this.pythonEnvService.installLibrary(pythonPath, libName);
-        // For now, throw error
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
       }
 
@@ -122,28 +79,34 @@ export class BacktestService implements IBacktestService {
         throw new Error('Strategy class name not defined in project settings for Backtrader.');
       }
 
-      fullConfig = {
-        ...(backtestConfig as BacktraderConfig), // Cast to specific type
+      const fullConfig = {
+        ...backtestConfig,
         pythonPath: pythonPath,
         strategy: strategyClassName,
-        logLevel: 'debug', // Example, make this configurable
+        logLevel: 'debug',
       } as BacktraderConfig;
 
       engineRunner = new BacktraderRunner(project, fullConfig);
     } else if (project.engine === 'vectorbt') {
-      const libName = 'vectorbt'; // or 'vectorbtpro'
+      const libName = 'vectorbt'; 
       if (progressCallback) progressCallback(35, `Checking if ${libName} library is installed...`);
       const isLibInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, libName);
       if (!isLibInstalled) {
-        // As above, consider installation or throw.
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
       }
-      fullConfig = {
-        ...(backtestConfig as VectorBTConfig), // Cast to specific type
+      const fullConfig = {
+        ...backtestConfig, 
         pythonPath: pythonPath,
-        logLevel: 'debug', // Example
+        logLevel: 'debug', 
       } as VectorBTConfig;
       engineRunner = new VectorBTRunner(project, fullConfig);
+    } else if (project.engine === 'custom') {
+      const fullConfig = {
+        ...backtestConfig, 
+        pythonPath: pythonPath,
+        logLevel: 'debug',
+      } as CustomEngineConfig;
+      engineRunner = new CustomEngineRunner(project, fullConfig); // Assuming CustomEngineRunner is defined
     } else {
       throw new Error(`Unsupported backtest engine: ${project.engine}`);
     }

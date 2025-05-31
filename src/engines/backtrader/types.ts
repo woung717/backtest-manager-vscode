@@ -59,37 +59,3 @@ export interface BacktraderConfig {
   
   env?: Record<string, string>; // Environment variable settings
 }
-
-export interface BacktestRunner {
-  loadConfig(): BacktraderConfig;
-  setConfig(config: BacktraderConfig): void;
-  runBacktest(pythonCode: string): Promise<BacktestResult>;
-}
-
-import { Equity,TradeInfo } from '../../types';
-
-export interface BacktestResult {
-  id: string;
-  success?: boolean;
-  output?: string;
-  error?: string;
-  plotPath?: string;
-  date: string;
-  strategy: string;    performance: {
-    totalReturn: number;
-    annualizedReturn: number;
-    sharpeRatio: number;
-    sortinoRatio: number;
-    maxDrawdown: number;
-    winRate: number;
-    profitFactor: number;
-    trades: number;
-    calmarRatio: number;
-    avgWinLossRatio: number;
-    skewness: number;
-    kurtosis: number;
-  };
-  equity: Array<Equity>;
-  trades: Record<string, TradeInfo>;
-  config?: any;  // Configuration used for the backtest run
-}  

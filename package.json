@@ -14,6 +14,21 @@
   ],
   "main": "./out/extension.js",
   "contributes": {
+    "configuration": {
+      "title": "Backtest Manager",
+      "properties": {
+        "backtestManager.verboseBacktestEngine": {
+          "type": "boolean",
+          "default": false,
+          "description": "When running backtesting, the stdio is displayed in the output window. This is helpful for debugging when problems occur."
+        },
+        "backtestManager.preserveBacktestScriptFile": {
+          "type": "boolean",
+          "default": false,
+          "description": "Whether to preserve the backtest script file after running a backtest. If set to true, the script file will not be deleted after the backtest is completed."
+        }
+      }
+    },
     "commands": [
       {
         "command": "backtestManager.feedback",
@@ -92,12 +107,14 @@
         {
           "type": "tree",
           "id": "projectTreeView",
-          "name": "Projects"
+          "name": "Projects",
+          "icon": "$(folder)"
         },
         {
           "type": "tree",
           "id": "datasetTreeView",
           "name": "Datasets"
+          ,"icon": "$(database)"
         }
       ]
     },

@@ -192,7 +192,7 @@ if portfolio is not None:
             "side": "long" if record["Direction"] == "Long" else "short" # Assuming Direction is "Long" or "Short"
         }
 
-        print(f"trade: {json.dumps(entry_trade)}")
+        print(f"t: {json.dumps(entry_trade)}")
 
         # Exit trade
         # Check if it's a closed trade by looking at PnL or Exit Timestamp
@@ -207,7 +207,7 @@ if portfolio is not None:
                 "hold_bars": 0,
                 "size": record["Size"] # Size should be positive as per requirement
             }
-            print(f"trade: {json.dumps(exit_trade)}")
+            print(f"t: {json.dumps(exit_trade)}")
 
     value_series = portfolio.value()
     for i in range(len(value_series)):
@@ -215,6 +215,6 @@ if portfolio is not None:
             "datetime": pd.to_datetime(value_series.index[i]).isoformat(),
             "value": value_series.iloc[i][0]
         }
-        print(f"equity: {json.dumps(equity_point)}")
+        print(f"e: {json.dumps(equity_point)}")
 else:
     print("Portfolio object not created. No data to output.")

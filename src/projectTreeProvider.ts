@@ -112,8 +112,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     // Tooltip and command are set based on the item type
     if (element.contextValue === 'project' && element.projectInfo) {
       treeItem.tooltip = `Project: ${element.projectInfo.name}\nPath: ${element.projectInfo.path}\nEngine: ${element.projectInfo.engine}`;
-      // Potentially set an icon path here if needed, e.g., using vscode.ThemeIcon or vscode.Uri.file(...)
-      // treeItem.iconPath = new vscode.ThemeIcon('file-directory'); 
     } else if (element.contextValue === 'backtestResult' && element.backtestResult) {
       treeItem.tooltip = `Backtest Result\nStrategy: ${element.backtestResult.strategy}\nTotal Return: ${(element.backtestResult.performance?.totalReturn * 100 || 0).toFixed(2)}%`;
       treeItem.command = {
@@ -142,16 +140,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     await this.loadProjects(); // loadProjects now handles firing the event
   }
 
-  // This method is typically called from a command registered in extension.ts
-  // updateData might be a better name if it's only about reloading.
-  // If it's a generic refresh (e.g. after add/delete), just refresh() is fine.
-  // The name updateData suggests it might take data as input, which is not the case here.
-  // Let's assume 'refresh' is the primary mechanism, and 'loadProjects' is called internally.
-  // So, removing 'updateData' unless it has a distinct purpose.
-  // updateData(): void { 
-  //   this.loadProjects();
-  // }
-
   async createNewProject(projectName: string, engine: Engine): Promise<void> {
     try {
       const workspaceFolders = vscode.workspace.workspaceFolders;
@@ -161,12 +149,10 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
       }
       const workspaceRootPath = workspaceFolders[0].uri.fsPath;
 
-      // ProjectService will handle directory creation, file writing, and DB persistence.
       const newProjectInfo = await this.projectService.createProject(projectName, engine, workspaceRootPath);
       
       await this.loadProjects(); // Refresh the tree view
 
-      // Open the entry file of the new project
       const entryFilePath = vscode.Uri.file(path.join(newProjectInfo.path, newProjectInfo.entryFile));
       const document = await vscode.workspace.openTextDocument(entryFilePath);
       await vscode.window.showTextDocument(document, vscode.ViewColumn.One);
@@ -224,9 +210,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
         await this.loadProjects(); // Refresh tree
         vscode.window.showInformationMessage('Backtest result has been deleted.');
       } else {
-         // If deleteBacktestResult is boolean:
-         // vscode.window.showErrorMessage(`Failed to delete backtest result. Service indicated failure.`);
-         // If it returns ProjectInfo | null:
          vscode.window.showInformationMessage('Backtest result deleted. Project data may have been updated.'); // Or specific error if service throws
       }
     } catch (error) {

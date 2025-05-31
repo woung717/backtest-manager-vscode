@@ -24,7 +24,7 @@ class TradeAndEquityAnalyzer(bt.Analyzer):
                 'side': 'long' if trade.size > 0 else 'short'
             }
             self.trades[trade.ref] = {'enter': trade_data, 'exits': []}
-            print(f"trade: {json.dumps(trade_data)}")
+            print(f"t: {json.dumps(trade_data)}")
             
         elif trade.isclosed: 
             if trade.ref in self.trades:
@@ -43,7 +43,7 @@ class TradeAndEquityAnalyzer(bt.Analyzer):
                     'size': exit_size
                 }
                 self.trades[trade.ref]['exits'].append(exit_info)
-                print(f"trade: {json.dumps(exit_info)}")
+                print(f"t: {json.dumps(exit_info)}")
 
     def next(self):
         portfolio_value = self.strategy.broker.getvalue()
@@ -51,13 +51,13 @@ class TradeAndEquityAnalyzer(bt.Analyzer):
             'datetime': self.strategy.datetime.datetime().isoformat(),
             'value': round(portfolio_value, 2)
         }
-        print(f"equity: {json.dumps(equity_data)}")
+        print(f"e: {json.dumps(equity_data)}")
         self.equity.append(equity_data)
 
     def get_analysis(self):
         return {
-            'trades': self.trades,
-            'equity': self.equity
+            't': self.trades,
+            'e': self.equity
         }
 
 

@@ -11,7 +11,7 @@ export interface ProjectInfo {
   lastConfig?: any;  // Last saved backtest configuration
 }
 
-export type Engine = 'backtrader' | 'vectorbt';
+export type Engine = 'backtrader' | 'vectorbt' | 'custom';
 
 // Trade entry information
 export interface TradeEnterData {

@@ -1,45 +1,16 @@
-import * as path from 'path';
-import * as ejs from 'ejs';
-import * as fs from 'fs';
-import { BacktraderConfig } from './types';
+import { CustomEngineConfig } from './types';
 import { ProjectInfo, Backtest } from '../../types';
 import { BaseRunner } from '../common/baseRunner';
 import { generateShortHash } from '../../util';
 
-function splitUserCode(userCode: string): { userImports: string; userCode: string } {
-  const importLines: string[] = [];
-  const otherLines: string[] = [];
-  for (const line of userCode.split('\n') ) {
-    if ( /^\s*(from .+ import )/.test(line) ) {
-      importLines.push(line);
-    } else {
-      otherLines.push(line);
-    }
-  }
-  return {
-    userImports: importLines.join('\n'),
-    userCode: otherLines.join('\n'),
-  };
-}
+export class CustomEngineRunner extends BaseRunner<CustomEngineConfig> {
+  protected readonly templatePath: string = '';
 
-export class BacktraderRunner extends BaseRunner<BacktraderConfig> {
-  protected readonly templatePath: string;
-
-  constructor(project: ProjectInfo, config: BacktraderConfig) {
+  constructor(project: ProjectInfo, config: CustomEngineConfig) {
     super(project, config);
-    this.templatePath = path.join(__dirname, '..', 'templates', 'backtrader.ejs');
   }
 
-  protected async renderScript(pythonCode: string): Promise<string> {
-    const template = await fs.promises.readFile(this.templatePath, 'utf8');
-    const { userImports, userCode } = splitUserCode(pythonCode);
-    return ejs.render(template, {
-      project: this.currentProject,
-      config: this.config,
-      userImports,
-      userCode
-    });
-  }
+  protected async renderScript(pythonCode: string): Promise<string> { return pythonCode; }
 
   public async runBacktest(pythonCode: string): Promise<Backtest> {
     try {
@@ -71,8 +42,7 @@ export class BacktraderRunner extends BaseRunner<BacktraderConfig> {
 
       // Output backtest start message
       this.logger.log('========================================');
-      this.logger.log('[+] Starting backtest...');
-      this.logger.log(`[+] Strategy: ${this.config.strategy}`);
+      this.logger.log('[+] Backtest started...');
       this.logger.log(`[+] Project path: ${this.currentProject?.path}`);
       this.logger.log(`[+] Backtest engine: ${this.currentProject?.engine}`);
       this.logger.log('========================================');

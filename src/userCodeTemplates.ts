@@ -59,12 +59,46 @@ def portfolio_init(close) -> dict:
 # VectorBT Documentation: https://vectorbt.dev/
 `;
 
+export const customEngineTemplate = `# Write backtesting code with your custom engine here.
+# Don't forget to print your backtest results so that Backtest Manager can capture them.
+
+"""
+Print Format:
+* Entry trade -
+print("t: {
+    'ref': int, 
+    'datetime': str (e.g. "2024-05-30T14:00:00+00:00"), 
+    'price': float, 
+    'size': float, 
+    'value': float, 
+    'commission': float, 
+    'side': str ('long' | 'short')
+}")
+
+* Exit trade -
+print("t: {
+    'ref': int,
+    'datetime': str (e.g. "2024-05-30T14:00:00+00:00"),
+    'price': float,
+    'size': float,
+    'pnl': float,
+    'pnlcomm': float,
+    'commission': float,
+    ['hold_bars': int]
+}")
+
+* Equity - print("e: { 'datetime': str (e.g. "2024-05-30T14:00:00+00:00"), 'value': float }")
+"""
+`;
+
 export function templateCodeFactory(engine: Engine): string {
   switch (engine) {
     case 'backtrader':
       return backtraderTemplate;
     case 'vectorbt':
       return vectorbtTemplate;
+    case 'custom':
+      return customEngineTemplate;
     default:
       return '';
   }
