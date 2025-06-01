@@ -3,7 +3,7 @@
 <div align="center">
     <img src="./resource/logo.png" alt="logo" width="200"/>
 
-Backtest Manager is your go-to tool for algorithmic trading strategy development—a powerful VSCode extension that makes backtesting simple and efficient. No more juggling complex configurations or switching between multiple tools!
+Backtest Manager is a powerful VSCode extension that streamlines algorithmic trading strategy development, making backtesting both simple and efficient.
 
 ![VSCode Badge](https://img.shields.io/badge/Vscode-Marketplace-blue)
 ![Backtest Engine](https://img.shields.io/badge/Engine-backtrader-green)
@@ -12,25 +12,22 @@ Backtest Manager is your go-to tool for algorithmic trading strategy development
 
 ## ✅ Why Use Backtest Manager?
 
-Developing trading strategies can be complex and time-consuming. With Backtest Manager, you can:
-- **Save hours of setup** – everything runs directly in your preferred backtest engine and IDE.
-- **Visualize results instantly** – see your strategy's performance without extra tools.
-- **Iterate quickly** – tweak parameters and re-run tests in seconds.
-- **Focus on strategy logic** – avoid technical setup and configuration hassles.
-- **Make better trading decisions** – rely on solid data and performance metrics.
-- **Leverage AI assistance** – use Copilot, Cursor, Roo, Cline, or any AI coding agent to help with your trading strategies.
+Developing trading strategies can be complex and time-consuming. Backtest Manager offers:
+- **Streamlined Development** – Direct integration with your IDE and engine lets you focus on strategy logic, eliminating setup complexities.
+- **Real-time Analysis** – Get instant visualization of results and quickly iterate parameters with comprehensive performance metrics.
+- **AI-Enhanced Workflow** – Accelerate development using advanced AI assistants (Copilot, Cursor, Roo, Cline).
 
 ## 🌟 Key Features
 
+|   |   |   |
+|:-:|:-:|:-:|
+| ![setting-view](./resource/backtest-setting.png) | ![result-view](./resource/result-analysis.png) | ![dataset-download](./resource/dataset-download.png) |
+| Strategy Settings | Result Analysis | Dataset Management |
+
 - **Strategy & Backtest Management**: Build, organize, and keep your backtest projects tidy in VSCode.
 - **Quick Parameter Tweaks**: Change settings and rerun tests easily.
-<img src="./resource/backtest-setting.png" alt="setting-view" width=400/>
-
 - **Visual Analysis**: Instantly view results with clear charts and stats.
-<img src="./resource/result-analysis.png" alt="result-view" width=400/>
-
 - **Dataset Download**: Easily fetch datasets from any exchange and timeframe.
-<img src="./resource/dataset-download.png" alt="dataset-download" width=300>
 
 ## 🚀 Currently Supported Engines
 
@@ -38,10 +35,8 @@ Developing trading strategies can be complex and time-consuming. With Backtest M
 - [VectorBT](https://vectorbt.dev/)
 - Any Python-based Backtest Engines (choose your favorite)
 
-## 🔮 Planned Support for Future Engines
-- [Nautilus Trader](https://nautilustrader.io/)
-- [LEAN Engine (QuantConnect)](https://www.quantconnect.com/)
-- Language support beyond Python
+Coming Soon...
+- [Nautilus Trader](https://nautilustrader.io/), [LEAN Engine (QuantConnect)](https://www.quantconnect.com/), Language support beyond Python
 
 ## 🚦 Getting Started
 
@@ -199,24 +194,31 @@ print("e: {
 }")
 
 ```
-Each project must include a `portfolio_init` function. The extension uses this to load data, set parameters, and run your backtest automatically.
-
 </details>
 
 ### 🆕 Create a New Project
-Start a new backtest project in just a few clicks and types.
+Start a new backtest project. Choose your favourite backtest engine.
 
-<img src="./resource/create-project.png" alt="create-project"/>
+|   |
+|:-:|
+| ![create-project](./resource/create-project.png) |
+| Create New Project |
 
 ### 📥 Download Dataset
 Easily download historical data for your backtests with just a few clicks.
 
-<img src="./resource/dataset-tree.png" alt="dataset-tree" width="300"/> <img src="./resource/dataset-download.png" alt="dataset-download" width="300"/>
+|   |   |
+|:-:|:-:|
+| ![dataset-tree](./resource/dataset-tree.png) | ![dataset-download](./resource/dataset-download.png) |
+| Dataset Organization | Dataset Download Interface |
 
 ### ⚙️ Setting Parameter and Running a Backtest
 Ready, Set, Go!
 
-<img src="./resource/backtest-setting.png" alt="setting-view"/>
+|   |
+|:-:|
+| ![setting-view](./resource/backtest-setting.png) |
+| Parameter Configuration |
 
 ### 📊 Result Analysis
 Analyze your strategy's performance with comprehensive analytics:
@@ -224,12 +226,18 @@ Analyze your strategy's performance with comprehensive analytics:
 - Performance metrics (total return, Sharpe ratio, max drawdown, win rate, etc.)
 - Trade history (time, price, size, profit, etc.)
 
-<img src="./resource/result-analysis.png" alt="result-view"/>
+|   |
+|:-:|
+| ![result-view](./resource/result-analysis.png) |
+| Performance Analytics |
 
 ### 🐞 Debugging Strategy
 You can enable verbose output for your backtest scripts and choose whether to automatically delete completed backtest scripts in the extension settings.  
 
-<img src="./resource/setting.png" alt="settings">
+|   |
+|:-:|
+| ![settings](./resource/setting.png) |
+| Debug Settings |
 
 ## 📜 License
 

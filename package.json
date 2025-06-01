@@ -1,13 +1,25 @@
 {
   "name": "backtest-manager-vscode",
   "displayName": "Backtest Manager",
-  "description": "백테스트 관리 도구",
+  "description": "Managing and running backtests on Visual Studio Code",
+  "icon": "resource/logo.png",
+  "homepage": "https://github.com/woung717/backtest-manager-vscode",
+  "bugs": {
+    "url": "https://github.com/woung717/backtest-manager-vscode/issues",
+    "email": "woung717@gmail.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/woung717/backtest-manager-vscode.git"
+  },
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.98.0"
   },
   "categories": [
-    "Other"
+    "Data Science",
+    "Visualization",
+    "Snippets"
   ],
   "activationEvents": [
     "onView:backtest-manager-vscode"
@@ -191,7 +203,7 @@
   },
   "scripts": {
     "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./ && webpack --mode production",
+    "compile": "tsc -p ./ && webpack --mode production --devtool hidden-source-map",
     "watch": "tsc -watch -p ./",
     "watch:webpack": "webpack --watch --mode development",
     "pretest": "npm run compile && npm run lint",
@@ -235,7 +247,6 @@
     "@vscode/webview-ui-toolkit": "^1.4.0",
     "ccxt": "^4.4.71",
     "ejs": "^3.1.10",
-    "express": "^4.21.2",
     "lightweight-charts": "^5.0.7",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"

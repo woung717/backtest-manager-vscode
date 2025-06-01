@@ -189,7 +189,7 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
 
     try {
       const result = await vscode.window.showWarningMessage(
-        `Are you sure you want to delete the "${datasetName}" dataset? This action is irreversible.`,
+        `Are you sure you want to delete the "${datasetName}" dataset?`,
         { modal: true },
         'Delete'
       );
