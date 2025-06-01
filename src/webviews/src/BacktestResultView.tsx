@@ -30,9 +30,9 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
         };
         return acc;
       }, {} as Record<number, EquityData>)
-    ) as EquityData[];
+    )
+    .sort((a, b) => a.time - b.time) as EquityData[];
 
-    equityData.sort((a, b) => a.time - b.time);
 
     // Calculate chart size
     const containerWidth = equityChartRef.current.clientWidth;
@@ -193,7 +193,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
   if (!backtest) {
     return (
       <div className="flex justify-center items-center h-screen text-[var(--vscode-descriptionForeground)]">
-        No backtest results available.
+        <div className="animate-spin rounded-full h-12 w-12 border-4 border-[var(--vscode-button-background)] border-t-transparent"></div>
       </div>
     );
   }

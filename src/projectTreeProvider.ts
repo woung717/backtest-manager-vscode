@@ -43,7 +43,10 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
   private async loadProjects(): Promise<void> {
     try {
       // projectService.getProjects() is expected to return ProjectInfo with 'results' (Backtest[]) populated.
-      const projects = await this.projectService.getProjects();
+      let projects = await this.projectService.getProjects();
+
+      // 프로젝트 이름 기준 오름차순 정렬
+      projects = projects.sort((a, b) => a.name.localeCompare(b.name));
 
       this.data = projects.map((project: ProjectInfo) => {
         if (!project._id) {
@@ -62,7 +65,16 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
         );
 
         if (project.results && project.results.length > 0) {
-          projectItem.children = project.results.map(result => {
+          const sortedResults = project.results.slice().sort((a, b) => {
+            if (a.date && b.date) {
+              return new Date(b.date).getTime() - new Date(a.date).getTime();
+            } else if (a.strategy && b.strategy) {
+              return a.strategy.localeCompare(b.strategy);
+            } else {
+              return 0;
+            }
+          });
+          projectItem.children = sortedResults.map(result => {
             const date = new Date(result.date);
             const formattedDate = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')} ${String(date.getHours()).padStart(2, '0')}:${String(date.getMinutes()).padStart(2, '0')}:${String(date.getSeconds()).padStart(2, '0')}`;
             return new ProjectTreeItem(

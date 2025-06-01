@@ -113,10 +113,10 @@ export function activate(context: vscode.ExtensionContext) {
       });
       
       const engineSelection = await vscode.window.showQuickPick([
-        { label: '🚀 Backtrader', value: 'backtrader' as Engine, description: 'Full featured event-driven backtesting engine.' },
-        { label: '⚡ VectorBT', value: 'vectorbt' as Engine, description: 'Ultra rapid vectorized backtesting engine.' },
-        { label: '🧪 Custom Engine', value: 'custom' as Engine, description: 'Bring Your Own Backtest Engine!'}
-      ], { placeHolder: 'Select engine' });
+        { label: '🚀 Backtrader', value: 'backtrader' as Engine, description: 'Full featured event-driven backtesting engine' },
+        { label: '⚡ VectorBT', value: 'vectorbt' as Engine, description: 'Ultra rapid vectorized backtesting engine' },
+        { label: '🧪 Custom Engine', value: 'custom' as Engine, description: 'Bring Your Own Backtest Engine'}
+      ], { placeHolder: 'Select Backtest Engine' });
 
       if (projectName && engineSelection) {
         try {
