@@ -37,7 +37,7 @@ const DatasetSelector: React.FC<DatasetSelectorProps> = ({
       
       {datasets.length === 0 ? (
         <div className="text-sm text-[var(--vscode-errorForeground)] mb-2">
-          No datasets available. Upload datasets in the Dataset Manager.
+          No datasets available. Download datasets in the Dataset Manager.
         </div>
       ) : (
         <div className="space-y-2">

@@ -1,12 +1,11 @@
 // src/services/datasetService.ts
-import * as fs from 'fs'; // Node's fs
+import * as fs from 'fs/promises'; // Node's fs promises
 import * as path from 'path';
 import * as ccxt from 'ccxt';
 import * as vscode from 'vscode';
 import { DatasetInfo, ExchangeInfo } from '../types'; // Assuming these types exist in ../types
 
 export interface IDatasetService {
-  // getDatasets(): Promise<DatasetInfo[]>; // Removed as per plan
   loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]>; 
   deleteDataset(datasetPath: string): Promise<boolean>; 
   getDatasetContent(datasetPath: string): Promise<OHLCV[]>; 

@@ -73,12 +73,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
         // DatasetService.loadDatasetsInWorkspace will ensure folders and get all DatasetInfo items
         const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace(this.datasetRoot);
 
-        if (!allDatasetInfos || allDatasetInfos.length === 0) {
-            console.log('No datasets found');
-            this.data = [new DatasetTreeItem('empty', 'No datasets found', true)];
-            return;
-        }
-
         // Group DatasetInfo items by assetType for the tree structure
         const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
         for (const assetType of this.ASSET_TYPES) {
@@ -183,10 +177,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
     await this.loadDatasets(); // Load or reload the data
     this._onDidChangeTreeData.fire(); // Then notify VS Code to update the view
   }
-
-  // updateData(): void { // Removed
-  //   this.loadDatasets();
-  // }
 
   // Method to delete dataset
   async deleteDataset(item: DatasetTreeItem): Promise<void> { // Takes DatasetTreeItem
