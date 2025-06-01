@@ -261,6 +261,13 @@ export function activate(context: vscode.ExtensionContext) {
       }
     }),
 
+    vscode.commands.registerCommand('backtestManager.copyDatatsetPath', async (item: DatasetTreeItem) => {
+      if (item.datasetInfo && item.datasetInfo.path) {
+        await vscode.env.clipboard.writeText(item.datasetInfo.path);
+        vscode.window.showInformationMessage(`Dataset path copied to clipboard.`);
+      }
+    }),
+
     vscode.commands.registerCommand('backtestManager.showDatasetDownloader', (item: DatasetTreeItem) => {
       if (item.assetType) {
         const downloaderView = new DatasetDownloaderView(context.extensionUri, item.assetType, datasetService);

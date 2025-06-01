@@ -76,16 +76,20 @@
         "icon": "$(refresh)"
       },
       {
-        "command": "backtestManager.deleteDataset",
-        "title": "Delete"
+        "command": "backtestManager.showDatasetChart",
+        "title": "Show Chart"
       },
       {
         "command": "backtestManager.openDataset",
         "title": "Backtest Manager: Open Dataset"
       },
       {
-        "command": "backtestManager.showDatasetChart",
-        "title": "Show Chart"
+        "command": "backtestManager.copyDatatsetPath",
+        "title": "Copy Path"
+      },
+      {
+        "command": "backtestManager.deleteDataset",
+        "title": "Delete"
       },
       {
         "command": "backtestManager.showDatasetDownloader",
@@ -172,6 +176,10 @@
         },
         {
           "command": "backtestManager.showDatasetChart",
+          "when": "view == datasetTreeView && viewItem == dataset"
+        },
+        {
+          "command": "backtestManager.copyDatatsetPath",
           "when": "view == datasetTreeView && viewItem == dataset"
         },
         {

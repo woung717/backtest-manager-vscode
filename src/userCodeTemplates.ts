@@ -63,7 +63,7 @@ export const customEngineTemplate = `# Write backtesting code with your custom e
 # Don't forget to print your backtest results so that Backtest Manager can capture them.
 
 """
-Print Format:
+Output Format:
 * Entry trade -
 print("t: {
     'ref': int, 
@@ -87,7 +87,11 @@ print("t: {
     ['hold_bars': int]
 }")
 
-* Equity - print("e: { 'datetime': str (e.g. "2024-05-30T14:00:00+00:00"), 'value': float }")
+* Equity - 
+print("e: { 
+    'datetime': str (e.g. "2024-05-30T14:00:00+00:00"), 
+    'value': float 
+}")
 """
 `;
 

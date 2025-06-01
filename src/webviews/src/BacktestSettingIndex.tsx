@@ -4,6 +4,7 @@ import BacktraderSettingView from './setting-view/BacktraderSettingView';
 import VectorBTSettingView from './setting-view/VectorBTSettingView';
 import { ProjectInfo, DatasetInfo } from '../../types';
 import '../lib/VSCode.css';
+import CustomEngineSettingView from './setting-view/CustomEngineSettingView';
 const root = document.getElementById('root');
 
 if (root) {
@@ -28,17 +29,26 @@ if (root) {
     reactRoot.render(
       <React.StrictMode>
         {currentProject?.engine === 'vectorbt' ? (
-          <VectorBTSettingView 
-            currentProject={currentProject} 
+          <VectorBTSettingView
+            currentProject={currentProject}
             datasets={datasets}
+            lastConfig={lastConfig}
+          />
+        ) : currentProject?.engine === 'backtrader' ? (
+          <BacktraderSettingView
+            currentProject={currentProject}
+            datasets={datasets}
+            lastConfig={lastConfig}
+          />
+        ) : currentProject?.engine === 'custom' ? (
+          <CustomEngineSettingView
+            currentProject={currentProject}
             lastConfig={lastConfig}
           />
         ) : (
-          <BacktraderSettingView 
-            currentProject={currentProject} 
-            datasets={datasets}
-            lastConfig={lastConfig}
-          />
+          <div>
+            No project selected or project engine not set.
+          </div>
         )}
       </React.StrictMode>
     );
