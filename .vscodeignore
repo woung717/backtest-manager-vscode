@@ -1,6 +1,16 @@
 .vscode/
 .vscode-test/
-**.vsix
 .aider*
 .python-version
 .gitignore
+.vscode/**
+node_modules/**
+src/**
+.space
+package.lock.json
+tsconfig.json
+webpack.config.js
+**/*.vsix
+.git/**
+.github/**
+**/*.svg
