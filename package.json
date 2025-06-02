@@ -1,6 +1,7 @@
 {
-  "name": "backtest-manager-vscode",
+  "name": "backtest-manager",
   "displayName": "Backtest Manager",
+  "publisher": "woung717",
   "description": "Managing and running backtests on Visual Studio Code",
   "icon": "resource/logo.png",
   "homepage": "https://github.com/woung717/backtest-manager-vscode",
@@ -20,6 +21,9 @@
     "Data Science",
     "Visualization",
     "Snippets"
+  ],
+  "extensionDependencies": [
+    "ms-python.python"
   ],
   "activationEvents": [
     "onView:backtest-manager-vscode"
