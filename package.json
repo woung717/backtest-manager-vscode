@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/woung717/backtest-manager-vscode.git"
   },
-  "version": "0.0.1",
+  "version": "0.1.0",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -133,8 +133,8 @@
         {
           "type": "tree",
           "id": "datasetTreeView",
-          "name": "Datasets"
-          ,"icon": "$(database)"
+          "name": "Datasets",
+          "icon": "$(database)"
         }
       ]
     },
