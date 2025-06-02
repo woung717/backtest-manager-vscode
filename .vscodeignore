@@ -1,0 +1,6 @@
+.vscode/
+.vscode-test/
+**.vsix
+.aider*
+.python-version
+.gitignore
