@@ -29,7 +29,7 @@ export interface BacktestResult {
     skewness: number;
     kurtosis: number;
   };
-  equity: Array<Equity>;
+  equity: Equity[];
   trades: Record<string, TradeInfo>;
   config?: any;  // Configuration used for the backtest run
 }  

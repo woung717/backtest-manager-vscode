@@ -15,7 +15,7 @@ export class DatasetTreeItem {
   constructor(
     id: string, 
     label: string, 
-    isFolder: boolean = false,
+    isFolder = false,
     children?: DatasetTreeItem[], 
     contextValue?: string, 
     datasetInfo?: DatasetInfo,

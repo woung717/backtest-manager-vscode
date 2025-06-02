@@ -1,9 +1,9 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment */
 // src/services/datasetService.ts
-import * as fs from 'fs/promises'; // Node's fs promises
 import * as path from 'path';
 import * as ccxt from 'ccxt';
 import * as vscode from 'vscode';
-import { DatasetInfo, ExchangeInfo } from '../types'; // Assuming these types exist in ../types
+import { DatasetInfo, ExchangeInfo } from '../types'; 
 
 export interface IDatasetService {
   loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]>; 
@@ -24,7 +24,7 @@ import { OHLCV } from '../types';
 export class DatasetService implements IDatasetService {
   private ccxtExchanges: ccxt.Exchange[] = [];
   private readonly ASSET_TYPES: ('crypto' | 'stock' | 'forex')[] = ['crypto', 'stock', 'forex'];
-  private readonly timeframeMsMap: { [key: string]: number } = {
+  private readonly timeframeMsMap: Record<string, number> = {
     '1m': 60 * 1000,
     '5m': 5 * 60 * 1000,
     '15m': 15 * 60 * 1000,
@@ -152,7 +152,9 @@ export class DatasetService implements IDatasetService {
     while (currentTime < end) {
       try {
         const candles = await exchange.fetchOHLCV(symbol, timeframe, currentTime, limit);
-        if (!candles || candles.length === 0) break;
+        if (!candles || candles.length === 0) { 
+          break;
+        }
 
         allCandles = [...allCandles, ...candles];
         const lastCandleTime = candles[candles.length - 1][0];
@@ -199,21 +201,27 @@ export class DatasetService implements IDatasetService {
     if (!this.workspacePath) {
         const errorMessage = "Workspace path is not set. Cannot download dataset.";
         console.error(errorMessage);
-        if (progressCallback) progressCallback({ message: errorMessage });
+        if (progressCallback) {
+          progressCallback({ message: errorMessage });
+        }
         throw new Error(errorMessage);
     }
 
     if (!symbol || !exchange || !timeframe || !startDate || !endDate) {
         const errorMessage = "Missing required parameters for dataset download";
         console.error(errorMessage);
-        if (progressCallback) progressCallback({ message: errorMessage });
+        if (progressCallback) {
+          progressCallback({ message: errorMessage });
+        }
         throw new Error(errorMessage);
     }
 
     if (!this.timeframeMsMap[timeframe]) {
         const errorMessage = `Unsupported timeframe: ${timeframe}`;
         console.error(errorMessage);
-        if (progressCallback) progressCallback({ message: errorMessage });
+        if (progressCallback) {
+          progressCallback({ message: errorMessage });
+        }
         throw new Error(errorMessage);
     }
 
@@ -226,10 +234,11 @@ export class DatasetService implements IDatasetService {
     const fileName = `${exchange}_${cleanSymbol}_${timeframe}_${formattedStartDate}_${formattedEndDate}.csv`; // Standardized filename
     const filePath = path.join(datasetDir, fileName);
     
-    let currentProgress = 0;
-    let data: string = '';
+    const currentProgress = 0;
 
-    if (progressCallback) progressCallback({ message: `Starting download for ${symbol}...`, overallProgress: 0 });
+    if (progressCallback) {
+      progressCallback({ message: `Starting download for ${symbol}...`, overallProgress: 0 });
+    }
 
     if (assetType === 'crypto') {
       try {
@@ -254,13 +263,17 @@ export class DatasetService implements IDatasetService {
           return filePath;
         }
       } catch (error: any) {
-        if (progressCallback) progressCallback({ message: `Download failed for ${symbol}: ${error.message}`, overallProgress: currentProgress });
+        if (progressCallback) {
+          progressCallback({ message: `Download failed for ${symbol}: ${error.message}`, overallProgress: currentProgress });
+        }
         throw error;
       }
     } else {
         const message = `Asset type '${assetType}' is not supported for download.`;
         console.warn(message);
-        if (progressCallback) progressCallback({ message, overallProgress: 100 });
+        if (progressCallback) {
+          progressCallback({ message, overallProgress: 100 });
+        }
         return ""; 
     }
     return filePath;
@@ -361,7 +374,9 @@ export class DatasetService implements IDatasetService {
         const data = lines.slice(1)
             .map((line, index) => {
                 const trimmedLine = line.trim();
-                if (!trimmedLine) return null; // Skip empty lines
+                if (!trimmedLine) {
+                  return null;
+                }
                 
                 const values = trimmedLine.split(',');
                 if (values.length !== header.length) {

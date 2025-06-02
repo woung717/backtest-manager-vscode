@@ -9,6 +9,7 @@
     "strict": true,
     "esModuleInterop": true,
     "jsx": "react",
+    "forceConsistentCasingInFileNames": true,
     "skipLibCheck": true
   },
   "exclude": ["node_modules", ".vscode-test", "src/webviews"]

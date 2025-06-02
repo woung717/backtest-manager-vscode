@@ -52,7 +52,7 @@ export class BacktestSettingView {
       const entryFilePath = vscode.Uri.joinPath(vscode.Uri.file(project.path), project.entryFile);
       try {
         await vscode.workspace.fs.stat(entryFilePath);
-      } catch (error) {
+      } catch {
         vscode.window.showErrorMessage(`Project entry file "${project.entryFile}" not found at ${project.path}.`);
         return;
       }
@@ -102,7 +102,7 @@ export class BacktestSettingView {
       this._panel.webview.onDidReceiveMessage(async data => {
         try {
           switch (data.type) {
-            case 'runBacktest':
+            case 'runBacktest':{ 
               if (!this._currentProject || !this._currentProject._id) {
                 vscode.window.showErrorMessage('Please select a project.');
                 return;
@@ -127,8 +127,9 @@ export class BacktestSettingView {
               } catch (error: any) {
                 vscode.window.showErrorMessage(`Error occurred during backtest execution: ${error.message || error}`);
               }
-              break;
-            case 'refresh':
+              break; 
+            }
+            case 'refresh': { 
               const datasetRootPathRefresh = path.join(this._workspacePath, 'dataset');
               this._datasets = await this.datasetService.loadDatasetsInWorkspace(datasetRootPathRefresh);
 
@@ -138,7 +139,8 @@ export class BacktestSettingView {
                 lastConfigRefresh = projectDetails?.lastConfig;
               }
               this._updateWebview(lastConfigRefresh); // Call _updateWebview with the potentially updated lastConfig
-              break;
+              break; 
+            }
             default:
               console.warn(`Unknown message type: ${data.type}`);
           }

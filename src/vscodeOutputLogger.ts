@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 
 export class VSCodeOutputLogger {
-  private static instances: Map<string, VSCodeOutputLogger> = new Map();
+  private static instances = new Map<string, VSCodeOutputLogger>();
   private outputChannel: vscode.OutputChannel;
 
   private constructor(name: string) {

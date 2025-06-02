@@ -11,7 +11,7 @@ enum DataType {
 
 export abstract class BaseRunner<T> {
   protected config: T;
-  protected tempFilePath: string = '';
+  protected tempFilePath = '';
   protected currentProject?: ProjectInfo;
   protected currentBacktest?: Backtest;
   protected logger: VSCodeOutputLogger = VSCodeOutputLogger.getInstance("Backtest Runner");
@@ -69,7 +69,9 @@ export abstract class BaseRunner<T> {
 
     try {
       if (type === DataType.TRADE) {
-        if (!this.currentBacktest.trades) this.currentBacktest.trades = {};
+        if (!this.currentBacktest.trades) {
+          this.currentBacktest.trades = {};
+        }
 
         if (data.ref && !data.pnl) {
           const enterData: TradeEnterData = {
@@ -102,7 +104,9 @@ export abstract class BaseRunner<T> {
           }
         }
       } else if (type === DataType.EQUITY) {
-        if (!this.currentBacktest.equity) this.currentBacktest.equity = [];
+        if (!this.currentBacktest.equity) {
+          this.currentBacktest.equity = [];
+        }
         
         // Check if the equity value is already present to avoid duplicates
         if (this.currentBacktest.equity.length > 0) {
@@ -124,7 +128,9 @@ export abstract class BaseRunner<T> {
   }
 
   protected calculatePerformanceMetrics(): void {
-    if (!this.currentBacktest) return;
+    if (!this.currentBacktest) {
+      return;
+    }
 
     const tradeCount = Object.keys(this.currentBacktest.trades).length;
     if (tradeCount > 0) {
@@ -168,9 +174,9 @@ export abstract class BaseRunner<T> {
       
       for (const equityPoint of this.currentBacktest.equity) {
         const currentValue = equityPoint.value;
-        if (currentValue > peak) peak = currentValue;
+        if (currentValue > peak) { peak = currentValue; }
         const drawdown = (peak - currentValue) / peak;
-        if (drawdown > maxDrawdown) maxDrawdown = drawdown;
+        if (drawdown > maxDrawdown) { maxDrawdown = drawdown; }
       }
       
       this.currentBacktest.performance.maxDrawdown = maxDrawdown;
@@ -251,81 +257,77 @@ export abstract class BaseRunner<T> {
   }
 
   protected async run(pythonCode: string): Promise<Backtest> {
-    try {
-      const pythonFilePath = await this.createTempPythonFile(pythonCode);
-      
-      return new Promise<Backtest>((resolve, reject) => {
-        const pythonProcess = spawn(
-          (this.config as any).pythonPath, 
-          [pythonFilePath],
-          {
-            cwd: this.currentProject?.path,
-            env: (this.config as any).env 
-          }
-        );
+    const pythonFilePath = await this.createTempPythonFile(pythonCode);
+    
+    return new Promise<Backtest>((resolve, reject) => {
+      const pythonProcess = spawn(
+        (this.config as any).pythonPath, 
+        [pythonFilePath],
+        {
+          cwd: this.currentProject?.path,
+          env: (this.config as any).env 
+        }
+      );
 
-        pythonProcess.stdout.on('data', async (data) => {
-          const lines = data.toString().split('\n');
-          for (const line of lines) {
-            if (line.startsWith('t:')) {
-              const tradeData = this.parseTradeData(line);
-              if (tradeData) {
-                await this.updateBacktestResult(tradeData, DataType.TRADE);
-              }
-            } else if (line.startsWith('e:')) {
-              const equityData = this.parseEquityData(line);
-              if (equityData) {
-                await this.updateBacktestResult(equityData, DataType.EQUITY);
-              }
+      pythonProcess.stdout.on('data', async (data) => {
+        const lines = data.toString().split('\n');
+        for (const line of lines) {
+          if (line.startsWith('t:')) {
+            const tradeData = this.parseTradeData(line);
+            if (tradeData) {
+              await this.updateBacktestResult(tradeData, DataType.TRADE);
+            }
+          } else if (line.startsWith('e:')) {
+            const equityData = this.parseEquityData(line);
+            if (equityData) {
+              await this.updateBacktestResult(equityData, DataType.EQUITY);
             }
           }
-          
-          if (this.debugMode) {
-            this.logger.log(data.toString());
-          }
-        });
-
-        pythonProcess.stderr.on('data', (data) => {
-          const chunk = data.toString();
-
-          if (this.debugMode) {
-            this.logger.log('Error: ' + chunk);
-          }
-        });
-
-        pythonProcess.on('close', async (code) => {
-          try {
-            if (this.tempFilePath && this.preserveTempFiles === false) {
-              const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              vscode.workspace.fs.delete(tempFileUri);
-            }
-          } catch (error) {
-            this.logger.log('Error deleting temporary file: ' + error);
-          }
-
-          if (code === 0 && this.currentBacktest) {
-            this.calculatePerformanceMetrics();
-            resolve(this.currentBacktest);
-          } else {
-            reject(new Error(`Python process exited with code ${code}.`));
-          }
-        });
-
-        pythonProcess.on('error', async (error) => {
-          try {
-            if (this.tempFilePath && this.preserveTempFiles === false) {
-              const tempFileUri = vscode.Uri.file(this.tempFilePath);
-              vscode.workspace.fs.delete(tempFileUri);
-            }
-          } catch (deleteError) {
-            console.error('Error deleting temporary file:', deleteError);
-          }
-          reject(error);
-        });
+        }
+        
+        if (this.debugMode) {
+          this.logger.log(data.toString());
+        }
       });
-    } catch (error) {
-      throw error;
-    }
+
+      pythonProcess.stderr.on('data', (data) => {
+        const chunk = data.toString();
+
+        if (this.debugMode) {
+          this.logger.log('Error: ' + chunk);
+        }
+      });
+
+      pythonProcess.on('close', async (code) => {
+        try {
+          if (this.tempFilePath && this.preserveTempFiles === false) {
+            const tempFileUri = vscode.Uri.file(this.tempFilePath);
+            vscode.workspace.fs.delete(tempFileUri);
+          }
+        } catch (error) {
+          this.logger.log('Error deleting temporary file: ' + error);
+        }
+
+        if (code === 0 && this.currentBacktest) {
+          this.calculatePerformanceMetrics();
+          resolve(this.currentBacktest);
+        } else {
+          reject(new Error(`Python process exited with code ${code}.`));
+        }
+      });
+
+      pythonProcess.on('error', async (error) => {
+        try {
+          if (this.tempFilePath && this.preserveTempFiles === false) {
+            const tempFileUri = vscode.Uri.file(this.tempFilePath);
+            vscode.workspace.fs.delete(tempFileUri);
+          }
+        } catch (deleteError) {
+          console.error('Error deleting temporary file:', deleteError);
+        }
+        reject(error);
+      });
+    });
   }
 
   protected abstract renderScript(pythonCode: string): Promise<string>;

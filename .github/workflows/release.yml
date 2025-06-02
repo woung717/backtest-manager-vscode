@@ -12,6 +12,32 @@ on:
   workflow_dispatch:
 
 jobs:
+  test:
+    strategy:
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      
+    - name: Install Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: 20.x
+        cache: 'npm'
+        
+    - name: Install dependencies
+      run: npm install
+      
+    - name: Run tests on Linux (with xvfb)
+      run: xvfb-run -a npm test
+      if: runner.os == 'Linux'
+      
+    - name: Run tests on macOS/Windows
+      run: npm test
+      if: runner.os != 'Linux'
+
   build-and-release:
     # 태그가 푸시된 경우에만 릴리스 실행
     if: startsWith(github.ref, 'refs/tags/v')

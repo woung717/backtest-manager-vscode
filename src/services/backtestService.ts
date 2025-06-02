@@ -44,14 +44,18 @@ export class BacktestService implements IBacktestService {
     backtestConfig: BacktestRunConfig,
     progressCallback?: (progress: number, message?: string) => void
   ): Promise<EngineBacktestResult> {
-    if (progressCallback) progressCallback(0, 'Starting backtest...');
+    if (progressCallback) {
+      progressCallback(0, 'Starting backtest...');
+    }
 
     const project = await this.projectService.getProject(projectId);
     if (!project) {
       throw new Error(`Project with ID "${projectId}" not found.`);
     }
 
-    if (progressCallback) progressCallback(10, 'Fetching Python path...');
+    if (progressCallback) {
+      progressCallback(10, 'Fetching Python path...');
+    }
     
     const pythonPath = await this.pythonEnvService.getPythonPath();
     if (!pythonPath) {
@@ -59,16 +63,22 @@ export class BacktestService implements IBacktestService {
     }
 
     const strategyFilePath = path.join(project.path, project.entryFile);
-    if (progressCallback) progressCallback(20, `Reading strategy code from ${strategyFilePath}...`);
+    if (progressCallback) {
+      progressCallback(20, `Reading strategy code from ${strategyFilePath}...`);
+    }
     const strategyCode = await this.readStrategyCode(strategyFilePath);
 
     let engineRunner;
 
-    if (progressCallback) progressCallback(30, `Initializing ${project.engine} engine...`);
+    if (progressCallback) {
+      progressCallback(30, `Initializing ${project.engine} engine...`);
+    }
 
     if (project.engine === 'backtrader') {
       const libName = 'backtrader';
-      if (progressCallback) progressCallback(35, `Checking if ${libName} library is installed...`);
+      if (progressCallback) {
+        progressCallback(35, `Checking if ${libName} library is installed...`);
+      }
       const isLibInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, libName);
       if (!isLibInstalled) {
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
@@ -89,11 +99,15 @@ export class BacktestService implements IBacktestService {
       engineRunner = new BacktraderRunner(project, fullConfig);
     } else if (project.engine === 'vectorbt') {
       const libName = 'vectorbt'; 
-      if (progressCallback) progressCallback(35, `Checking if ${libName} library is installed...`);
+      if (progressCallback) {
+        progressCallback(35, `Checking if ${libName} library is installed...`);
+      }
+
       const isLibInstalled = await this.pythonEnvService.checkLibraryInstalled(pythonPath, libName);
       if (!isLibInstalled) {
         throw new Error(`${libName} library is not installed. Please install it in your Python environment.`);
       }
+      
       const fullConfig = {
         ...backtestConfig, 
         pythonPath: pythonPath,
@@ -111,15 +125,23 @@ export class BacktestService implements IBacktestService {
       throw new Error(`Unsupported backtest engine: ${project.engine}`);
     }
 
-    if (progressCallback) progressCallback(50, 'Running backtest via engine runner...');
+    if (progressCallback) { 
+      progressCallback(50, 'Running backtest via engine runner...'); 
+    }
     
     try {
       const result = await engineRunner.runBacktest(strategyCode); // Assuming runners have runBacktest
-      if (progressCallback) progressCallback(100, 'Backtest completed.');
+      if (progressCallback) {
+        progressCallback(100, 'Backtest completed.');
+      }
+      
       return result;
     } catch (error) {
       console.error('Backtesting failed:', error);
-      if (progressCallback) progressCallback(100, `Backtest failed: ${error instanceof Error ? error.message : String(error)}`);
+      if (progressCallback) {
+        progressCallback(100, `Backtest failed: ${error instanceof Error ? error.message : String(error)}`);
+      }
+      
       throw new Error(`Backtesting failed: ${error instanceof Error ? error.message : String(error)}`);
     }
   }

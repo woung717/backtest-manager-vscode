@@ -47,20 +47,22 @@ export class DatasetDownloaderView {
             case 'refresh':
               vscode.commands.executeCommand('backtestManager.refreshDatasetView');
               break;
-            case 'getExchangeInfo':
+            case 'getExchangeInfo': { 
               const exchangeInfo = await this.datasetService.getExchangeInfo(data.exchange, this.assetType); // New
               this.panel?.webview.postMessage({
                 type: 'exchangeInfo',
                 data: exchangeInfo
               });
-              break;
-            case 'getAvailableExchanges':
+              break; 
+            }
+            case 'getAvailableExchanges': {
               const exchanges = await this.datasetService.getAvailableExchanges(this.assetType); // New
               this.panel?.webview.postMessage({
                 type: 'availableExchanges',
                 data: exchanges
               });
               break;
+            }
           }
         } catch (error: any) {
           vscode.window.showErrorMessage(`Error processing message: ${error.message}`);

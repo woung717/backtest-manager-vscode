@@ -17,7 +17,7 @@ import { PythonEnvironmentService } from './services/pythonEnvironmentService';
 import { BacktestService } from './services/backtestService';
 
 // Types
-import { Backtest, DatasetInfo, Engine, ProjectInfo } from './types'; // Added ProjectInfo explicitly
+import { Backtest, DatasetInfo, Engine } from './types'; // Added ProjectInfo explicitly
 
 // Utilities
 import { VSCodeOutputLogger } from './vscodeOutputLogger';
@@ -98,13 +98,20 @@ export function activate(context: vscode.ExtensionContext) {
         placeHolder: 'Enter project name',
         prompt: 'Create New Project',
         validateInput: async (value) => {
-          if (!value) return 'Project name cannot be empty.';
-          if (value.includes('/') || value.includes('\\')) return 'Project name cannot contain path separators.';
+          if (!value) {
+            return 'Project name cannot be empty.';
+          }
+
+          if (value.includes('/') || value.includes('\\')) {
+            return 'Project name cannot contain path separators.';
+          }
+
           try {
             const project = await projectService.getProjectByName(value); // Use service
-            if (project) return 'Project name already exists.';
+            if (project) {
+              return 'Project name already exists.';
+            }
           } catch (e: any) {
-            // For validation, perhaps a softer check or ensure service handles this gracefully.
             console.error("Validation error checking project name:", e.message);
             return "Error validating project name."; 
           }
@@ -198,8 +205,14 @@ export function activate(context: vscode.ExtensionContext) {
         prompt: 'Rename Project',
         value: item.projectInfo?.name, // Pre-fill with current name
         validateInput: (value) => {
-          if (!value) return 'Project name cannot be empty';
-          if (value.includes('/') || value.includes('\\')) return 'Project name cannot contain path separators';
+          if (!value) { 
+            return 'Project name cannot be empty';
+          }
+
+          if (value.includes('/') || value.includes('\\')) {
+            return 'Project name cannot contain path separators';
+          }
+          
           return null;
         }
       });

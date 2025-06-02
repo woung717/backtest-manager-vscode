@@ -210,9 +210,9 @@
     "compile": "tsc -p ./ && webpack --mode production --devtool hidden-source-map",
     "watch": "tsc -watch -p ./",
     "watch:webpack": "webpack --watch --mode development",
-    "pretest": "npm run compile && npm run lint",
+    "pretest": "npm run lint",
     "lint": "eslint src --ext ts",
-    "test": "vscode-test",
+    "test": "npm run compile && vscode-test",
     "dev": "webpack --mode development"
   },
   "devDependencies": {

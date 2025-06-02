@@ -1,5 +1,4 @@
 import * as path from 'path';
-import * as vscode from 'vscode';
 import * as zlib from 'zlib';
 import { promisify } from 'util';
 import { Backtest } from './types';
@@ -7,11 +6,12 @@ import { ProjectInfo } from './types';
 
 export class Database {
   private static instance: Database;
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
   private Datastore = require('@seald-io/nedb');
   private readonly CONFIG_FILE_NAME: string = '.backtest-man';
   private db: any;
-  private initialized: boolean = false;
-  private dbPath: string = '';
+  private initialized = false;
+  private dbPath = '';
   private readonly gzip = promisify(zlib.gzip);
   private readonly gunzip = promisify(zlib.gunzip);
 
