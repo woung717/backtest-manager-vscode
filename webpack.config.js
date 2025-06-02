@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+/* eslint-disable no-undef */
 const path = require('path');
 const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -13,12 +15,25 @@ function copyEjsFiles() {
   
   const files = fs.readdirSync(sourceDir, { recursive: true });
   files.forEach(file => {
-    if (file.endsWith('.ejs')) {
-      const filename = file.split('/').pop();
-      const sourcePath = path.join(sourceDir, file);
+    // Windows에서 file은 객체로 반환될 수 있으므로 문자열로 변환
+    const filePath = file.toString();
+    
+    if (filePath.endsWith('.ejs')) {
+      // 마지막 경로 구성요소만 추출
+      const filename = filePath.split(path.sep).pop();
+      if (!filename) {
+        return;
+      }
+      
+      // 소스 경로 구성 - filePath가 상대 경로이므로 sourceDir와 결합
+      const sourcePath = path.join(sourceDir, filePath);
       const targetPath = path.join(targetDir, filename);
-      fs.copyFileSync(sourcePath, targetPath);
-      console.log(`Copied ${sourcePath} to ${targetPath}`);
+      
+      // 파일이 존재하는지 확인
+      if (fs.existsSync(sourcePath)) {
+        fs.copyFileSync(sourcePath, targetPath);
+        console.log(`Copied ${sourcePath} to ${targetPath}`);
+      }
     }
   });
 }
@@ -104,4 +119,4 @@ module.exports = {
   performance: {
     hints: false
   }
-}; 
+};

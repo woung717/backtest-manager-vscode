@@ -211,7 +211,7 @@
     "watch": "tsc -watch -p ./",
     "watch:webpack": "webpack --watch --mode development",
     "pretest": "npm run lint",
-    "lint": "eslint src --ext ts",
+    "lint": "eslint src/**/*.ts",
     "test": "npm run compile && vscode-test",
     "dev": "webpack --mode development"
   },

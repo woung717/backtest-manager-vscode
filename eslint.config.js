@@ -3,12 +3,12 @@
  * 
  * See https://eslint.style and https://typescript-eslint.io for additional linting options.
  */
-// @ts-check
-import js from '@eslint/js';
-import tseslint from 'typescript-eslint';
-import stylistic from '@stylistic/eslint-plugin';
+// @ts-nocheck
+const js = require('@eslint/js');
+const tseslint = require('typescript-eslint');
+const stylistic = require('@stylistic/eslint-plugin');
 
-export default tseslint.config(
+module.exports = tseslint.config(
 	{
 		ignores: [
 			'.vscode-test',
