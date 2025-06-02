@@ -3,17 +3,14 @@ const fs = require('fs');
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const TerserPlugin = require('terser-webpack-plugin');
 
-// EJS 파일 복사 함수
 function copyEjsFiles() {
   const sourceDir = path.resolve(__dirname, 'src/engines');
   const targetDir = path.resolve(__dirname, 'out/engines/templates');
   
-  // 대상 디렉토리가 없으면 생성
   if (!fs.existsSync(targetDir)) {
     fs.mkdirSync(targetDir, { recursive: true });
   }
   
-  // EJS 파일 복사
   const files = fs.readdirSync(sourceDir, { recursive: true });
   files.forEach(file => {
     if (file.endsWith('.ejs')) {
@@ -26,7 +23,6 @@ function copyEjsFiles() {
   });
 }
 
-// 빌드 전 EJS 파일 복사
 copyEjsFiles();
 
 module.exports = {
@@ -41,7 +37,7 @@ module.exports = {
   output: {
     path: path.resolve(__dirname, 'out/webviews'),
     filename: '[name].js',
-    clean: false // out 폴더 내 다른 파일 유지
+    clean: false 
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx']
@@ -85,7 +81,7 @@ module.exports = {
   ],
   optimization: {
     moduleIds: 'deterministic',
-    splitChunks: false, // 청크 분할 방지
+    splitChunks: false, 
     minimize: true,
     minimizer: [
       new TerserPlugin({
@@ -103,9 +99,6 @@ module.exports = {
         extractComments: false,
       }),
     ],
-    runtimeChunk: false,
-    usedExports: true,
-    concatenateModules: true,
     providedExports: true
   },
   performance: {
