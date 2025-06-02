@@ -1,3 +1,5 @@
+**/*.svg
+**/*.vsix
 .vscode/
 .vscode-test/
 .aider*
@@ -5,11 +7,9 @@
 .gitignore
 .vscode/**
 .space
+.git/**
+.github/**
 package.lock.json
 tsconfig.json
 webpack.config.js
 eslint.config.js
-**/*.vsix
-.git/**
-.github/**
-**/*.svg
