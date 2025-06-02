@@ -4,12 +4,11 @@
 .python-version
 .gitignore
 .vscode/**
-node_modules/**
-src/**
 .space
 package.lock.json
 tsconfig.json
 webpack.config.js
+eslint.config.js
 **/*.vsix
 .git/**
 .github/**

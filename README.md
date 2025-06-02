@@ -44,7 +44,6 @@ Coming Soon...
 
 - Visual Studio Code 1.98.0 or higher
 - Python 3.8+
-- [Python Extension](https://marketplace.visualstudio.com/items?itemName=ms-python.python) 
 - Backtest libraries (Choose)
 
 ```bash
