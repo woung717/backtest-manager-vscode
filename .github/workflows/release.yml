@@ -120,4 +120,3 @@ jobs:
         name: vscode-extension-${{ steps.extension_info.outputs.version }}
         path: '*.vsix'
         retention-days: 30
-
