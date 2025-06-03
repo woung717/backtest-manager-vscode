@@ -1,9 +1,7 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import { Backtest, Engine, ProjectInfo } from './types';
-// import { Database } from './database'; // Removed
 import { IProjectService } from './services/projectService'; // Added
-// import { templateCodeFactory } from './userCodeTemplates'; // Will be used by ProjectService
 
 export class ProjectTreeItem {
   id: string;
@@ -28,7 +26,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
   private data: ProjectTreeItem[] = [
     new ProjectTreeItem('loading', 'Loading Projects...', undefined, undefined, undefined, undefined)
   ];
-  // private entryFileName: string = 'main.py'; // Will be handled by ProjectService
 
   private _onDidChangeTreeData: vscode.EventEmitter<ProjectTreeItem | undefined | null | void> = new vscode.EventEmitter<ProjectTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<ProjectTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
@@ -45,7 +42,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
       // projectService.getProjects() is expected to return ProjectInfo with 'results' (Backtest[]) populated.
       let projects = await this.projectService.getProjects();
 
-      // 프로젝트 이름 기준 오름차순 정렬
       projects = projects.sort((a, b) => a.name.localeCompare(b.name));
 
       this.data = projects.map((project: ProjectInfo) => {

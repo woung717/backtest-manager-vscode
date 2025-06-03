@@ -6,7 +6,7 @@ import * as vscode from 'vscode';
 import { DatasetInfo, ExchangeInfo } from '../types'; 
 
 export interface IDatasetService {
-  loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]>; 
+  loadDatasetsInWorkspace(): Promise<DatasetInfo[]>; 
   deleteDataset(datasetPath: string): Promise<boolean>; 
   getDatasetContent(datasetPath: string): Promise<OHLCV[]>; 
   downloadDataset(
@@ -22,6 +22,7 @@ export interface IDatasetService {
 import { OHLCV } from '../types';
 
 export class DatasetService implements IDatasetService {
+  private readonly datasetRootPath: string = path.join(this.workspacePath, 'dataset');
   private ccxtExchanges: ccxt.Exchange[] = [];
   private readonly ASSET_TYPES: ('crypto' | 'stock' | 'forex')[] = ['crypto', 'stock', 'forex'];
   private readonly timeframeMsMap: Record<string, number> = {
@@ -195,6 +196,7 @@ export class DatasetService implements IDatasetService {
     config: any,
     progressCallback?: (event: { message: string, increment?: number, overallProgress?: number }) => void
   ): Promise<string> {
+
     console.log('DatasetService.downloadDataset called with config:', config, 'assetType:', assetType);
     const { symbol, exchange, timeframe, startDate, endDate } = config;
     
@@ -225,7 +227,10 @@ export class DatasetService implements IDatasetService {
         throw new Error(errorMessage);
     }
 
-    const datasetDir = path.join(this.workspacePath, 'dataset', assetType);
+    await vscode.workspace.fs.createDirectory(vscode.Uri.file(this.datasetRootPath));
+    console.log(`Ensured root dataset folder exists: ${this.datasetRootPath}`);
+
+    const datasetDir = path.join(this.datasetRootPath, assetType);
     await vscode.workspace.fs.createDirectory(vscode.Uri.file(datasetDir));
     
     const cleanSymbol = symbol.replace(/\//g, '-'); // Ensure all slashes are replaced
@@ -279,26 +284,13 @@ export class DatasetService implements IDatasetService {
     return filePath;
   }
 
-  // Removed getDatasets() method implementation
-  // async getDatasets(): Promise<DatasetInfo[]> {
-  //   console.log('DatasetService.getDatasets called - this is a general fetch, not workspace specific for tree');
-  //   return Promise.resolve([]);
-  // }
-
-  async loadDatasetsInWorkspace(datasetRootPath: string): Promise<DatasetInfo[]> {
-    console.log(`DatasetService.loadDatasetsInWorkspace called for datasetRootPath: ${datasetRootPath}`);
+  async loadDatasetsInWorkspace(): Promise<DatasetInfo[]> {
+    console.log(`DatasetService.loadDatasetsInWorkspace called for datasetRootPath: ${this.datasetRootPath}`);
     const allDatasets: DatasetInfo[] = [];
 
     try {
-      await vscode.workspace.fs.createDirectory(vscode.Uri.file(datasetRootPath));
-      console.log(`Ensured root dataset folder exists: ${datasetRootPath}`);
-
-      // 2. Iterate over defined asset types and ensure their subfolders exist
       for (const assetType of this.ASSET_TYPES) {
-        const assetTypePath = path.join(datasetRootPath, assetType);
-
-        await vscode.workspace.fs.createDirectory(vscode.Uri.file(assetTypePath));
-        console.log(`Ensured asset type folder exists: ${assetTypePath}`);
+        const assetTypePath = path.join(this.datasetRootPath, assetType);
 
         try {
           (await vscode.workspace.fs.readDirectory(vscode.Uri.file(assetTypePath))).map(([name, _]) => name)
@@ -314,20 +306,18 @@ export class DatasetService implements IDatasetService {
                 exchange: nameParts[0] || 'Unknown',
                 symbol: nameParts[1] || 'Unknown',
                 timeframe: nameParts[2] || 'Unknown',
-                // startDate, endDate, totalBars would require reading the file content
               };
               allDatasets.push(dataset);
             });
         } catch (readDirError) {
           console.error(`Error reading directory ${assetTypePath}:`, readDirError);
-          // Continue to next asset type
         }
       }
     } catch (error) {
-      console.error(`Error loading datasets from workspace ${datasetRootPath}:`, error);
-      throw error; // Re-throw to be caught by the caller (DatasetTreeProvider)
+      console.error(`Error loading datasets from workspace ${this.datasetRootPath}:`, error);
+      throw error; 
     }
-    console.log(`Loaded ${allDatasets.length} datasets from ${datasetRootPath}`);
+    console.log(`Loaded ${allDatasets.length} datasets from ${this.datasetRootPath}`);
     return allDatasets;
   }
 

@@ -46,14 +46,13 @@ export function activate(context: vscode.ExtensionContext) {
   }
   const workspacePath = workspaceFolders[0].uri.fsPath;
 
-  // Instantiate Database (used by ProjectService)
   const database = Database.getInstance(workspacePath);
 
   // Instantiate Services
-  const projectService = new ProjectService(database, workspacePath); // Assuming constructor updated
+  const projectService = new ProjectService(database, workspacePath); 
   const datasetService = new DatasetService(workspacePath);
   const pythonEnvService = new PythonEnvironmentService();
-  const backtestService = new BacktestService(pythonEnvService, projectService); // Assuming constructor updated
+  const backtestService = new BacktestService(pythonEnvService, projectService); 
 
   // Instantiate UI Providers/Views with injected services
   const projectTreeProvider = new ProjectTreeProvider(projectService);
@@ -64,8 +63,7 @@ export function activate(context: vscode.ExtensionContext) {
     projectService, 
     datasetService, 
     pythonEnvService, 
-    backtestService, 
-    workspacePath
+    backtestService,
   );
 
   // Register Tree Views
@@ -161,8 +159,6 @@ export function activate(context: vscode.ExtensionContext) {
       if (item.projectInfo) {
         try {
           await backtestSettingView.openBacktestSetting(item.projectInfo.name);
-          // projectTreeProvider.openEntryFile(item.projectInfo); // This is still fine as it's a UI concern
-          // If openEntryFile is complex, it could also be a command. For now, keep as is.
           await projectTreeProvider.openEntryFile(item.projectInfo);
         } catch (e: any) {
            vscode.window.showErrorMessage(`Error opening backtest settings: ${e.message}`);
@@ -212,7 +208,7 @@ export function activate(context: vscode.ExtensionContext) {
           if (value.includes('/') || value.includes('\\')) {
             return 'Project name cannot contain path separators';
           }
-          
+
           return null;
         }
       });
@@ -257,7 +253,6 @@ export function activate(context: vscode.ExtensionContext) {
     }),
 
     vscode.commands.registerCommand('backtestManager.deleteDataset', async (item: DatasetTreeItem) => {
-      // datasetTreeProvider.deleteDataset already handles confirmation and service call
       if (item.datasetInfo) { // Check if it's a dataset item
          await datasetTreeProvider.deleteDataset(item); 
       } else {

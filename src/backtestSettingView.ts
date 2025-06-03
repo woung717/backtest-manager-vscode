@@ -19,7 +19,6 @@ export class BacktestSettingView {
   private _panel?: vscode.WebviewPanel;
   private _treeProvider: ProjectTreeProvider;
   private _datasets: DatasetInfo[] = [];
-  private _workspacePath: string; 
 
   private projectService: IProjectService;
   private datasetService: IDatasetService;
@@ -33,7 +32,6 @@ export class BacktestSettingView {
     datasetService: IDatasetService,
     pythonEnvService: IPythonEnvironmentService,
     backtestService: IBacktestService, 
-    workspacePath: string 
   ) {
     this._extensionUri = extensionUri;
     this._resultProvider = new BacktestResultView(extensionUri); 
@@ -42,7 +40,6 @@ export class BacktestSettingView {
     this.datasetService = datasetService;
     this.pythonEnvService = pythonEnvService;
     this.backtestService = backtestService;
-    this._workspacePath = workspacePath;
   }
 
   public async openBacktestSetting(projectName: string) {
@@ -58,9 +55,7 @@ export class BacktestSettingView {
       }
 
       this._currentProject = project;
-
-      const datasetRootPath = path.join(this._workspacePath, 'dataset');
-      this._datasets = await this.datasetService.loadDatasetsInWorkspace(datasetRootPath);
+      this._datasets = await this.datasetService.loadDatasetsInWorkspace();
 
       const fullProject = await this.projectService.getProject(project._id);
       const lastConfig = fullProject?.lastConfig;
@@ -130,8 +125,7 @@ export class BacktestSettingView {
               break; 
             }
             case 'refresh': { 
-              const datasetRootPathRefresh = path.join(this._workspacePath, 'dataset');
-              this._datasets = await this.datasetService.loadDatasetsInWorkspace(datasetRootPathRefresh);
+              this._datasets = await this.datasetService.loadDatasetsInWorkspace();
 
               let lastConfigRefresh = undefined;
               if (this._currentProject && this._currentProject._id) {
@@ -158,23 +152,19 @@ export class BacktestSettingView {
 
     if (this._currentProject && this._currentProject._id) {
       this.projectService.getProject(this._currentProject._id).then(projectDetails => {
-        const datasetRootPath = path.join(this._workspacePath, 'dataset');
-        this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+        this.datasetService.loadDatasetsInWorkspace().then(datasets => {
           this._datasets = datasets;
           this._updateWebview(projectDetails?.lastConfig);
         }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
       }).catch(error => {
         vscode.window.showErrorMessage(`Error loading project data in show(): ${error.message}`);
-        // Fallback to loading datasets only
-        const datasetRootPath = path.join(this._workspacePath, 'dataset');
-        this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+        this.datasetService.loadDatasetsInWorkspace().then(datasets => {
           this._datasets = datasets;
           this._updateWebview(undefined);
         }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
       });
     } else {
-      const datasetRootPath = path.join(this._workspacePath, 'dataset');
-      this.datasetService.loadDatasetsInWorkspace(datasetRootPath).then(datasets => {
+      this.datasetService.loadDatasetsInWorkspace().then(datasets => {
         this._datasets = datasets;
         this._updateWebview(undefined);
       }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));

@@ -35,7 +35,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   private _onDidChangeTreeData: vscode.EventEmitter<DatasetTreeItem | undefined | null | void> = new vscode.EventEmitter<DatasetTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<DatasetTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  private datasetRoot: string; // Set in constructor
   private data: DatasetTreeItem[] = [
     new DatasetTreeItem('loading', 'Loading Datasets...', true) // isFolder true for loading item
   ];
@@ -46,12 +45,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
     private datasetService: IDatasetService, // Injected service
     private workspaceRoot: string
   ) {
-    if (!workspaceRoot) {
-        vscode.window.showErrorMessage("Workspace root is not defined for DatasetTreeProvider.");
-        this.datasetRoot = '';
-    } else {
-        this.datasetRoot = path.join(this.workspaceRoot, 'dataset');
-    }
     // Initialize with loading state
     this.data = [new DatasetTreeItem('loading', 'Loading Datasets...', true)];
     // Trigger initial load
@@ -64,14 +57,9 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   // ensureDatasetFolders and getDatasetFilesFromFolder are removed, logic moved to DatasetService.loadDatasetsInWorkspace
 
   private async loadDatasets(): Promise<void> {
-    if (!this.datasetRoot) {
-        this.data = [new DatasetTreeItem('error', 'Error: Workspace root not set.', true)];
-        return;
-    }
-
     try {
         // DatasetService.loadDatasetsInWorkspace will ensure folders and get all DatasetInfo items
-        const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace(this.datasetRoot);
+        const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace();
 
         // Group DatasetInfo items by assetType for the tree structure
         const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
