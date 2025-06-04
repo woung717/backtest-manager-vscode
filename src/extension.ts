@@ -56,7 +56,7 @@ export function activate(context: vscode.ExtensionContext) {
 
   // Instantiate UI Providers/Views with injected services
   const projectTreeProvider = new ProjectTreeProvider(projectService);
-  const datasetTreeProvider = new DatasetTreeProvider(datasetService, workspacePath);
+  const datasetTreeProvider = new DatasetTreeProvider(datasetService);
   const backtestSettingView = new BacktestSettingView(
     context.extensionUri, 
     projectTreeProvider, 

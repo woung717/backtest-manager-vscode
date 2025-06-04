@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
 import { DatasetInfo } from './types';
 import { IDatasetService } from './services/datasetService'; // Added
 
@@ -43,7 +42,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
 
   constructor(
     private datasetService: IDatasetService, // Injected service
-    private workspaceRoot: string
   ) {
     // Initialize with loading state
     this.data = [new DatasetTreeItem('loading', 'Loading Datasets...', true)];
@@ -52,61 +50,57 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
         console.error('Failed to load datasets:', err);
         vscode.window.showErrorMessage(`Failed to load datasets: ${err instanceof Error ? err.message : String(err)}`);
     });
-}
-
-  // ensureDatasetFolders and getDatasetFilesFromFolder are removed, logic moved to DatasetService.loadDatasetsInWorkspace
+  }
 
   private async loadDatasets(): Promise<void> {
     try {
-        // DatasetService.loadDatasetsInWorkspace will ensure folders and get all DatasetInfo items
-        const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace();
+      const allDatasetInfos = await this.datasetService.loadDatasetsInWorkspace();
 
-        // Group DatasetInfo items by assetType for the tree structure
-        const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
-        for (const assetType of this.ASSET_TYPES) {
-            datasetsByAssetType[assetType] = [];
-        }
+      const datasetsByAssetType: Record<string, DatasetInfo[]> = {};
+      for (const assetType of this.ASSET_TYPES) {
+          datasetsByAssetType[assetType] = [];
+      }
 
-        // Group datasets by asset type
-        for (const dsInfo of allDatasetInfos) {
-            if (dsInfo.assetType && this.ASSET_TYPES.includes(dsInfo.assetType)) {
-                datasetsByAssetType[dsInfo.assetType].push(dsInfo);
-            } else {
-                console.warn(`Dataset ${dsInfo.name} has unknown or invalid assetType: ${dsInfo.assetType}`);
-            }
-        }
+      // Group datasets by asset type
+      for (const dsInfo of allDatasetInfos) {
+          if (dsInfo.assetType && this.ASSET_TYPES.includes(dsInfo.assetType)) {
+              datasetsByAssetType[dsInfo.assetType].push(dsInfo);
+          } else {
+              console.warn(`Dataset ${dsInfo.name} has unknown or invalid assetType: ${dsInfo.assetType}`);
+          }
+      }
 
-        // Create tree structure
-        this.data = this.ASSET_TYPES.map(assetType => {
-            const datasets = datasetsByAssetType[assetType] || [];
-            const childrenItems = datasets.map(dsInfo => 
-                new DatasetTreeItem(
-                    dsInfo.path,
-                    dsInfo.name,
-                    false,
-                    [],
-                    'dataset',
-                    dsInfo,
-                    dsInfo.assetType
-                )
-            );
-            
-            return new DatasetTreeItem(
-                `folder-${assetType}`,
-                assetType.charAt(0).toUpperCase() + assetType.slice(1),
-                true,
-                childrenItems,
-                'assetFolder',
-                undefined,
-                assetType
-            );
-        });
+      // Create tree structure
+      this.data = this.ASSET_TYPES.map(assetType => {
+        const datasets = datasetsByAssetType[assetType] || [];
+        const childrenItems = datasets.map(dsInfo => 
+          new DatasetTreeItem(
+            dsInfo.path,
+            dsInfo.name,
+            false,
+            [],
+            'dataset',
+            dsInfo,
+            dsInfo.assetType
+          )
+        );
+        
+        return new DatasetTreeItem(
+          `folder-${assetType}`,
+          assetType.charAt(0).toUpperCase() + assetType.slice(1),
+          true,
+          childrenItems,
+          'assetFolder',
+          undefined,
+          assetType
+        );
+      });
 
-        console.log(`Loaded ${allDatasetInfos.length} datasets across ${this.ASSET_TYPES.length} asset types`);
+      console.log(`Loaded ${allDatasetInfos.length} datasets across ${this.ASSET_TYPES.length} asset types`);
     } catch (error) {
-        console.error('Error loading datasets:', error);
-        this.data = [new DatasetTreeItem('error', `Error loading datasets: ${error instanceof Error ? error.message : String(error)}`, true)];
-        throw error; // Propagate error to refresh() method
+      console.error('Error loading datasets:', error);
+      this.data = [new DatasetTreeItem('error', `Error loading datasets: ${error instanceof Error ? error.message : String(error)}`, true)];
+      throw error; // Propagate error to refresh() method
     }
   }
 

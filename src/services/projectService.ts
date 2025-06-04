@@ -2,7 +2,7 @@
 import { ProjectInfo, Engine, Backtest } from '../types';
 import * as path from 'path';
 import { templateCodeFactory } from '../userCodeTemplates';
-import { Database } from '../database'; // Import Database
+import { Database } from '../database'; 
 import * as vscode from 'vscode';
 
 export interface IProjectService {
@@ -24,15 +24,27 @@ export class ProjectService implements IProjectService {
   constructor(private database: Database, private workspaceRootPath: string) {} // Updated constructor
 
   async getProjects(): Promise<ProjectInfo[]> {
+    if (!this.database.isDatabaseLoaded()) {
+      return []; 
+    }
+
     return await this.database.getProjects();
   }
 
   async getProject(projectId: string): Promise<ProjectInfo | null> {
+    if (!this.database.isDatabaseLoaded()) {
+      return null;
+    }
+
     const project = await this.database.getProject(projectId);
     return project || null; // NeDB findOne can return undefined, ensure null if not found
   }
 
   async getProjectByName(projectName: string): Promise<ProjectInfo | null> {
+    if (!this.database.isDatabaseLoaded()) {
+      return null; 
+    }
+
     const project = await this.database.getProjectByName(projectName);
     return project || null; // Ensure null if not found
   }
@@ -67,13 +79,7 @@ export class ProjectService implements IProjectService {
 
   async deleteProject(projectId: string): Promise<boolean> {
     try {
-      await this.database.deleteProject(projectId); // This throws if not found
-      // Optionally, could add fs logic here to delete the project's directory from the filesystem
-      // For now, as per original command, it only removes from manager.
-      // const project = await this.getProject(projectId); // This would now be null or throw
-      // if (project && project.path) {
-      //   await fsPromises.rm(project.path, { recursive: true, force: true });
-      // }
+      await this.database.deleteProject(projectId);
       return true;
     } catch (error) {
       console.error(`Error deleting project ${projectId}:`, error);

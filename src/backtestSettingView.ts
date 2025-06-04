@@ -3,7 +3,6 @@ import * as vscode from 'vscode';
 import { BacktestResultView } from './backtestResultView';
 import { ProjectInfo, DatasetInfo } from './types';
 import { ProjectTreeProvider } from './projectTreeProvider';
-import * as path from 'path';
 
 import { IProjectService } from './services/projectService';
 import { IDatasetService } from './services/datasetService';
