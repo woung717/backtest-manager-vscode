@@ -24,10 +24,6 @@ export class ProjectService implements IProjectService {
   constructor(private database: Database, private workspaceRootPath: string) {} // Updated constructor
 
   async getProjects(): Promise<ProjectInfo[]> {
-    if (!this.database.isDatabaseLoaded()) {
-      return []; 
-    }
-
     return await this.database.getProjects();
   }
 
