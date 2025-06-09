@@ -43,8 +43,6 @@ export class DatasetTreeProvider implements vscode.TreeDataProvider<DatasetTreeI
   constructor(
     private datasetService: IDatasetService, // Injected service
   ) {
-    // Initialize with loading state
-    this.data = [new DatasetTreeItem('loading', 'Loading Datasets...', true)];
     // Trigger initial load
     this.refresh().catch(err => {
         console.error('Failed to load datasets:', err);

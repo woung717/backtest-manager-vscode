@@ -22,16 +22,13 @@ export class ProjectTreeItem {
 }
 
 export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeItem> {
-  // private db: Database; // Removed
   private data: ProjectTreeItem[] = [
-    new ProjectTreeItem('loading', 'Loading Projects...', undefined, undefined, undefined, undefined)
   ];
 
   private _onDidChangeTreeData: vscode.EventEmitter<ProjectTreeItem | undefined | null | void> = new vscode.EventEmitter<ProjectTreeItem | undefined | null | void>();
   readonly onDidChangeTreeData: vscode.Event<ProjectTreeItem | undefined | null | void> = this._onDidChangeTreeData.event;
 
-  constructor(private projectService: IProjectService) { // Modified constructor
-    // Trigger initial load async
+  constructor(private projectService: IProjectService) { 
     this.refresh().catch(error => {
       vscode.window.showErrorMessage(`Error during initial project load: ${error instanceof Error ? error.message : String(error)}`);
     });
@@ -39,7 +36,6 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
 
   private async loadProjects(): Promise<void> {
     try {
-      // projectService.getProjects() is expected to return ProjectInfo with 'results' (Backtest[]) populated.
       let projects = await this.projectService.getProjects();
 
       projects = projects.sort((a, b) => a.name.localeCompare(b.name));
@@ -121,7 +117,7 @@ export class ProjectTreeProvider implements vscode.TreeDataProvider<ProjectTreeI
     if (element.contextValue === 'project' && element.projectInfo) {
       treeItem.tooltip = `Project: ${element.projectInfo.name}\nPath: ${element.projectInfo.path}\nEngine: ${element.projectInfo.engine}`;
     } else if (element.contextValue === 'backtestResult' && element.backtestResult) {
-      treeItem.tooltip = `Backtest Result\nStrategy: ${element.backtestResult.strategy}\nTotal Return: ${(element.backtestResult.performance?.totalReturn * 100 || 0).toFixed(2)}%`;
+      treeItem.tooltip = `Backtest Result\nTotal Return: ${(element.backtestResult.performance?.totalReturn * 100 || 0).toFixed(2)}%`;
       treeItem.command = {
         command: 'backtestManager.showBacktestResult',
         title: 'View Backtest Result',

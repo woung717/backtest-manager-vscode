@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/woung717/backtest-manager-vscode.git"
   },
-  "version": "0.1.3",
+  "version": "0.1.4",
   "engines": {
     "vscode": "^1.98.0"
   },
@@ -138,6 +138,27 @@
         }
       ]
     },
+    "viewsWelcome": [
+      {
+        "view": "projectTreeView",
+        "contents": 
+          "Welcome to the Backtest Manager! \nYou can create a new project by clicking the '+' button in the view title. \n [Create a Project](command:backtestManager.createNewProject)\n To run a backtest, open a Python file in your project and click the 'Run Backtest' button in the editor title.",
+        "when": "workbenchState != empty"
+      },
+      {
+        "view": "projectTreeView",
+        "contents":
+          "Workspace folder is not open. Please open a folder to use Backtest Manager. \n [Open Folder](command:workbench.action.files.openFolder)",
+        "when": "workbenchState == empty"
+      },
+      {
+        "view": "datasetTreeView",
+        "contents": 
+          "Workspace folder is not open. Please open a folder to use Backtest Manager.",
+        "when": "workbenchState == empty"
+      }
+
+    ],
     "menus": {
       "view/title": [
         {

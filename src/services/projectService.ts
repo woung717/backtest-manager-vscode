@@ -24,7 +24,7 @@ export class ProjectService implements IProjectService {
   constructor(private database: Database, private workspaceRootPath: string) {} // Updated constructor
 
   async getProjects(): Promise<ProjectInfo[]> {
-    return await this.database.getProjects();
+    return this.database.getProjects();
   }
 
   async getProject(projectId: string): Promise<ProjectInfo | null> {
@@ -32,7 +32,7 @@ export class ProjectService implements IProjectService {
       return null;
     }
 
-    const project = await this.database.getProject(projectId);
+    const project = this.database.getProject(projectId);
     return project || null; // NeDB findOne can return undefined, ensure null if not found
   }
 
@@ -41,7 +41,7 @@ export class ProjectService implements IProjectService {
       return null; 
     }
 
-    const project = await this.database.getProjectByName(projectName);
+    const project = this.database.getProjectByName(projectName);
     return project || null; // Ensure null if not found
   }
 
@@ -65,17 +65,17 @@ export class ProjectService implements IProjectService {
       lastConfig: {} // Initialize as empty object or specific default config structure
     };
 
-    return await this.database.addProject(newProjectForDb);
+    return this.database.addProject(newProjectForDb);
   }
 
   async updateProject(projectId: string, projectData: Partial<ProjectInfo>): Promise<ProjectInfo | null> {
-    await this.database.updateProject(projectId, projectData);
+    this.database.updateProject(projectId, projectData);
     return await this.getProject(projectId); // Fetch and return updated project
   }
 
   async deleteProject(projectId: string): Promise<boolean> {
     try {
-      await this.database.deleteProject(projectId);
+      this.database.deleteProject(projectId);
       return true;
     } catch (error) {
       console.error(`Error deleting project ${projectId}:`, error);
@@ -84,17 +84,17 @@ export class ProjectService implements IProjectService {
   }
 
   async addBacktestResult(projectId: string, backtestResult: Backtest): Promise<ProjectInfo | null> {
-    await this.database.addBacktestResult(projectId, backtestResult);
+    this.database.addBacktestResult(projectId, backtestResult);
     return await this.getProject(projectId);
   }
 
   async deleteBacktestResult(projectId: string, backtestResultId: string): Promise<ProjectInfo | null> {
-    await this.database.deleteBacktestResult(projectId, backtestResultId);
+    this.database.deleteBacktestResult(projectId, backtestResultId);
     return await this.getProject(projectId);
   }
 
   async updateLastConfig(projectId: string, config: any): Promise<ProjectInfo | null> {
-    await this.database.updateLastConfig(projectId, config);
+    this.database.updateLastConfig(projectId, config);
     return await this.getProject(projectId);
   }
 
