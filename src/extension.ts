@@ -41,11 +41,10 @@ export function activate(context: vscode.ExtensionContext) {
   // Get workspace path
   const workspaceFolders = vscode.workspace.workspaceFolders;
   if (!workspaceFolders || workspaceFolders.length === 0) {
-    vscode.window.showErrorMessage('Workspace folder is not open. Please open a folder to use Backtest Manager.');
     return;
   }
-  const workspacePath = workspaceFolders[0].uri.fsPath;
 
+  const workspacePath = workspaceFolders[0].uri.fsPath;
   const database = Database.getInstance(workspacePath);
 
   // Instantiate Services
