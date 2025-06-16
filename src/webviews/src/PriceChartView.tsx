@@ -1,5 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { ChartData } from '../../types';
+import { DrawingTools } from '../lib/light-weight-chart-plugins/drawing-tools';
+import { UserPriceLines } from '../lib/light-weight-chart-plugins/user-price-lines';
 
 // Lightweight Charts type definition
 declare const LightweightCharts: any;
@@ -10,6 +12,7 @@ interface PriceChartViewProps {
 
 const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
   const chartContainerRef = useRef<HTMLDivElement>(null);
+  const drawingToolToolbarRef = useRef<HTMLDivElement>(null);
   
   useEffect(() => {
     if (!chartData || !chartContainerRef.current) return;
@@ -114,10 +117,28 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
       },
     })
 
-
     candlestickSeries.setData(candleData);
     volumeSeries.setData(volumeData);
-    LightweightCharts.createSeriesMarkers(candlestickSeries, tradeMarkers)
+    LightweightCharts.createSeriesMarkers(candlestickSeries, tradeMarkers);
+
+    // lwc plugins
+    new DrawingTools(
+      chart,
+      candlestickSeries,
+      drawingToolToolbarRef.current!,
+      {
+        showLabels: false,
+      }
+    );
+
+    new UserPriceLines(
+      chart, 
+      candlestickSeries, 
+      { 
+        color: 'hotpink' 
+      }
+    );
+    //
 
     chart.timeScale().fitContent();
 
@@ -157,13 +178,15 @@ const PriceChartView: React.FC<PriceChartViewProps> = ({ chartData }) => {
             <div>Dataset: {chartData.datasetPath.split('/').pop()}</div>
           </div>
         </div>
-
         <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] rounded-lg overflow-hidden">
           <div className="p-2">
             <div 
+              ref={drawingToolToolbarRef}
+              className="flex flex-row gap-2.5 pt-0.5 pr-2.5 pb-2.5 pl-2.5"
+            ></div>
+            <div 
               ref={chartContainerRef} 
               className="w-full overflow-hidden"
-              title="Drag to zoom in/out. Double-click to reset view."
             ></div>
           </div>
         </div>

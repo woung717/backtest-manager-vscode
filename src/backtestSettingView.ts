@@ -150,23 +150,31 @@ export class BacktestSettingView {
     this._panel.webview.html = this.getHtmlContent(this._panel.webview);
 
     if (this._currentProject && this._currentProject._id) {
-      this.projectService.getProject(this._currentProject._id).then(projectDetails => {
-        this.datasetService.loadDatasetsInWorkspace().then(datasets => {
+      this.projectService.getProject(this._currentProject._id)
+      .then(projectDetails => {
+        this.datasetService.loadDatasetsInWorkspace()
+        .then(datasets => {
           this._datasets = datasets;
           this._updateWebview(projectDetails?.lastConfig);
-        }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
-      }).catch(error => {
+        })
+        .catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
+      })
+      .catch(error => {
         vscode.window.showErrorMessage(`Error loading project data in show(): ${error.message}`);
-        this.datasetService.loadDatasetsInWorkspace().then(datasets => {
+        this.datasetService.loadDatasetsInWorkspace()
+        .then(datasets => {
           this._datasets = datasets;
           this._updateWebview(undefined);
-        }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
+        })
+        .catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
       });
     } else {
-      this.datasetService.loadDatasetsInWorkspace().then(datasets => {
+      this.datasetService.loadDatasetsInWorkspace()
+      .then(datasets => {
         this._datasets = datasets;
         this._updateWebview(undefined);
-      }).catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
+      })
+      .catch(dsError => vscode.window.showErrorMessage(`Error loading datasets in show(): ${dsError.message}`));
     }
 
     this._panel.reveal(vscode.ViewColumn.Two);

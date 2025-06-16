@@ -11,9 +11,11 @@ const stylistic = require('@stylistic/eslint-plugin');
 module.exports = tseslint.config(
 	{
 		ignores: [
+			'eslint.config.js',
 			'.vscode-test',
 			'out',
-			'src/webviews'
+			'src/webviews',
+			'src/webviews/lib'
 		]
 	},
 	js.configs.recommended,
