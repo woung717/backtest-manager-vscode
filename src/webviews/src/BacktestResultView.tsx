@@ -17,6 +17,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
   const equityChartRef = useRef<HTMLDivElement>(null);
   const [showAdvancedMetrics, setShowAdvancedMetrics] = useState(false);
   
+  // Effect for chart rendering
   useEffect(() => {
     if (!backtest || !equityChartRef.current) return;
 
@@ -33,14 +34,33 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
     )
     .sort((a, b) => a.time - b.time) as EquityData[];
 
+    // Calculate Drawdown data
+    const drawdownData: EquityData[] = [];
+    let peakEquity = -Infinity;
+    if (equityData.length > 0) {
+      peakEquity = equityData[0].value; // Initialize with the first equity value
+    }
+
+    for (const point of equityData) {
+      if (point.value > peakEquity) {
+        peakEquity = point.value;
+      }
+      
+      const drawdownValue = peakEquity > 0 ? (peakEquity - point.value) / peakEquity : 0;
+      drawdownData.push({
+        time: point.time,
+        value: drawdownValue,
+      });
+    }
 
     // Calculate chart size
     const containerWidth = equityChartRef.current.clientWidth;
     const containerHeight = 300; // Fixed height
 
     // Chart default options
-    const defaultChartOptions = {
+    const chartBaseOptions = {
       layout: {
+        // background: { type: LightweightCharts.ColorType.Solid, color: '#ffffff' }, // More explicit way
         background: { color: '#ffffff' },
         textColor: '#333333',
         fontFamily: 'var(--vscode-font-family)',
@@ -60,13 +80,22 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
           bottom: 0.1,
         },
       },
+      leftPriceScale: { // For Drawdown
+        visible: true,
+        borderColor: '#e0e0e0',
+        autoScale: true,
+        invertScale: true,
+        scaleMargins: {
+          top: 0.05,
+          bottom: 0.3,
+        },
+        // Formatter for labels is set in series.priceFormat
+      },
       timeScale: {
         borderColor: '#e0e0e0',
         timeVisible: true,
         secondsVisible: false,
-        barSpacing: 0.2, // Minimize bar spacing
-        minBarSpacing: 0.03, // Minimize minimum bar spacing
-        rightOffset: 0,
+        rightOffset: 1, // Small offset to ensure last data point is not cut off
         leftOffset: 0,
         fixLeftEdge: true,
         fixRightEdge: true,
@@ -80,14 +109,18 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
       },
     };
 
+    let chart: any = null; // Use 'any' due to global LightweightCharts type
+    let initialAdjustTimeoutId: NodeJS.Timeout | null = null;
+    let resizeAdjustTimeoutId: NodeJS.Timeout | null = null;
+
     // Initialize equity chart
-    const equityChart = LightweightCharts.createChart(equityChartRef.current, {
-      ...defaultChartOptions,
+    chart = LightweightCharts.createChart(equityChartRef.current, {
+      ...chartBaseOptions,
       width: containerWidth,
       height: containerHeight,
     });
 
-    const equitySeries = equityChart.addSeries(LightweightCharts.AreaSeries, {
+    const equitySeries = chart.addSeries(LightweightCharts.AreaSeries, {
       lineColor: '#3B82F6',
       topColor: 'rgba(59, 130, 246, 0.4)',
       bottomColor: 'rgba(59, 130, 246, 0.0)',
@@ -102,91 +135,94 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
       crosshairMarkerVisible: true,
       baseLineVisible: true,
       baseLineColor: '#aaaaaa',
-      baseLineWidth: 1,
-      baseLineStyle: 3, // Dotted
+      baseLineWidth: 1, // LargeDashed (3) or Dotted (1)
+      baseLineStyle: 3, // Using 3 for LargeDashed as in original
     });
 
+    // Add Drawdown Series
+    const drawdownSeries = chart.addSeries(LightweightCharts.AreaSeries, {
+      priceScaleId: 'left', 
+      invertFilledArea: true, 
+      bottomColor: 'rgba(54, 188, 155, 0.5)',
+      topColor: 'rgba(54, 188, 155, 0.0)',
+      lineColor: 'rgba(54, 188, 155, 1.0)',
+      lineWidth: 1,
+      priceFormat: {
+        type: 'custom',
+        formatter: (price: number) => (price * 100).toFixed(1) + '%', // Format as percentage e.g. 10.5%
+        minMove: 0.0001, // Smallest change is 0.01%
+      },
+      lastValueVisible: true,
+      priceLineVisible: true,
+      crosshairMarkerVisible: true,
+      baseLineVisible: true,
+      baseLineColor: '#aaaaaa',
+      baseLineWidth: 1, // LargeDashed (3) or Dotted (1)
+      baseLineStyle: 3, // Using 3 for LargeDashed as in original
+    });
+
+    drawdownSeries.setData(drawdownData);
     equitySeries.setData(equityData);
     
-    // Initially zoom out to show all data
-    equityChart.timeScale().fitContent();
+    const adjustChartView = () => {
+      if (!equityChartRef.current || !chart ) return;
+      try {
+        chart.timeScale().fitContent();
+        chart.applyOptions({
+          timeScale: {
+            barSpacing: 0.2, // Minimize bar spacing to show more data
+          },
+        });
 
-    // Optimal view settings
-    setTimeout(() => {
-      equityChart.timeScale().fitContent();
-      
-      // Minimize bar spacing to show as much data as possible
-      equityChart.applyOptions({
-        timeScale: {
-          barSpacing: 0.2,
-        },
-      });
-      
-      if (equityData.length > 0) {
-        const minTime = equityData[0].time;
-        const maxTime = equityData[equityData.length - 1].time;
-        
-        // Add padding for some buffer space on both sides
-        const padding = (maxTime - minTime) * 0.01;
-        
-        try {
-          // Set visible range to include entire time range (if possible)
-          equityChart.timeScale().setVisibleRange({
+        if (equityData.length > 0) {
+          const minTime = equityData[0].time;
+          const maxTime = equityData[equityData.length - 1].time;
+          const timeRange = maxTime - minTime;
+          
+          // Add small padding to the visible range
+          const padding = timeRange > 0 ? timeRange * 0.01 : 1; // Ensure padding is positive
+          
+          chart.timeScale().setVisibleRange({
             from: minTime - padding,
             to: maxTime + padding,
           });
-        } catch (e) {
-          // If error occurs, fallback to default method
-          equityChart.timeScale().fitContent();
+        }
+      } catch (e) {
+        console.warn("Chart adjustment error:", e);
+        // Fallback if setVisibleRange fails or chart was removed
+        if (chart && chart.timeScale && typeof chart.timeScale.fitContent === 'function') {
+          try { chart.timeScale().fitContent(); } catch (fitContentError) {
+            console.warn("Fallback fitContent error:", fitContentError);
+          }
         }
       }
-    }, 50);
+    };
+
+    initialAdjustTimeoutId = setTimeout(adjustChartView, 50);
     
-    // Resize chart when window size changes
     const handleResize = () => {
-      if (equityChartRef.current) {
-        equityChart.applyOptions({
+      if (equityChartRef.current && chart) {
+        chart.applyOptions({
           width: equityChartRef.current.clientWidth,
         });
-        
-        // Ensure all data is visible after resize
-        setTimeout(() => {
-          equityChart.timeScale().fitContent();
-          
-          // Minimize bar spacing to show as much data as possible
-          equityChart.applyOptions({
-            timeScale: {
-              barSpacing: 0.2,
-            },
-          });
-          
-          if (equityData.length > 0) {
-            const minTime = equityData[0].time;
-            const maxTime = equityData[equityData.length - 1].time;
-            
-            // Add padding for some buffer space on both sides
-            const padding = (maxTime - minTime) * 0.01;
-            
-            try {
-              // Set visible range to include entire time range (if possible)
-              equityChart.timeScale().setVisibleRange({
-                from: minTime - padding,
-                to: maxTime + padding,
-              });
-            } catch (e) {
-              // If error occurs, fallback to default method
-              equityChart.timeScale().fitContent();
-            }
-          }
-        }, 50);
+        if (resizeAdjustTimeoutId) clearTimeout(resizeAdjustTimeoutId);
+        resizeAdjustTimeoutId = setTimeout(adjustChartView, 50); // Re-apply view adjustments
       }
     };
 
     window.addEventListener('resize', handleResize);
 
-    // Remove event listener when component unmounts
     return () => {
+      if (initialAdjustTimeoutId) clearTimeout(initialAdjustTimeoutId);
+      if (resizeAdjustTimeoutId) clearTimeout(resizeAdjustTimeoutId);
       window.removeEventListener('resize', handleResize);
+      if (chart) {
+        try {
+          chart.remove();
+        } catch (removeError) {
+          console.warn("Error removing chart:", removeError);
+        }
+      }
     };
   }, [backtest]);
 
@@ -304,7 +340,6 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
               id="equityChart" 
               ref={equityChartRef} 
               className="w-full h-[300px] overflow-hidden"
-              title="Drag to zoom in/out. Double-click to reset view."
             ></div>
           </div>
         </div>
