@@ -143,9 +143,9 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
     const drawdownSeries = chart.addSeries(LightweightCharts.AreaSeries, {
       priceScaleId: 'left', 
       invertFilledArea: true, 
-      bottomColor: 'rgba(54, 188, 155, 0.5)',
-      topColor: 'rgba(54, 188, 155, 0.0)',
-      lineColor: 'rgba(54, 188, 155, 1.0)',
+      bottomColor: 'rgba(255,105,180, 0.5)',
+      topColor: 'rgba(255,105,180, 0.0)',
+      lineColor: 'rgba(255,105,180, 0.7)',
       lineWidth: 1,
       priceFormat: {
         type: 'custom',
