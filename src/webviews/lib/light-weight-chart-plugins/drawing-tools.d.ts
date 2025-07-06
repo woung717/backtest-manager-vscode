@@ -3898,59 +3898,9 @@ export interface LineDrawingToolOptions {
 	priceLabelFormatter: (price: number) => string;
 	timeLabelFormatter: (time: Time) => string;
 }
-export declare class LineDrawingTool {
-	private _chart;
-	private _series;
-	private _defaultOptions;
-	private _lines;
-	private _previewLine;
-	private _points;
-	private _drawing;
-	private _onDrawingCompleteCallback?;
-	constructor(chart: IChartApi, series: ISeriesApi<SeriesType>, options: Partial<LineDrawingToolOptions>, onDrawingCompleteCallback?: () => void);
-	private _clickHandler;
-	private _moveHandler;
-	private _dblClickHandler;
-	get options(): Partial<LineDrawingToolOptions>;
-	remove(): void;
-	startDrawing(): void;
-	stopDrawing(): void;
-	isDrawing(): boolean;
-	private _onClick;
-	private _onMouseMove;
-	private _onDblClick;
-	private _addPoint;
-	private _addNewLine;
-	private _removeLine;
-	private _addPreviewLine;
-	private _removePreviewLine;
-}
-export declare class RectangleDrawingTool {
-	private _chart;
-	private _series;
-	private _defaultOptions;
-	private _rectangles;
-	private _previewRectangle;
-	private _points;
-	private _drawing;
-	private _onDrawingCompleteCallback?;
-	constructor(chart: IChartApi, series: ISeriesApi<SeriesType>, options: Partial<RectangleDrawingToolOptions>, onDrawingCompleteCallback?: () => void);
-	private _clickHandler;
-	private _moveHandler;
-	private _dblClickHandler;
-	get options(): Partial<RectangleDrawingToolOptions>;
-	remove(): void;
-	startDrawing(): void;
-	stopDrawing(): void;
-	isDrawing(): boolean;
-	private _onClick;
-	private _onMouseMove;
-	private _onDblClick;
-	private _addPoint;
-	private _addNewRectangle;
-	private _removeRectangle;
-	private _addPreviewRectangle;
-	private _removePreviewRectangle;
+export declare class ShapeIdGenerator {
+	private static _nextId;
+	static getNextId(): string;
 }
 export declare class DrawingTools {
 	private _rectangleTool;

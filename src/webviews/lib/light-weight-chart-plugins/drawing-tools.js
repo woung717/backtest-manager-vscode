@@ -7,6 +7,13 @@ function a(n) {
     throw new Error("Value is undefined");
   return n;
 }
+function C(n, t, e) {
+  const i = Math.round(e * n), o = Math.round(e * t);
+  return {
+    position: Math.min(i, o),
+    length: Math.abs(o - i) + 1
+  };
+}
 class P {
   constructor() {
     s(this, "_chart");
@@ -36,21 +43,25 @@ class P {
     return a(this._series);
   }
 }
-function C(n, t, e) {
-  const i = Math.round(e * n), o = Math.round(e * t);
-  return {
-    position: Math.min(i, o),
-    length: Math.abs(o - i) + 1
-  };
-}
-const g = class g {
-  static getNextId() {
-    return `${g._nextId++}`;
-  }
+const M = {
+  lineColor: "rgba(0 , 0, 0, 1)",
+  previewLineColor: "rgba(0, 0, 0, 0.5)",
+  lineWidth: 2,
+  labelColor: "rgba(0, 0, 0, 1)",
+  labelTextColor: "white",
+  showLabels: !0,
+  priceLabelFormatter: (n) => n.toFixed(2),
+  timeLabelFormatter: (n) => typeof n == "string" ? n : (T(n) ? new Date(n.year, n.month - 1, n.day) : new Date(n * 1e3)).toLocaleDateString()
+}, E = {
+  fillColor: "rgba(200, 50, 100, 0.35)",
+  previewFillColor: "rgba(200, 50, 100, 0.25)",
+  labelColor: "rgba(200, 50, 100, 1)",
+  labelTextColor: "white",
+  showLabels: !0,
+  priceLabelFormatter: (n) => n.toFixed(2),
+  timeLabelFormatter: (n) => typeof n == "string" ? n : (T(n) ? new Date(n.year, n.month - 1, n.day) : new Date(n * 1e3)).toLocaleDateString()
 };
-s(g, "_nextId", 0);
-let w = g;
-class M {
+class H {
   constructor(t, e, i) {
     s(this, "_p1");
     s(this, "_p2");
@@ -79,63 +90,7 @@ class M {
     });
   }
 }
-class E {
-  constructor(t, e, i, o) {
-    s(this, "_p1");
-    s(this, "_p2");
-    s(this, "_lineColor");
-    s(this, "_lineWidth");
-    this._p1 = t, this._p2 = e, this._lineColor = i, this._lineWidth = o;
-  }
-  draw(t) {
-    t.useBitmapCoordinateSpace((e) => {
-      if (this._p1.x === null || this._p1.y === null || this._p2.x === null || this._p2.y === null)
-        return;
-      const i = e.context, o = this._p1.x * e.horizontalPixelRatio, r = this._p1.y * e.verticalPixelRatio, h = this._p2.x * e.horizontalPixelRatio, p = this._p2.y * e.verticalPixelRatio;
-      i.strokeStyle = this._lineColor, i.lineWidth = this._lineWidth * e.horizontalPixelRatio, i.lineCap = "round", i.lineJoin = "round", i.beginPath(), i.moveTo(o, r), i.lineTo(h, p), i.stroke();
-    });
-  }
-}
-class H {
-  constructor(t) {
-    s(this, "_source");
-    s(this, "_p1", { x: null, y: null });
-    s(this, "_p2", { x: null, y: null });
-    this._source = t;
-  }
-  update() {
-    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
-    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
-  }
-  renderer() {
-    return new E(
-      this._p1,
-      this._p2,
-      this._source._options.lineColor,
-      this._source._options.lineWidth
-    );
-  }
-}
 class F {
-  constructor(t) {
-    s(this, "_source");
-    s(this, "_p1", { x: null, y: null });
-    s(this, "_p2", { x: null, y: null });
-    this._source = t;
-  }
-  update() {
-    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
-    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
-  }
-  renderer() {
-    return new M(
-      this._p1,
-      this._p2,
-      this._source._options.fillColor
-    );
-  }
-}
-class I {
   constructor(t, e, i, o) {
     s(this, "_p1");
     s(this, "_p2");
@@ -157,6 +112,25 @@ class I {
     });
   }
 }
+class I {
+  constructor(t) {
+    s(this, "_source");
+    s(this, "_p1", { x: null, y: null });
+    s(this, "_p2", { x: null, y: null });
+    this._source = t;
+  }
+  update() {
+    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
+    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
+  }
+  renderer() {
+    return new H(
+      this._p1,
+      this._p2,
+      this._source._options.fillColor
+    );
+  }
+}
 class V {
   constructor(t, e) {
     s(this, "_source");
@@ -169,7 +143,7 @@ class V {
     [this._p1, this._p2] = this.getPoints();
   }
   renderer() {
-    return new I(
+    return new F(
       this._p1,
       this._p2,
       this._source._options.fillColor,
@@ -236,136 +210,7 @@ class b extends D {
     return this._source._options.priceLabelFormatter(this._p.price);
   }
 }
-class L {
-  constructor(t, e) {
-    s(this, "_source");
-    s(this, "_p");
-    s(this, "_pos", null);
-    this._source = t, this._p = e;
-  }
-  coordinate() {
-    return this._pos ?? -1;
-  }
-  visible() {
-    return this._source._options.showLabels;
-  }
-  tickVisible() {
-    return this._source._options.showLabels;
-  }
-  textColor() {
-    return this._source._options.labelTextColor;
-  }
-  backColor() {
-    return this._source._options.labelColor;
-  }
-  movePoint(t) {
-    this._p = t, this.update();
-  }
-}
-class f extends L {
-  update() {
-    const t = this._source.chart.timeScale();
-    this._pos = t.timeToCoordinate(this._p.time);
-  }
-  text() {
-    return this._source._options.timeLabelFormatter(this._p.time);
-  }
-}
-class y extends L {
-  update() {
-    const t = this._source.series;
-    this._pos = t.priceToCoordinate(this._p.price);
-  }
-  text() {
-    return this._source._options.priceLabelFormatter(this._p.price);
-  }
-}
-const z = {
-  fillColor: "rgba(200, 50, 100, 0.35)",
-  previewFillColor: "rgba(200, 50, 100, 0.25)",
-  labelColor: "rgba(200, 50, 100, 1)",
-  labelTextColor: "white",
-  showLabels: !0,
-  priceLabelFormatter: (n) => n.toFixed(2),
-  timeLabelFormatter: (n) => typeof n == "string" ? n : (T(n) ? new Date(n.year, n.month, n.day) : new Date(n * 1e3)).toLocaleDateString()
-}, N = {
-  lineColor: "rgba(0 , 0, 0, 1)",
-  previewLineColor: "rgba(0, 0, 0, 0.5)",
-  lineWidth: 2,
-  labelColor: "rgba(0, 0, 0, 1)",
-  labelTextColor: "white",
-  showLabels: !0,
-  priceLabelFormatter: (n) => n.toFixed(2),
-  timeLabelFormatter: (n) => typeof n == "string" ? n : (T(n) ? new Date(n.year, n.month, n.day) : new Date(n * 1e3)).toLocaleDateString()
-};
-class A extends P {
-  constructor(e, i, o = {}) {
-    super();
-    s(this, "_id");
-    s(this, "_options");
-    s(this, "_p1");
-    s(this, "_p2");
-    s(this, "_paneViews");
-    s(this, "_timeAxisViews");
-    s(this, "_priceAxisViews");
-    this._id = w.getNextId(), this._p1 = e, this._p2 = i, this._options = {
-      ...N,
-      ...o
-    }, this._paneViews = [new H(this)], this._timeAxisViews = [
-      new f(this, e),
-      new f(this, i)
-    ], this._priceAxisViews = [
-      new y(this, e),
-      new y(this, i)
-    ];
-  }
-  updateAllViews() {
-    this._paneViews.forEach((e) => e.update()), this._timeAxisViews.forEach((e) => e.update()), this._priceAxisViews.forEach((e) => e.update());
-  }
-  priceAxisViews() {
-    return this._priceAxisViews;
-  }
-  timeAxisViews() {
-    return this._timeAxisViews;
-  }
-  paneViews() {
-    return this._paneViews;
-  }
-  applyOptions(e) {
-    this._options = { ...this._options, ...e }, this.requestUpdate();
-  }
-  hitTest(e, i) {
-    if (!this._paneViews || !this._paneViews[0])
-      return null;
-    const o = this._paneViews[0]._p1, r = this._paneViews[0]._p2;
-    if (o.x === null || o.y === null || r.x === null || r.y === null)
-      return null;
-    const x = ((_, l, c) => {
-      if (_.x === null || _.y === null || l.x === null || l.y === null || c.x === null || c.y === null)
-        return 1 / 0;
-      const m = (l.x - c.x) ** 2 + (l.y - c.y) ** 2;
-      if (m === 0) return (_.x - l.x) ** 2 + (_.y - l.y) ** 2;
-      let d = ((_.x - l.x) * (c.x - l.x) + (_.y - l.y) * (c.y - l.y)) / m;
-      d = Math.max(0, Math.min(1, d));
-      const k = l.x + d * (c.x - l.x), B = l.y + d * (c.y - l.y);
-      return (_.x - k) ** 2 + (_.y - B) ** 2;
-    })({ x: e, y: i }, o, r), u = this._options.lineWidth / 2 + 2;
-    return x <= u * u ? {
-      externalId: this._id,
-      zOrder: "normal",
-      cursorStyle: "pointer"
-    } : null;
-  }
-}
-class W extends A {
-  constructor(t, e, i = {}) {
-    super(t, e, i), this._options.lineColor = this._options.previewLineColor;
-  }
-  updateEndPoint(t) {
-    this._p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
-  }
-}
-class R extends P {
+class L extends P {
   constructor(e, i, o = {}) {
     super();
     s(this, "_id");
@@ -378,9 +223,9 @@ class R extends P {
     s(this, "_priceAxisPaneViews");
     s(this, "_timeAxisPaneViews");
     this._id = w.getNextId(), this._p1 = e, this._p2 = i, this._options = {
-      ...z,
+      ...E,
       ...o
-    }, this._paneViews = [new F(this)], this._timeAxisViews = [
+    }, this._paneViews = [new I(this)], this._timeAxisViews = [
       new v(this, e),
       new v(this, i)
     ], this._priceAxisViews = [
@@ -418,12 +263,12 @@ class R extends P {
     const h = Math.min(o.x, r.x), p = Math.max(o.x, r.x), x = Math.min(o.y, r.y), u = Math.max(o.y, r.y);
     return e >= h && e <= p && i >= x && i <= u ? {
       externalId: this._id,
-      zOrder: "normal",
+      zOrder: "top",
       cursorStyle: "pointer"
     } : null;
   }
 }
-class $ extends R {
+class z extends L {
   constructor(t, e, i = {}) {
     super(t, e, i), this._options.fillColor = this._options.previewFillColor;
   }
@@ -431,84 +276,7 @@ class $ extends R {
     this._p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
   }
 }
-class j {
-  constructor(t, e, i, o) {
-    s(this, "_chart");
-    s(this, "_series");
-    s(this, "_defaultOptions");
-    s(this, "_lines");
-    s(this, "_previewLine");
-    s(this, "_points", []);
-    s(this, "_drawing", !1);
-    s(this, "_onDrawingCompleteCallback");
-    s(this, "_clickHandler", (t) => this._onClick(t));
-    s(this, "_moveHandler", (t) => this._onMouseMove(t));
-    s(this, "_dblClickHandler", (t) => this._onDblClick(t));
-    this._chart = t, this._series = e, this._defaultOptions = i, this._onDrawingCompleteCallback = o, this._lines = [], this._chart.subscribeClick(this._clickHandler), this._chart.subscribeCrosshairMove(this._moveHandler), this._chart.subscribeDblClick(this._dblClickHandler);
-  }
-  get options() {
-    return this._defaultOptions;
-  }
-  remove() {
-    this._lines.forEach((t) => this._removeLine(t)), this.stopDrawing(), this._chart.unsubscribeClick(this._clickHandler), this._chart.unsubscribeCrosshairMove(this._moveHandler), this._lines.forEach((t) => {
-      this._removeLine(t);
-    }), this._lines = [], this._removePreviewLine(), this._chart.unsubscribeDblClick(this._dblClickHandler);
-  }
-  startDrawing() {
-    this._drawing = !0, this._points = [];
-  }
-  stopDrawing() {
-    this._drawing = !1, this._points = [], this._removePreviewLine();
-  }
-  isDrawing() {
-    return this._drawing;
-  }
-  _onClick(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._addPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onMouseMove(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._previewLine && this._previewLine.updateEndPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onDblClick(t) {
-    if (this._drawing) return;
-    const e = t.hoveredObjectId;
-    if (!e) return;
-    const i = this._lines.findIndex((o) => o._id === e);
-    if (i !== -1) {
-      const o = this._lines[i];
-      this._removeLine(o), this._lines.splice(i, 1);
-    }
-  }
-  _addPoint(t) {
-    this._points.push(t), this._points.length >= 2 && (this._addNewLine(this._points[0], this._points[1]), this.stopDrawing(), this._onDrawingCompleteCallback && this._onDrawingCompleteCallback()), this._points.length === 1 && this._addPreviewLine(this._points[0]);
-  }
-  _addNewLine(t, e) {
-    const i = new A(t, e, { ...this._defaultOptions });
-    this._lines.push(i), a(this._series).attachPrimitive(i);
-  }
-  _removeLine(t) {
-    a(this._series).detachPrimitive(t);
-  }
-  _addPreviewLine(t) {
-    this._previewLine = new W(t, t, {
-      ...this._defaultOptions
-    }), a(this._series).attachPrimitive(this._previewLine);
-  }
-  _removePreviewLine() {
-    this._previewLine && (a(this._series).detachPrimitive(this._previewLine), this._previewLine = void 0);
-  }
-}
-class X {
+class N {
   constructor(t, e, i, o) {
     s(this, "_chart");
     s(this, "_series");
@@ -570,14 +338,14 @@ class X {
     this._points.push(t), this._points.length >= 2 && (this._addNewRectangle(this._points[0], this._points[1]), this.stopDrawing(), this._onDrawingCompleteCallback && this._onDrawingCompleteCallback()), this._points.length === 1 && this._addPreviewRectangle(this._points[0]);
   }
   _addNewRectangle(t, e) {
-    const i = new R(t, e, { ...this._defaultOptions });
+    const i = new L(t, e, { ...this._defaultOptions });
     this._rectangles.push(i), a(this._series).attachPrimitive(i);
   }
   _removeRectangle(t) {
     a(this._series).detachPrimitive(t);
   }
   _addPreviewRectangle(t) {
-    this._previewRectangle = new $(t, t, {
+    this._previewRectangle = new z(t, t, {
       ...this._defaultOptions
     }), a(this._series).attachPrimitive(this._previewRectangle);
   }
@@ -585,6 +353,238 @@ class X {
     this._previewRectangle && (a(this._series).detachPrimitive(this._previewRectangle), this._previewRectangle = void 0);
   }
 }
+class W {
+  constructor(t, e, i, o) {
+    s(this, "_p1");
+    s(this, "_p2");
+    s(this, "_lineColor");
+    s(this, "_lineWidth");
+    this._p1 = t, this._p2 = e, this._lineColor = i, this._lineWidth = o;
+  }
+  draw(t) {
+    t.useBitmapCoordinateSpace((e) => {
+      if (this._p1.x === null || this._p1.y === null || this._p2.x === null || this._p2.y === null)
+        return;
+      const i = e.context, o = this._p1.x * e.horizontalPixelRatio, r = this._p1.y * e.verticalPixelRatio, h = this._p2.x * e.horizontalPixelRatio, p = this._p2.y * e.verticalPixelRatio;
+      i.strokeStyle = this._lineColor, i.lineWidth = this._lineWidth * e.horizontalPixelRatio, i.lineCap = "round", i.lineJoin = "round", i.beginPath(), i.moveTo(o, r), i.lineTo(h, p), i.stroke();
+    });
+  }
+}
+class $ {
+  constructor(t) {
+    s(this, "_source");
+    s(this, "_p1", { x: null, y: null });
+    s(this, "_p2", { x: null, y: null });
+    this._source = t;
+  }
+  update() {
+    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
+    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
+  }
+  renderer() {
+    return new W(
+      this._p1,
+      this._p2,
+      this._source._options.lineColor,
+      this._source._options.lineWidth
+    );
+  }
+}
+class A {
+  constructor(t, e) {
+    s(this, "_source");
+    s(this, "_p");
+    s(this, "_pos", null);
+    this._source = t, this._p = e;
+  }
+  coordinate() {
+    return this._pos ?? -1;
+  }
+  visible() {
+    return this._source._options.showLabels;
+  }
+  tickVisible() {
+    return this._source._options.showLabels;
+  }
+  textColor() {
+    return this._source._options.labelTextColor;
+  }
+  backColor() {
+    return this._source._options.labelColor;
+  }
+  movePoint(t) {
+    this._p = t, this.update();
+  }
+}
+class f extends A {
+  update() {
+    const t = this._source.chart.timeScale();
+    this._pos = t.timeToCoordinate(this._p.time);
+  }
+  text() {
+    return this._source._options.timeLabelFormatter(this._p.time);
+  }
+}
+class y extends A {
+  update() {
+    const t = this._source.series;
+    this._pos = t.priceToCoordinate(this._p.price);
+  }
+  text() {
+    return this._source._options.priceLabelFormatter(this._p.price);
+  }
+}
+class R extends P {
+  constructor(e, i, o = {}) {
+    super();
+    s(this, "_id");
+    s(this, "_options");
+    s(this, "_p1");
+    s(this, "_p2");
+    s(this, "_paneViews");
+    s(this, "_timeAxisViews");
+    s(this, "_priceAxisViews");
+    this._id = w.getNextId(), this._p1 = e, this._p2 = i, this._options = {
+      ...M,
+      ...o
+    }, this._paneViews = [new $(this)], this._timeAxisViews = [
+      new f(this, e),
+      new f(this, i)
+    ], this._priceAxisViews = [
+      new y(this, e),
+      new y(this, i)
+    ];
+  }
+  updateAllViews() {
+    this._paneViews.forEach((e) => e.update()), this._timeAxisViews.forEach((e) => e.update()), this._priceAxisViews.forEach((e) => e.update());
+  }
+  priceAxisViews() {
+    return this._priceAxisViews;
+  }
+  timeAxisViews() {
+    return this._timeAxisViews;
+  }
+  paneViews() {
+    return this._paneViews;
+  }
+  applyOptions(e) {
+    this._options = { ...this._options, ...e }, this.requestUpdate();
+  }
+  hitTest(e, i) {
+    if (!this._paneViews || !this._paneViews[0])
+      return null;
+    const o = this._paneViews[0]._p1, r = this._paneViews[0]._p2;
+    if (o.x === null || o.y === null || r.x === null || r.y === null)
+      return null;
+    const x = ((_, l, c) => {
+      if (_.x === null || _.y === null || l.x === null || l.y === null || c.x === null || c.y === null)
+        return 1 / 0;
+      const m = (l.x - c.x) ** 2 + (l.y - c.y) ** 2;
+      if (m === 0) return (_.x - l.x) ** 2 + (_.y - l.y) ** 2;
+      let d = ((_.x - l.x) * (c.x - l.x) + (_.y - l.y) * (c.y - l.y)) / m;
+      d = Math.max(0, Math.min(1, d));
+      const k = l.x + d * (c.x - l.x), B = l.y + d * (c.y - l.y);
+      return (_.x - k) ** 2 + (_.y - B) ** 2;
+    })({ x: e, y: i }, o, r), u = this._options.lineWidth / 2 + 2;
+    return x <= u * u ? {
+      externalId: this._id,
+      zOrder: "top",
+      cursorStyle: "pointer"
+    } : null;
+  }
+}
+class j extends R {
+  constructor(t, e, i = {}) {
+    super(t, e, i), this._options.lineColor = this._options.previewLineColor;
+  }
+  updateEndPoint(t) {
+    this._p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
+  }
+}
+class X {
+  constructor(t, e, i, o) {
+    s(this, "_chart");
+    s(this, "_series");
+    s(this, "_defaultOptions");
+    s(this, "_lines");
+    s(this, "_previewLine");
+    s(this, "_points", []);
+    s(this, "_drawing", !1);
+    s(this, "_onDrawingCompleteCallback");
+    s(this, "_clickHandler", (t) => this._onClick(t));
+    s(this, "_moveHandler", (t) => this._onMouseMove(t));
+    s(this, "_dblClickHandler", (t) => this._onDblClick(t));
+    this._chart = t, this._series = e, this._defaultOptions = i, this._onDrawingCompleteCallback = o, this._lines = [], this._chart.subscribeClick(this._clickHandler), this._chart.subscribeCrosshairMove(this._moveHandler), this._chart.subscribeDblClick(this._dblClickHandler);
+  }
+  get options() {
+    return this._defaultOptions;
+  }
+  remove() {
+    this._lines.forEach((t) => this._removeLine(t)), this.stopDrawing(), this._chart.unsubscribeClick(this._clickHandler), this._chart.unsubscribeCrosshairMove(this._moveHandler), this._lines.forEach((t) => {
+      this._removeLine(t);
+    }), this._lines = [], this._removePreviewLine(), this._chart.unsubscribeDblClick(this._dblClickHandler);
+  }
+  startDrawing() {
+    this._drawing = !0, this._points = [];
+  }
+  stopDrawing() {
+    this._drawing = !1, this._points = [], this._removePreviewLine();
+  }
+  isDrawing() {
+    return this._drawing;
+  }
+  _onClick(t) {
+    if (!this._drawing || !t.point || !t.time || !this._series) return;
+    const e = this._series.coordinateToPrice(t.point.y);
+    e !== null && this._addPoint({
+      time: t.time,
+      price: e
+    });
+  }
+  _onMouseMove(t) {
+    if (!this._drawing || !t.point || !t.time || !this._series) return;
+    const e = this._series.coordinateToPrice(t.point.y);
+    e !== null && this._previewLine && this._previewLine.updateEndPoint({
+      time: t.time,
+      price: e
+    });
+  }
+  _onDblClick(t) {
+    if (this._drawing) return;
+    const e = t.hoveredObjectId;
+    if (!e) return;
+    const i = this._lines.findIndex((o) => o._id === e);
+    if (i !== -1) {
+      const o = this._lines[i];
+      this._removeLine(o), this._lines.splice(i, 1);
+    }
+  }
+  _addPoint(t) {
+    this._points.push(t), this._points.length >= 2 && (this._addNewLine(this._points[0], this._points[1]), this.stopDrawing(), this._onDrawingCompleteCallback && this._onDrawingCompleteCallback()), this._points.length === 1 && this._addPreviewLine(this._points[0]);
+  }
+  _addNewLine(t, e) {
+    const i = new R(t, e, { ...this._defaultOptions });
+    this._lines.push(i), a(this._series).attachPrimitive(i);
+  }
+  _removeLine(t) {
+    a(this._series).detachPrimitive(t);
+  }
+  _addPreviewLine(t) {
+    this._previewLine = new j(t, t, {
+      ...this._defaultOptions
+    }), a(this._series).attachPrimitive(this._previewLine);
+  }
+  _removePreviewLine() {
+    this._previewLine && (a(this._series).detachPrimitive(this._previewLine), this._previewLine = void 0);
+  }
+}
+const g = class g {
+  static getNextId() {
+    return `${g._nextId++}`;
+  }
+};
+s(g, "_nextId", 0);
+let w = g;
 class Z {
   constructor(t, e, i, o = {}, r = {}) {
     s(this, "_rectangleTool");
@@ -597,12 +597,12 @@ class Z {
     s(this, "_inactiveColor", "rgb(100, 100, 100)");
     s(this, "_selectedBaseColor", "#000000");
     s(this, "_currentOpacity", 0.35);
-    this._drawingsToolbarContainer = i, this._rectangleTool = new X(
+    this._drawingsToolbarContainer = i, this._rectangleTool = new N(
       t,
       e,
       o,
       this.stopDrawing.bind(this)
-    ), this._lineTool = new j(
+    ), this._lineTool = new X(
       t,
       e,
       r,
@@ -662,6 +662,5 @@ class Z {
 }
 export {
   Z as DrawingTools,
-  j as LineDrawingTool,
-  X as RectangleDrawingTool
+  w as ShapeIdGenerator
 };

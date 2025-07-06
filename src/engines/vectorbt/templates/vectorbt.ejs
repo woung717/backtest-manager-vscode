@@ -4,6 +4,8 @@ import json
 
 import vectorbt as vbt
 
+from pathlib import Path
+
 
 <%- userCode %>
 
@@ -58,7 +60,7 @@ def backtest_run():
 
         <% if (config.datasetPaths) { %>
         <% config.datasetPaths.forEach(function(datasetPath) { %>
-        df = pd.read_csv('<%= datasetPath %>')
+        df = pd.read_csv(Path('<%= datasetPath %>'))
         df['datetime'] = pd.to_datetime(df['datetime'])
         df.set_index('datetime', inplace=True)
         df.sort_index(inplace=True)
@@ -110,7 +112,7 @@ def backtest_run():
 
         <% if (config.datasetPaths) { %>
         <% config.datasetPaths.forEach(function(datasetPath) { %>
-        df = pd.read_csv('<%= datasetPath %>')
+        df = pd.read_csv(Path('<%= datasetPath %>'))
         df['datetime'] = pd.to_datetime(df['datetime'])
         df.set_index('datetime', inplace=True)
         df.sort_index(inplace=True)
@@ -152,7 +154,7 @@ def backtest_run():
 
         <% if (config.datasetPaths) { %>
         <% config.datasetPaths.forEach(function(datasetPath) { %>
-        df = pd.read_csv('<%= datasetPath %>')
+        df = pd.read_csv(Path('<%= datasetPath %>'))
         df['datetime'] = pd.to_datetime(df['datetime'])
         df.set_index('datetime', inplace=True)
         df.sort_index(inplace=True)
