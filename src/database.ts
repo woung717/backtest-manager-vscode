@@ -89,7 +89,7 @@ export class Database {
     return this.db.findOne({ name: projectName });
   }
 
-  public addProject(projectData: ProjectInfo): ProjectInfo {
+  public async addProject(projectData: ProjectInfo): Promise<ProjectInfo> {
     this.enableStorage();
     const projectToInsert = {
       ...projectData,
@@ -98,8 +98,8 @@ export class Database {
       created: projectData.created || new Date(),
       updated: projectData.updated || new Date(),
     };
-    const insertedProject = this.db.insert(projectToInsert);
-    return insertedProject as ProjectInfo;
+
+    return this.db.insertAsync(projectToInsert);
   }
 
   public updateProject(projectId: string, updates: Partial<ProjectInfo>): void {

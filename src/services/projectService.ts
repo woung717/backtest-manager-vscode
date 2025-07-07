@@ -64,8 +64,8 @@ export class ProjectService implements IProjectService {
       results: [], // Initialize as empty array
       lastConfig: {} // Initialize as empty object or specific default config structure
     };
-
-    return this.database.addProject(newProjectForDb);
+  
+    return await this.database.addProject(newProjectForDb);
   }
 
   async updateProject(projectId: string, projectData: Partial<ProjectInfo>): Promise<ProjectInfo | null> {
