@@ -1,7 +1,6 @@
 import json
 import backtrader as bt
 
-from pathlib import Path
 from datetime import datetime
 
 <%- userImports %>
@@ -124,8 +123,8 @@ cerebro.broker.set_slippage_fixed(<%= config.broker.slippage.slippageFixed %>
 <% config.datasetPaths.forEach(function(datasetPath) { %>
 cerebro.adddata(
     bt.feeds.GenericCSVData(
-        dataname=Path('<%= datasetPath %>'),
-        name='<%= datasetPath.split('/').pop() %>',
+        dataname=r'<%= datasetPath %>',
+        name='<%= datasetPath.split(/[\/\\]/).pop() %>',
         dtformat='%Y-%m-%dT%H:%M:%S.%fZ',
         datetime=0,
         open=1,
