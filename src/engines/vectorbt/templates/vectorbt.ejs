@@ -209,12 +209,14 @@ if portfolio is not None:
             }
             print(f"t: {json.dumps(exit_trade)}")
 
-    value_series = portfolio.value()
-    for i in range(len(value_series)):
-        equity_point = {
-            "datetime": pd.to_datetime(value_series.index[i]).isoformat(),
-            "value": value_series.iloc[i][0]
-        }
-        print(f"e: {json.dumps(equity_point)}")
+    if len(portfolio.value()) > 0:
+        value_series = portfolio.value()
+        is_single_value = pd.api.types.is_scalar(value_series.iloc[0])
+        for i in range(len(value_series)):
+            equity_point = {
+                "datetime": pd.to_datetime(value_series.index[i]).isoformat(),
+                "value": value_series.iloc[i] if is_single_value else value_series.iloc[i][0]
+            }
+            print(f"e: {json.dumps(equity_point)}")
 else:
     print("Portfolio object not created. No data to output.")
