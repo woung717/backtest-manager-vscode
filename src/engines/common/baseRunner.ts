@@ -269,9 +269,15 @@ export abstract class BaseRunner<T> {
         }
       );
 
+      let stdoutBuffer = '';
       pythonProcess.stdout.on('data', async (data) => {
-        const lines = data.toString().split('\n');
-        for (const line of lines) {
+        stdoutBuffer += data.toString();
+
+        let newlineIndex: number;
+        while ((newlineIndex = stdoutBuffer.indexOf('\n')) !== -1) {
+          const line = stdoutBuffer.slice(0, newlineIndex);
+          stdoutBuffer = stdoutBuffer.slice(newlineIndex + 1);
+
           if (line.startsWith('t:')) {
             const tradeData = this.parseTradeData(line);
             if (tradeData) {
@@ -283,10 +289,10 @@ export abstract class BaseRunner<T> {
               await this.updateBacktestResult(equityData, DataType.EQUITY);
             }
           }
-        }
-        
-        if (this.debugMode) {
-          this.logger.log(data.toString());
+
+          if (this.debugMode && line.trim().length > 0) {
+            this.logger.log(line);
+          }
         }
       });
 

@@ -13,7 +13,7 @@
     "type": "git",
     "url": "https://github.com/woung717/backtest-manager-vscode.git"
   },
-  "version": "0.1.11",
+  "version": "0.1.12",
   "engines": {
     "vscode": "^1.98.0"
   },

@@ -149,7 +149,7 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
       lineWidth: 1,
       priceFormat: {
         type: 'custom',
-        formatter: (price: number) => (price * 100).toFixed(1) + '%', // Format as percentage e.g. 10.5%
+        formatter: (price: number) => (price * 100)?.toFixed(1) + '%', // Format as percentage e.g. 10.5%
         minMove: 0.0001, // Smallest change is 0.01%
       },
       lastValueVisible: true,
@@ -273,15 +273,15 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Total Return</div>
-            <div className="text-lg font-semibold">{(backtest.performance.totalReturn * 100).toFixed(2)}%</div>
+            <div className="text-lg font-semibold">{(backtest.performance.totalReturn * 100)?.toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Win Rate</div>
-            <div className="text-lg font-semibold">{(backtest.performance.winRate * 100).toFixed(2)}%</div>
+            <div className="text-lg font-semibold">{(backtest.performance.winRate * 100)?.toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Max Drawdown</div>
-            <div className="text-lg font-semibold">{(backtest.performance.maxDrawdown * 100).toFixed(2)}%</div>
+            <div className="text-lg font-semibold">{(backtest.performance.maxDrawdown * 100)?.toFixed(2)}%</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Number of Trades</div>
@@ -289,11 +289,11 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Win/Loss Ratio</div>
-            <div className="text-lg font-semibold">{backtest.performance.avgWinLossRatio.toFixed(2)}</div>
+            <div className="text-lg font-semibold">{backtest.performance.avgWinLossRatio?.toFixed(2)}</div>
           </div>
           <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg">
             <div className="text-xs text-[var(--vscode-descriptionForeground)]">Sharpe Ratio</div>
-            <div className="text-lg font-semibold">{backtest.performance.sharpeRatio.toFixed(2)}</div>
+            <div className="text-lg font-semibold">{backtest.performance.sharpeRatio?.toFixed(2)}</div>
           </div>
         </div>
 
@@ -314,19 +314,19 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
             <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
               <div className="text-xs text-[var(--vscode-descriptionForeground)]">Sortino Ratio</div>
-              <div className="text-lg font-semibold">{backtest.performance.sortinoRatio.toFixed(2)}</div>
+              <div className="text-lg font-semibold">{backtest.performance.sortinoRatio?.toFixed(2)}</div>
             </div>
             <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
               <div className="text-xs text-[var(--vscode-descriptionForeground)]">Calmar Ratio</div>
-              <div className="text-lg font-semibold">{backtest.performance.calmarRatio.toFixed(2)}</div>
+              <div className="text-lg font-semibold">{backtest.performance.calmarRatio?.toFixed(2)}</div>
             </div>
             <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
               <div className="text-xs text-[var(--vscode-descriptionForeground)]">Skewness</div>
-              <div className="text-lg font-semibold">{backtest.performance.skewness.toFixed(2)}</div>
+              <div className="text-lg font-semibold">{backtest.performance.skewness?.toFixed(2)}</div>
             </div>
             <div className="bg-[var(--vscode-editor-inactiveSelectionBackground)] p-2 rounded-lg group">
               <div className="text-xs text-[var(--vscode-descriptionForeground)]">Kurtosis</div>
-              <div className="text-lg font-semibold">{backtest.performance.kurtosis.toFixed(2)}</div>
+              <div className="text-lg font-semibold">{backtest.performance.kurtosis?.toFixed(2)}</div>
             </div>
           </div>
         )}
@@ -370,14 +370,14 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
                       }`}>
                         <td className="p-2 font-bold text-center">{trade.id}</td>
                         <td className="p-2">{trade.type === 'Long' ? 'Buy' : 'Sell'}</td>
-                        <td className="p-2">{trade.size.toFixed(2)}</td>
+                        <td className="p-2">{trade.size?.toFixed(2)}</td>
                         <td className="p-2">{new Date(trade.time).toLocaleString()}</td>
-                        <td className="p-2">{trade.entry.toFixed(2)}</td>
+                        <td className="p-2">{trade.entry?.toFixed(2)}</td>
                         <td className="p-2"></td>
                         <td className={`p-2 font-bold ${trade.isOverallProfit 
                           ? 'text-[var(--vscode-testing-iconPassed)]' 
                           : 'text-[var(--vscode-testing-iconFailed)]'}`}>
-                          {trade.totalProfit.toFixed(2)}
+                          {trade.totalProfit?.toFixed(2)}
                         </td>
                       </tr>
                       {/* Sub-row for each Exit */}
@@ -390,9 +390,9 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
                             </div>
                           </td>
                           <td className="p-2">
-                            <div className="font-medium">{exit.exitPrice.toFixed(2)}</div>
+                            <div className="font-medium">{exit.exitPrice?.toFixed(2)}</div>
                             <div className="text-xs text-[var(--vscode-descriptionForeground)]">
-                              Size: {exit.exitSize.toFixed(2)}
+                              Size: {exit.exitSize?.toFixed(2)}
                             </div>
                           </td>
                           <td className="p-2">
@@ -404,9 +404,9 @@ const BacktestResultView: React.FC<BacktestResultViewProps> = ({ backtest }) => 
                           <td className={`p-2 ${exit.isProfit 
                             ? 'text-[var(--vscode-testing-iconPassed)]' 
                             : 'text-[var(--vscode-testing-iconFailed)]'}`}>
-                            <div className="font-medium">{exit.profit.toFixed(2)}</div>
+                            <div className="font-medium">{exit.profit?.toFixed(2)}</div>
                             <div className="text-xs text-[var(--vscode-descriptionForeground)]">
-                              {((exit.profit / (trade.entry * exit.exitSize)) * 100).toFixed(2)}%
+                              {((exit.profit / (trade.entry * exit.exitSize)) * 100)?.toFixed(2)}%
                             </div>
                           </td>
                         </tr>

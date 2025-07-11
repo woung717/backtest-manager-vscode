@@ -1,6 +1,6 @@
 var O = Object.defineProperty;
-var S = (n, t, e) => t in n ? O(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
-var s = (n, t, e) => S(n, typeof t != "symbol" ? t + "" : t, e);
+var M = (n, t, e) => t in n ? O(n, t, { enumerable: !0, configurable: !0, writable: !0, value: e }) : n[t] = e;
+var s = (n, t, e) => M(n, typeof t != "symbol" ? t + "" : t, e);
 import { isBusinessDay as T } from "lightweight-charts";
 function a(n) {
   if (n === void 0)
@@ -43,7 +43,7 @@ class P {
     return a(this._series);
   }
 }
-const M = {
+const S = {
   lineColor: "rgba(0 , 0, 0, 1)",
   previewLineColor: "rgba(0, 0, 0, 0.5)",
   lineWidth: 2,
@@ -61,24 +61,24 @@ const M = {
   priceLabelFormatter: (n) => n.toFixed(2),
   timeLabelFormatter: (n) => typeof n == "string" ? n : (T(n) ? new Date(n.year, n.month - 1, n.day) : new Date(n * 1e3)).toLocaleDateString()
 };
-class H {
+class F {
   constructor(t, e, i) {
-    s(this, "_p1");
-    s(this, "_p2");
+    s(this, "p1");
+    s(this, "p2");
     s(this, "_fillColor");
-    this._p1 = t, this._p2 = e, this._fillColor = i;
+    this.p1 = t, this.p2 = e, this._fillColor = i;
   }
   draw(t) {
     t.useBitmapCoordinateSpace((e) => {
-      if (this._p1.x === null || this._p1.y === null || this._p2.x === null || this._p2.y === null)
+      if (this.p1.x === null || this.p1.y === null || this.p2.x === null || this.p2.y === null)
         return;
       const i = e.context, o = C(
-        this._p1.x,
-        this._p2.x,
+        this.p1.x,
+        this.p2.x,
         e.horizontalPixelRatio
       ), r = C(
-        this._p1.y,
-        this._p2.y,
+        this.p1.y,
+        this.p2.y,
         e.verticalPixelRatio
       );
       i.fillStyle = this._fillColor, i.fillRect(
@@ -90,63 +90,63 @@ class H {
     });
   }
 }
-class F {
+class I {
   constructor(t, e, i, o) {
-    s(this, "_p1");
-    s(this, "_p2");
+    s(this, "p1");
+    s(this, "p2");
     s(this, "_fillColor");
     s(this, "_vertical", !1);
-    this._p1 = t, this._p2 = e, this._fillColor = i, this._vertical = o;
+    this.p1 = t, this.p2 = e, this._fillColor = i, this._vertical = o;
   }
   draw(t) {
     t.useBitmapCoordinateSpace((e) => {
-      if (this._p1 === null || this._p2 === null) return;
+      if (this.p1 === null || this.p2 === null) return;
       const i = e.context;
       i.globalAlpha = 0.5;
       const o = C(
-        this._p1,
-        this._p2,
+        this.p1,
+        this.p2,
         this._vertical ? e.verticalPixelRatio : e.horizontalPixelRatio
       );
       i.fillStyle = this._fillColor, this._vertical ? i.fillRect(0, o.position, 15, o.length) : i.fillRect(o.position, 0, o.length, 15);
     });
   }
 }
-class I {
+class U {
   constructor(t) {
     s(this, "_source");
-    s(this, "_p1", { x: null, y: null });
-    s(this, "_p2", { x: null, y: null });
+    s(this, "p1", { x: null, y: null });
+    s(this, "p2", { x: null, y: null });
     this._source = t;
   }
   update() {
-    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
-    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
+    const t = this._source.series, e = t.priceToCoordinate(this._source.p1.price), i = t.priceToCoordinate(this._source.p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source.p1.time), h = o.timeToCoordinate(this._source.p2.time);
+    this.p1 = { x: r, y: e }, this.p2 = { x: h, y: i };
   }
   renderer() {
-    return new H(
-      this._p1,
-      this._p2,
-      this._source._options.fillColor
+    return new F(
+      this.p1,
+      this.p2,
+      this._source.option.fillColor
     );
   }
 }
 class V {
   constructor(t, e) {
     s(this, "_source");
-    s(this, "_p1", null);
-    s(this, "_p2", null);
+    s(this, "p1", null);
+    s(this, "p2", null);
     s(this, "_vertical", !1);
     this._source = t, this._vertical = e;
   }
   update() {
-    [this._p1, this._p2] = this.getPoints();
+    [this.p1, this.p2] = this.getPoints();
   }
   renderer() {
-    return new F(
-      this._p1,
-      this._p2,
-      this._source._options.fillColor,
+    return new I(
+      this.p1,
+      this.p2,
+      this._source.option.fillColor,
       this._vertical
     );
   }
@@ -154,15 +154,15 @@ class V {
     return "bottom";
   }
 }
-class U extends V {
+class q extends V {
   getPoints() {
-    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price);
+    const t = this._source.series, e = t.priceToCoordinate(this._source.p1.price), i = t.priceToCoordinate(this._source.p2.price);
     return [e, i];
   }
 }
-class q extends V {
+class z extends V {
   getPoints() {
-    const t = this._source.chart.timeScale(), e = t.timeToCoordinate(this._source._p1.time), i = t.timeToCoordinate(this._source._p2.time);
+    const t = this._source.chart.timeScale(), e = t.timeToCoordinate(this._source.p1.time), i = t.timeToCoordinate(this._source.p2.time);
     return [e, i];
   }
 }
@@ -177,16 +177,16 @@ class D {
     return this._pos ?? -1;
   }
   visible() {
-    return this._source._options.showLabels;
+    return this._source.option.showLabels;
   }
   tickVisible() {
-    return this._source._options.showLabels;
+    return this._source.option.showLabels;
   }
   textColor() {
-    return this._source._options.labelTextColor;
+    return this._source.option.labelTextColor;
   }
   backColor() {
-    return this._source._options.labelColor;
+    return this._source.option.labelColor;
   }
   movePoint(t) {
     this._p = t, this.update();
@@ -198,7 +198,7 @@ class v extends D {
     this._pos = t.timeToCoordinate(this._p.time);
   }
   text() {
-    return this._source._options.timeLabelFormatter(this._p.time);
+    return this._source.option.timeLabelFormatter(this._p.time);
   }
 }
 class b extends D {
@@ -207,31 +207,31 @@ class b extends D {
     this._pos = t.priceToCoordinate(this._p.price);
   }
   text() {
-    return this._source._options.priceLabelFormatter(this._p.price);
+    return this._source.option.priceLabelFormatter(this._p.price);
   }
 }
 class L extends P {
   constructor(e, i, o = {}) {
     super();
-    s(this, "_id");
-    s(this, "_options");
-    s(this, "_p1");
-    s(this, "_p2");
+    s(this, "id");
+    s(this, "option");
+    s(this, "p1");
+    s(this, "p2");
     s(this, "_paneViews");
     s(this, "_timeAxisViews");
     s(this, "_priceAxisViews");
     s(this, "_priceAxisPaneViews");
     s(this, "_timeAxisPaneViews");
-    this._id = w.getNextId(), this._p1 = e, this._p2 = i, this._options = {
+    this.id = w.getNextId(), this.p1 = e, this.p2 = i, this.option = {
       ...E,
       ...o
-    }, this._paneViews = [new I(this)], this._timeAxisViews = [
+    }, this._paneViews = [new U(this)], this._timeAxisViews = [
       new v(this, e),
       new v(this, i)
     ], this._priceAxisViews = [
       new b(this, e),
       new b(this, i)
-    ], this._priceAxisPaneViews = [new U(this, !0)], this._timeAxisPaneViews = [new q(this, !1)];
+    ], this._priceAxisPaneViews = [new q(this, !0)], this._timeAxisPaneViews = [new z(this, !1)];
   }
   updateAllViews() {
     this._paneViews.forEach((e) => e.update()), this._timeAxisViews.forEach((e) => e.update()), this._priceAxisViews.forEach((e) => e.update()), this._priceAxisPaneViews.forEach((e) => e.update()), this._timeAxisPaneViews.forEach((e) => e.update());
@@ -252,141 +252,138 @@ class L extends P {
     return this._timeAxisPaneViews;
   }
   applyOptions(e) {
-    this._options = { ...this._options, ...e }, this.requestUpdate();
+    this.option = { ...this.option, ...e }, this.requestUpdate();
   }
   hitTest(e, i) {
     if (!this._paneViews || !this._paneViews[0])
       return null;
-    const o = this._paneViews[0]._p1, r = this._paneViews[0]._p2;
+    const o = this._paneViews[0].p1, r = this._paneViews[0].p2;
     if (o.x === null || o.y === null || r.x === null || r.y === null)
       return null;
-    const h = Math.min(o.x, r.x), p = Math.max(o.x, r.x), x = Math.min(o.y, r.y), u = Math.max(o.y, r.y);
-    return e >= h && e <= p && i >= x && i <= u ? {
-      externalId: this._id,
-      zOrder: "top",
+    const h = Math.min(o.x, r.x), u = Math.max(o.x, r.x), x = Math.min(o.y, r.y), _ = Math.max(o.y, r.y);
+    return e >= h && e <= u && i >= x && i <= _ ? {
+      externalId: this.id,
+      zOrder: "normal",
       cursorStyle: "pointer"
     } : null;
   }
 }
-class z extends L {
+class N extends L {
   constructor(t, e, i = {}) {
-    super(t, e, i), this._options.fillColor = this._options.previewFillColor;
+    super(t, e, i), this.option.fillColor = this.option.previewFillColor;
   }
   updateEndPoint(t) {
-    this._p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
-  }
-}
-class N {
-  constructor(t, e, i, o) {
-    s(this, "_chart");
-    s(this, "_series");
-    s(this, "_defaultOptions");
-    s(this, "_rectangles");
-    s(this, "_previewRectangle");
-    s(this, "_points", []);
-    s(this, "_drawing", !1);
-    s(this, "_onDrawingCompleteCallback");
-    s(this, "_clickHandler", (t) => this._onClick(t));
-    s(this, "_moveHandler", (t) => this._onMouseMove(t));
-    s(this, "_dblClickHandler", (t) => this._onDblClick(t));
-    this._chart = t, this._series = e, this._defaultOptions = i, this._onDrawingCompleteCallback = o, this._rectangles = [], this._chart.subscribeClick(this._clickHandler), this._chart.subscribeCrosshairMove(this._moveHandler), this._chart.subscribeDblClick(this._dblClickHandler);
-  }
-  get options() {
-    return this._defaultOptions;
-  }
-  remove() {
-    this._rectangles.forEach((t) => this._removeRectangle(t)), this.stopDrawing(), this._chart.unsubscribeClick(this._clickHandler), this._chart.unsubscribeCrosshairMove(this._moveHandler), this._rectangles.forEach((t) => {
-      this._removeRectangle(t);
-    }), this._rectangles = [], this._removePreviewRectangle(), this._chart.unsubscribeDblClick(this._dblClickHandler);
-  }
-  startDrawing() {
-    this._drawing = !0, this._points = [];
-  }
-  stopDrawing() {
-    this._drawing = !1, this._points = [], this._removePreviewRectangle();
-  }
-  isDrawing() {
-    return this._drawing;
-  }
-  _onClick(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._addPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onMouseMove(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._previewRectangle && this._previewRectangle.updateEndPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onDblClick(t) {
-    if (this._drawing) return;
-    const e = t.hoveredObjectId;
-    if (!e) return;
-    const i = this._rectangles.findIndex((o) => o._id === e);
-    if (i !== -1) {
-      const o = this._rectangles[i];
-      this._removeRectangle(o), this._rectangles.splice(i, 1);
-    }
-  }
-  _addPoint(t) {
-    this._points.push(t), this._points.length >= 2 && (this._addNewRectangle(this._points[0], this._points[1]), this.stopDrawing(), this._onDrawingCompleteCallback && this._onDrawingCompleteCallback()), this._points.length === 1 && this._addPreviewRectangle(this._points[0]);
-  }
-  _addNewRectangle(t, e) {
-    const i = new L(t, e, { ...this._defaultOptions });
-    this._rectangles.push(i), a(this._series).attachPrimitive(i);
-  }
-  _removeRectangle(t) {
-    a(this._series).detachPrimitive(t);
-  }
-  _addPreviewRectangle(t) {
-    this._previewRectangle = new z(t, t, {
-      ...this._defaultOptions
-    }), a(this._series).attachPrimitive(this._previewRectangle);
-  }
-  _removePreviewRectangle() {
-    this._previewRectangle && (a(this._series).detachPrimitive(this._previewRectangle), this._previewRectangle = void 0);
+    this.p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
   }
 }
 class W {
   constructor(t, e, i, o) {
-    s(this, "_p1");
-    s(this, "_p2");
+    s(this, "chart");
+    s(this, "series");
+    s(this, "defaultOptions");
+    s(this, "_rectangles");
+    s(this, "_previewRectangle");
+    s(this, "points", []);
+    s(this, "drawing", !1);
+    s(this, "onDrawingCompleteCallback");
+    s(this, "onClick", (t) => {
+      if (!this.drawing || !t.point || !t.time || !this.series) return;
+      const e = this.series.coordinateToPrice(t.point.y);
+      e !== null && this.addPoint({
+        time: t.time,
+        price: e
+      });
+    });
+    s(this, "onMouseMove", (t) => {
+      if (!this.drawing || !t.point || !t.time || !this.series) return;
+      const e = this.series.coordinateToPrice(t.point.y);
+      e !== null && this._previewRectangle && this._previewRectangle.updateEndPoint({
+        time: t.time,
+        price: e
+      });
+    });
+    s(this, "onDblClick", (t) => {
+      if (this.drawing) return;
+      const e = t.hoveredObjectId;
+      if (!e) return;
+      const i = this._rectangles.findIndex((o) => o.id === e);
+      if (i !== -1) {
+        const o = this._rectangles[i];
+        this._removeRectangle(o), this._rectangles.splice(i, 1);
+      }
+    });
+    this.chart = t, this.series = e, this.defaultOptions = i, this.onDrawingCompleteCallback = o, this._rectangles = [], this.chart.subscribeClick(this.onClick.bind(this)), this.chart.subscribeCrosshairMove(this.onMouseMove.bind(this)), this.chart.subscribeDblClick(this.onDblClick.bind(this));
+  }
+  get options() {
+    return this.defaultOptions;
+  }
+  remove() {
+    this._rectangles.forEach((t) => this._removeRectangle(t)), this.stopDrawing(), this.chart.unsubscribeClick(this.onClick), this.chart.unsubscribeCrosshairMove(this.onMouseMove), this._rectangles.forEach((t) => {
+      this._removeRectangle(t);
+    }), this._rectangles = [], this._removePreviewRectangle(), this.chart.unsubscribeDblClick(this.onDblClick);
+  }
+  startDrawing() {
+    this.drawing = !0, this.points = [];
+  }
+  stopDrawing() {
+    this.drawing = !1, this.points = [], this._removePreviewRectangle();
+  }
+  isDrawing() {
+    return this.drawing;
+  }
+  addPoint(t) {
+    this.points.push(t), this.points.length >= 2 && (this._addNewRectangle(this.points[0], this.points[1]), this.stopDrawing(), this.onDrawingCompleteCallback && this.onDrawingCompleteCallback()), this.points.length === 1 && this._addPreviewRectangle(this.points[0]);
+  }
+  _addNewRectangle(t, e) {
+    const i = new L(t, e, { ...this.defaultOptions });
+    this._rectangles.push(i), a(this.series).attachPrimitive(i);
+  }
+  _removeRectangle(t) {
+    a(this.series).detachPrimitive(t);
+  }
+  _addPreviewRectangle(t) {
+    this._previewRectangle = new N(t, t, {
+      ...this.defaultOptions
+    }), a(this.series).attachPrimitive(this._previewRectangle);
+  }
+  _removePreviewRectangle() {
+    this._previewRectangle && (a(this.series).detachPrimitive(this._previewRectangle), this._previewRectangle = void 0);
+  }
+}
+class H {
+  constructor(t, e, i, o) {
+    s(this, "p1");
+    s(this, "p2");
     s(this, "_lineColor");
     s(this, "_lineWidth");
-    this._p1 = t, this._p2 = e, this._lineColor = i, this._lineWidth = o;
+    this.p1 = t, this.p2 = e, this._lineColor = i, this._lineWidth = o;
   }
   draw(t) {
     t.useBitmapCoordinateSpace((e) => {
-      if (this._p1.x === null || this._p1.y === null || this._p2.x === null || this._p2.y === null)
+      if (this.p1.x === null || this.p1.y === null || this.p2.x === null || this.p2.y === null)
         return;
-      const i = e.context, o = this._p1.x * e.horizontalPixelRatio, r = this._p1.y * e.verticalPixelRatio, h = this._p2.x * e.horizontalPixelRatio, p = this._p2.y * e.verticalPixelRatio;
-      i.strokeStyle = this._lineColor, i.lineWidth = this._lineWidth * e.horizontalPixelRatio, i.lineCap = "round", i.lineJoin = "round", i.beginPath(), i.moveTo(o, r), i.lineTo(h, p), i.stroke();
+      const i = e.context, o = this.p1.x * e.horizontalPixelRatio, r = this.p1.y * e.verticalPixelRatio, h = this.p2.x * e.horizontalPixelRatio, u = this.p2.y * e.verticalPixelRatio;
+      i.strokeStyle = this._lineColor, i.lineWidth = this._lineWidth * e.horizontalPixelRatio, i.lineCap = "round", i.lineJoin = "round", i.beginPath(), i.moveTo(o, r), i.lineTo(h, u), i.stroke();
     });
   }
 }
 class $ {
   constructor(t) {
     s(this, "_source");
-    s(this, "_p1", { x: null, y: null });
-    s(this, "_p2", { x: null, y: null });
+    s(this, "p1", { x: null, y: null });
+    s(this, "p2", { x: null, y: null });
     this._source = t;
   }
   update() {
-    const t = this._source.series, e = t.priceToCoordinate(this._source._p1.price), i = t.priceToCoordinate(this._source._p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source._p1.time), h = o.timeToCoordinate(this._source._p2.time);
-    this._p1 = { x: r, y: e }, this._p2 = { x: h, y: i };
+    const t = this._source.series, e = t.priceToCoordinate(this._source.p1.price), i = t.priceToCoordinate(this._source.p2.price), o = this._source.chart.timeScale(), r = o.timeToCoordinate(this._source.p1.time), h = o.timeToCoordinate(this._source.p2.time);
+    this.p1 = { x: r, y: e }, this.p2 = { x: h, y: i };
   }
   renderer() {
-    return new W(
-      this._p1,
-      this._p2,
-      this._source._options.lineColor,
-      this._source._options.lineWidth
+    return new H(
+      this.p1,
+      this.p2,
+      this._source.option.lineColor,
+      this._source.option.lineWidth
     );
   }
 }
@@ -401,16 +398,16 @@ class A {
     return this._pos ?? -1;
   }
   visible() {
-    return this._source._options.showLabels;
+    return this._source.option.showLabels;
   }
   tickVisible() {
-    return this._source._options.showLabels;
+    return this._source.option.showLabels;
   }
   textColor() {
-    return this._source._options.labelTextColor;
+    return this._source.option.labelTextColor;
   }
   backColor() {
-    return this._source._options.labelColor;
+    return this._source.option.labelColor;
   }
   movePoint(t) {
     this._p = t, this.update();
@@ -422,7 +419,7 @@ class f extends A {
     this._pos = t.timeToCoordinate(this._p.time);
   }
   text() {
-    return this._source._options.timeLabelFormatter(this._p.time);
+    return this._source.option.timeLabelFormatter(this._p.time);
   }
 }
 class y extends A {
@@ -431,21 +428,21 @@ class y extends A {
     this._pos = t.priceToCoordinate(this._p.price);
   }
   text() {
-    return this._source._options.priceLabelFormatter(this._p.price);
+    return this._source.option.priceLabelFormatter(this._p.price);
   }
 }
 class R extends P {
   constructor(e, i, o = {}) {
     super();
-    s(this, "_id");
-    s(this, "_options");
-    s(this, "_p1");
-    s(this, "_p2");
+    s(this, "id");
+    s(this, "option");
+    s(this, "p1");
+    s(this, "p2");
     s(this, "_paneViews");
     s(this, "_timeAxisViews");
     s(this, "_priceAxisViews");
-    this._id = w.getNextId(), this._p1 = e, this._p2 = i, this._options = {
-      ...M,
+    this.id = w.getNextId(), this.p1 = e, this.p2 = i, this.option = {
+      ...S,
       ...o
     }, this._paneViews = [new $(this)], this._timeAxisViews = [
       new f(this, e),
@@ -468,114 +465,111 @@ class R extends P {
     return this._paneViews;
   }
   applyOptions(e) {
-    this._options = { ...this._options, ...e }, this.requestUpdate();
+    this.option = { ...this.option, ...e }, this.requestUpdate();
   }
   hitTest(e, i) {
     if (!this._paneViews || !this._paneViews[0])
       return null;
-    const o = this._paneViews[0]._p1, r = this._paneViews[0]._p2;
+    const o = this._paneViews[0].p1, r = this._paneViews[0].p2;
     if (o.x === null || o.y === null || r.x === null || r.y === null)
       return null;
-    const x = ((_, l, c) => {
-      if (_.x === null || _.y === null || l.x === null || l.y === null || c.x === null || c.y === null)
+    const x = ((c, l, p) => {
+      if (c.x === null || c.y === null || l.x === null || l.y === null || p.x === null || p.y === null)
         return 1 / 0;
-      const m = (l.x - c.x) ** 2 + (l.y - c.y) ** 2;
-      if (m === 0) return (_.x - l.x) ** 2 + (_.y - l.y) ** 2;
-      let d = ((_.x - l.x) * (c.x - l.x) + (_.y - l.y) * (c.y - l.y)) / m;
+      const m = (l.x - p.x) ** 2 + (l.y - p.y) ** 2;
+      if (m === 0) return (c.x - l.x) ** 2 + (c.y - l.y) ** 2;
+      let d = ((c.x - l.x) * (p.x - l.x) + (c.y - l.y) * (p.y - l.y)) / m;
       d = Math.max(0, Math.min(1, d));
-      const k = l.x + d * (c.x - l.x), B = l.y + d * (c.y - l.y);
-      return (_.x - k) ** 2 + (_.y - B) ** 2;
-    })({ x: e, y: i }, o, r), u = this._options.lineWidth / 2 + 2;
-    return x <= u * u ? {
-      externalId: this._id,
-      zOrder: "top",
+      const k = l.x + d * (p.x - l.x), B = l.y + d * (p.y - l.y);
+      return (c.x - k) ** 2 + (c.y - B) ** 2;
+    })({ x: e, y: i }, o, r), _ = this.option.lineWidth / 2 + 2;
+    return x <= _ * _ ? {
+      externalId: this.id,
+      zOrder: "normal",
       cursorStyle: "pointer"
     } : null;
   }
 }
 class j extends R {
   constructor(t, e, i = {}) {
-    super(t, e, i), this._options.lineColor = this._options.previewLineColor;
+    super(t, e, i), this.option.lineColor = this.option.previewLineColor;
   }
   updateEndPoint(t) {
-    this._p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
+    this.p2 = t, this._paneViews[0].update(), this._timeAxisViews[1].movePoint(t), this._priceAxisViews[1].movePoint(t), this.requestUpdate();
   }
 }
 class X {
   constructor(t, e, i, o) {
-    s(this, "_chart");
-    s(this, "_series");
-    s(this, "_defaultOptions");
+    s(this, "chart");
+    s(this, "series");
+    s(this, "defaultOptions");
     s(this, "_lines");
     s(this, "_previewLine");
-    s(this, "_points", []);
-    s(this, "_drawing", !1);
-    s(this, "_onDrawingCompleteCallback");
-    s(this, "_clickHandler", (t) => this._onClick(t));
-    s(this, "_moveHandler", (t) => this._onMouseMove(t));
-    s(this, "_dblClickHandler", (t) => this._onDblClick(t));
-    this._chart = t, this._series = e, this._defaultOptions = i, this._onDrawingCompleteCallback = o, this._lines = [], this._chart.subscribeClick(this._clickHandler), this._chart.subscribeCrosshairMove(this._moveHandler), this._chart.subscribeDblClick(this._dblClickHandler);
+    s(this, "points", []);
+    s(this, "drawing", !1);
+    s(this, "onDrawingCompleteCallback");
+    s(this, "onClick", (t) => {
+      if (!this.drawing || !t.point || !t.time || !this.series) return;
+      const e = this.series.coordinateToPrice(t.point.y);
+      e !== null && this.addPoint({
+        time: t.time,
+        price: e
+      });
+    });
+    s(this, "onMouseMove", (t) => {
+      if (!this.drawing || !t.point || !t.time || !this.series) return;
+      const e = this.series.coordinateToPrice(t.point.y);
+      e !== null && this._previewLine && this._previewLine.updateEndPoint({
+        time: t.time,
+        price: e
+      });
+    });
+    s(this, "onDblClick", (t) => {
+      if (this.drawing) return;
+      const e = t.hoveredObjectId;
+      if (!e) return;
+      const i = this._lines.findIndex((o) => o.id === e);
+      if (i !== -1) {
+        const o = this._lines[i];
+        this._removeLine(o), this._lines.splice(i, 1);
+      }
+    });
+    this.chart = t, this.series = e, this.defaultOptions = i, this.onDrawingCompleteCallback = o, this._lines = [], this.chart.subscribeClick(this.onClick.bind(this)), this.chart.subscribeCrosshairMove(this.onMouseMove.bind(this)), this.chart.subscribeDblClick(this.onDblClick.bind(this));
   }
   get options() {
-    return this._defaultOptions;
+    return this.defaultOptions;
   }
   remove() {
-    this._lines.forEach((t) => this._removeLine(t)), this.stopDrawing(), this._chart.unsubscribeClick(this._clickHandler), this._chart.unsubscribeCrosshairMove(this._moveHandler), this._lines.forEach((t) => {
+    this._lines.forEach((t) => this._removeLine(t)), this.stopDrawing(), this.chart.unsubscribeClick(this.onClick), this.chart.unsubscribeCrosshairMove(this.onMouseMove), this._lines.forEach((t) => {
       this._removeLine(t);
-    }), this._lines = [], this._removePreviewLine(), this._chart.unsubscribeDblClick(this._dblClickHandler);
+    }), this._lines = [], this._removePreviewLine(), this.chart.unsubscribeDblClick(this.onDblClick);
   }
   startDrawing() {
-    this._drawing = !0, this._points = [];
+    this.drawing = !0, this.points = [];
   }
   stopDrawing() {
-    this._drawing = !1, this._points = [], this._removePreviewLine();
+    this.drawing = !1, this.points = [], this._removePreviewLine();
   }
   isDrawing() {
-    return this._drawing;
+    return this.drawing;
   }
-  _onClick(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._addPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onMouseMove(t) {
-    if (!this._drawing || !t.point || !t.time || !this._series) return;
-    const e = this._series.coordinateToPrice(t.point.y);
-    e !== null && this._previewLine && this._previewLine.updateEndPoint({
-      time: t.time,
-      price: e
-    });
-  }
-  _onDblClick(t) {
-    if (this._drawing) return;
-    const e = t.hoveredObjectId;
-    if (!e) return;
-    const i = this._lines.findIndex((o) => o._id === e);
-    if (i !== -1) {
-      const o = this._lines[i];
-      this._removeLine(o), this._lines.splice(i, 1);
-    }
-  }
-  _addPoint(t) {
-    this._points.push(t), this._points.length >= 2 && (this._addNewLine(this._points[0], this._points[1]), this.stopDrawing(), this._onDrawingCompleteCallback && this._onDrawingCompleteCallback()), this._points.length === 1 && this._addPreviewLine(this._points[0]);
+  addPoint(t) {
+    this.points.push(t), this.points.length >= 2 && (this._addNewLine(this.points[0], this.points[1]), this.stopDrawing(), this.onDrawingCompleteCallback && this.onDrawingCompleteCallback()), this.points.length === 1 && this._addPreviewLine(this.points[0]);
   }
   _addNewLine(t, e) {
-    const i = new R(t, e, { ...this._defaultOptions });
-    this._lines.push(i), a(this._series).attachPrimitive(i);
+    const i = new R(t, e, { ...this.defaultOptions });
+    this._lines.push(i), a(this.series).attachPrimitive(i);
   }
   _removeLine(t) {
-    a(this._series).detachPrimitive(t);
+    a(this.series).detachPrimitive(t);
   }
   _addPreviewLine(t) {
     this._previewLine = new j(t, t, {
-      ...this._defaultOptions
-    }), a(this._series).attachPrimitive(this._previewLine);
+      ...this.defaultOptions
+    }), a(this.series).attachPrimitive(this._previewLine);
   }
   _removePreviewLine() {
-    this._previewLine && (a(this._series).detachPrimitive(this._previewLine), this._previewLine = void 0);
+    this._previewLine && (a(this.series).detachPrimitive(this._previewLine), this._previewLine = void 0);
   }
 }
 const g = class g {
@@ -594,10 +588,10 @@ class Z {
     s(this, "_rectangleButton");
     s(this, "_lineButton");
     s(this, "_activeButtonColor", "#000000");
-    s(this, "_inactiveColor", "rgb(100, 100, 100)");
+    s(this, "_inactiveColor", "#646464");
     s(this, "_selectedBaseColor", "#000000");
     s(this, "_currentOpacity", 0.35);
-    this._drawingsToolbarContainer = i, this._rectangleTool = new N(
+    this._drawingsToolbarContainer = i, this._rectangleTool = new W(
       t,
       e,
       o,
@@ -607,7 +601,7 @@ class Z {
       e,
       r,
       this.stopDrawing.bind(this)
-    ), this._selectedBaseColor = "#000000", this._currentOpacity = 0.35, this._activeButtonColor = this._selectedBaseColor, this._createToolbar(), this._updateDrawingToolColorsAndOpacity();
+    ), this._createToolbar(), this._updateDrawingToolColorsAndOpacity();
   }
   _createToolbar() {
     const t = document.createElement("div");
